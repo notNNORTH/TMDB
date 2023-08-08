@@ -1,6 +1,5 @@
-package drz.tmdb.Log;
+package edu.whu.tmdb.Log;
 
-import androidx.annotation.NonNull;
 
 public class LogTableItem {
     public int logid;//日志记录id
@@ -17,7 +16,6 @@ public class LogTableItem {
     }
     public LogTableItem(){};
 
-    @NonNull
     @Override
     public String toString(){
         return "id为"+ this.logid+" op为"+ this.op+" key为"

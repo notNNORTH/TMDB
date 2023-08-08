@@ -1,4 +1,4 @@
-package drz.tmdb.Log;
+package edu.whu.tmdb.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;

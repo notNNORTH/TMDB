@@ -1,6 +1,6 @@
-package drz.tmdb.Transaction.Transactions.utils;
+package edu.whu.tmdb.Transaction.Transactions.utils;
 
-import drz.tmdb.memory.TupleList;
+import edu.whu.tmdb.memory.TupleList;
 
 public class SelectResult {
     TupleList tpl; //存实际的元祖

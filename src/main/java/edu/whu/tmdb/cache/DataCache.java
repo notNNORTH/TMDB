@@ -1,4 +1,4 @@
-package drz.tmdb.cache;
+package edu.whu.tmdb.cache;
 
 import java.util.HashMap;
 import java.util.LinkedList;

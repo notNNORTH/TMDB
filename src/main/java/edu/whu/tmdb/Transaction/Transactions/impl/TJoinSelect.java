@@ -1,13 +1,13 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import java.util.List;
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
-import drz.tmdb.Transaction.Transactions.utils.TrajTrans;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.Transaction.Transactions.utils.traj.TrajTrans;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
 
 public class TJoinSelect extends SelectImpl{
 

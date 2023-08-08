@@ -1,4 +1,4 @@
-package drz.tmdb.memory.SystemTable;
+package edu.whu.tmdb.memory.SystemTable;
 
 //import android.support.annotation.Nullable;
 

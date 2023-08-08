@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.utils;
+package edu.whu.tmdb.Transaction.Transactions.utils;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -13,8 +13,8 @@ import net.sf.jsqlparser.schema.Column;
 
 import java.util.ArrayList;
 
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
 
 public class Formula {
     //表达式后续遍历处理的核心

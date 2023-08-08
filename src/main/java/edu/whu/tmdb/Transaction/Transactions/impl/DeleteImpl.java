@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -9,15 +9,15 @@ import net.sf.jsqlparser.statement.Statement;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.ObjectTableItem;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Delete;
-import drz.tmdb.Transaction.Transactions.Select;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Delete;
+import edu.whu.tmdb.Transaction.Transactions.Select;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 
 public class DeleteImpl implements Delete {
 

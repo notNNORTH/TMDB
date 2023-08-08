@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -12,9 +12,9 @@ import net.sf.jsqlparser.statement.select.SetOperationList;
 import java.util.ArrayList;
 import java.util.List;
 
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 
 public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
     private MemConnect memConnect;

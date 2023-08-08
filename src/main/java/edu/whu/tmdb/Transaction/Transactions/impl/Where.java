@@ -1,5 +1,10 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
+import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
+import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
+import edu.whu.tmdb.Transaction.Transactions.torch.TorchConnect;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -15,19 +20,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import au.edu.rmit.bdm.Torch.base.model.Coordinate;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
-import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Select;
-import drz.tmdb.Transaction.Transactions.torch.TorchConnect;
-import drz.tmdb.Transaction.Transactions.utils.Formula;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
-import drz.tmdb.Transaction.Transactions.utils.TrajTrans;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Select;
+import edu.whu.tmdb.Transaction.Transactions.utils.Formula;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.Transaction.Transactions.utils.traj.TrajTrans;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
 
 public class Where {
     private MemConnect memConnect;

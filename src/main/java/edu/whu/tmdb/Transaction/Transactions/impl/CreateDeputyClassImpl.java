@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 
 import net.sf.jsqlparser.schema.Column;
@@ -15,15 +15,15 @@ import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.List;
 
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.ClassTableItem;
-import drz.tmdb.memory.SystemTable.DeputyTableItem;
-import drz.tmdb.memory.SystemTable.SwitchingTableItem;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.Transaction.Transactions.CreateDeputyClass;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.Transaction.Transactions.CreateDeputyClass;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 
 
 public class CreateDeputyClassImpl implements CreateDeputyClass {

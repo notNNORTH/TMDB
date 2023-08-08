@@ -1,6 +1,7 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.RowConstructor;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
@@ -20,14 +21,14 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import drz.tmdb.memory.SystemTable.ObjectTableItem;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
-import drz.tmdb.memory.SystemTable.ClassTableItem;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.utils.Formula;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.utils.Formula;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 
 //1、from子句组装来自不同数据源的数据；
 //2、where子句基于指定的条件对记录行进行筛选；
@@ -37,7 +38,7 @@ import drz.tmdb.Transaction.Transactions.utils.SelectResult;
 //6、计算所有的表达式；
 //7、select 的字段；
 //8、使用order by对结果集进行排序。
-public class SelectImpl implements drz.tmdb.Transaction.Transactions.Select {
+public class SelectImpl implements edu.whu.tmdb.Transaction.Transactions.Select {
 
     private MemConnect memConnect;
 
@@ -89,11 +90,160 @@ public class SelectImpl implements drz.tmdb.Transaction.Transactions.Select {
             Where where=new Where(memConnect);
             selectResult=where.where(plainSelect,selectResult);
         }
-        //然后通过selectItem提取想要的列
-        selectResult=elicit(plainSelect,selectResult);
+        if(plainSelect.getGroupBy()!=null){
+            GroupBy groupBy=new GroupBy();
+            HashMap<Object,ArrayList<Tuple>> hashMap = groupBy.groupBy(plainSelect, selectResult);
+            selectResult=groupByElicit(plainSelect,hashMap,selectResult);
+        }
+        else {//然后通过selectItem提取想要的列
+            selectResult = elicit(plainSelect, selectResult);
+        }
         //最终返回selectResult
         return selectResult;
     }
+
+    private SelectResult groupByElicit(PlainSelect plainSelect, HashMap resultMap, SelectResult selectResult) throws TMDBException {
+        String groupByElement = plainSelect.getGroupBy().getGroupByExpressionList().getExpressions().get(0).toString();
+        ArrayList<SelectItem> selectItemList= (ArrayList<SelectItem>) plainSelect.getSelectItems();
+        HashMap<SelectItem, ArrayList<Column>> map = getSelectItemColumn(selectItemList);
+        //select item的length
+        int length=selectItemList.size();
+
+        //init resTupleList
+        TupleList resTupleList=new TupleList();
+        SelectResult result=new SelectResult();
+        result.setAlias(new String[length]);
+        result.setAttrname(new String[length]);
+        result.setClassName(new String[length]);
+        result.setAttrid(new int[length]);
+        result.setType(new String[length]);
+        for(int i=0;i<resultMap.size();i++){
+            Tuple tuple=new Tuple();
+            int[] temp=new int[length];
+            Arrays.fill(temp,-1);
+            tuple.tupleIds=temp;
+            tuple.tuple=new Object[length];
+            resTupleList.addTuple(tuple);
+        }
+        result.setTpl(resTupleList);
+        int i=0;
+        //按照列处理res Result
+        while(i<length){
+//            这里是针对selectItem是表达式的判定，a或者a+2或者a+b*c都会被认定为表达式
+            if(selectItemList.get(i).getClass().getSimpleName().equals("SelectExpressionItem")){
+                SelectExpressionItem selectItem=(SelectExpressionItem) selectItemList.get(i);
+                //如果有alias 例如a*b as c则需要将输出的getAttrname()改成别名
+                if(selectItem.getAlias()!=null){
+                    result.getAlias()[i]=selectItem.getAlias().getName();
+                    result.getAttrname()[i]=selectItem.getAlias().getName();
+                }
+                else {
+                    result.getAlias()[i]=selectItem.toString();
+                    result.getAttrname()[i]=selectItem.toString();
+                }
+                ArrayList<Object> thisColumn=new ArrayList<>();
+                if(selectItem.getExpression().toString().equals(groupByElement)
+                ||(selectItem.getAlias()!=null && selectItem.getAlias().getName().equals(groupByElement))){
+                    for (Object o :
+                            resultMap.keySet()) {
+                        thisColumn.add(o);
+                    }
+                }
+                else{
+                    Function func = (Function) selectItem.getExpression();
+                    String funcName = func.getName();
+                    String p = func.getParameters().getExpressions().get(0).toString();
+                    int pIndex=-1;
+                    for (int j = 0; j < selectResult.getAttrname().length; j++) {
+                        if(p.equals(selectResult.getAttrname()[j])
+                        || p.equals(selectResult.getAlias()[j])){
+                            pIndex=j;
+                        }
+                    }
+                    if(pIndex==-1){
+                        throw new TMDBException("cannot find element "+p);
+                    }
+                    thisColumn=solveAggregationFunction(resultMap,funcName,pIndex);
+                }
+                int tempI=-1;
+                Column column = map.get(selectItem).get(0);
+                for (int j = 0; j < selectResult.getClassName().length; j++) {
+                    if(column.getTable()!=null){
+                        if((selectResult.getClassName()[j].equals(column.getTable().getName())
+                                || selectResult.getAlias()[j].equals(column.getTable().getName()))
+                                && selectResult.getAttrname()[j].equals(column.getColumnName())){
+                            tempI=j;
+                            break;
+                        }
+                    }
+                    else{
+                        if(selectResult.getAttrname()[j].equals(column.getColumnName())){
+                            tempI=j;
+                            break;
+                        }
+                    }
+                }
+
+                for(int j=0;j<resTupleList.tuplelist.size();j++){
+                    resTupleList.tuplelist.get(j).tuple[i]=thisColumn.get(j);
+                    resTupleList.tuplelist.get(j).tupleIds[i]=selectResult.getTpl().tuplelist.get(j).tupleIds[tempI];
+                }
+
+                result.getType()[i]=selectResult.getType()[tempI];
+                result.getAttrid()[i]=i;
+                result.getClassName()[i]=selectResult.getClassName()[tempI];
+                i++;
+            }
+        }
+
+        return result;
+    }
+
+    private ArrayList<Object> solveAggregationFunction(HashMap<Object,ArrayList<Tuple>> resultMap, String funcName, int pIndex) {
+        ArrayList<Object> res = new ArrayList<>();
+        for (Object k :
+                resultMap.keySet()) {
+            ArrayList<Tuple> tuples = resultMap.get(k);
+            List<Double> temp=new ArrayList<Double>();
+            for (Tuple t:
+                 tuples) {
+                if(t.tuple[pIndex]!=null) {
+                    temp.add(Double.parseDouble((String) t.tuple[pIndex]));
+                }
+            }
+            double d=solveList(funcName,temp);
+            res.add(d);
+        }
+        return res;
+    }
+
+    private double solveList(String funcName, List<Double> temp) {
+        switch (funcName.toLowerCase()) {
+            case "avg":
+                return temp.stream()
+                        .mapToDouble(Double::doubleValue)
+                        .average()
+                        .orElse(0);
+            case "min":
+                return temp.stream()
+                        .mapToDouble(Double::doubleValue)
+                        .min()
+                        .orElse(0);
+            case "max":
+                return temp.stream()
+                        .mapToDouble(Double::doubleValue)
+                        .max()
+                        .orElse(0);
+            case "count":
+                return temp.size();
+            case "sum":
+                return temp.stream()
+                        .mapToDouble(Double::doubleValue)
+                        .sum();
+            default: return -1;
+        }
+    }
+
 
     //提取
     public SelectResult elicit(PlainSelect plainSelect,SelectResult selectResult) throws TMDBException {

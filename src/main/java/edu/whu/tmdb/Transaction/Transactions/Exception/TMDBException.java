@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.Exception;
+package edu.whu.tmdb.Transaction.Transactions.Exception;
 
 public class TMDBException extends Exception{
 //    private int errorCode;

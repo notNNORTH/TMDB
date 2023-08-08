@@ -1,4 +1,4 @@
-package drz.tmdb.cache;
+package edu.whu.tmdb.cache;
 
 
 // 缓存由两部分组成

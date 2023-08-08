@@ -1,6 +1,4 @@
-package drz.tmdb.Transaction.Transactions.torch;
-
-import android.content.Context;
+package edu.whu.tmdb.Transaction.Transactions.torch;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -8,7 +6,6 @@ import net.sf.jsqlparser.statement.Statement;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,18 +21,18 @@ import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.Engine;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
 import au.edu.rmit.bdm.Torch.queryEngine.query.QueryResult;
-import drz.tmdb.Transaction.Transactions.Create;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Insert;
-import drz.tmdb.Transaction.Transactions.Select;
-import drz.tmdb.Transaction.Transactions.impl.CreateImpl;
-import drz.tmdb.Transaction.Transactions.impl.InsertImpl;
-import drz.tmdb.Transaction.Transactions.impl.SelectImpl;
-import drz.tmdb.Transaction.Transactions.utils.Constants;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
-import drz.tmdb.Transaction.Transactions.utils.TrajTrans;
-import drz.tmdb.memory.Tuple;
+import edu.whu.tmdb.Transaction.Transactions.Create;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Insert;
+import edu.whu.tmdb.Transaction.Transactions.Select;
+import edu.whu.tmdb.Transaction.Transactions.impl.CreateImpl;
+import edu.whu.tmdb.Transaction.Transactions.impl.InsertImpl;
+import edu.whu.tmdb.Transaction.Transactions.impl.SelectImpl;
+import edu.whu.tmdb.Transaction.Transactions.utils.Constants;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.Transaction.Transactions.utils.traj.TrajTrans;
+import edu.whu.tmdb.memory.Tuple;
 
 public class TorchConnect {
 
@@ -44,32 +41,30 @@ public class TorchConnect {
     String baseDir;
     MemConnect memConnect;
 
-    TorchSQLiteHelper helper;
-    Context context;
+//    TorchSQLiteHelper helper;
 
 
-    public TorchConnect(MemConnect memConnect, String baseDir, Context context){
+    public TorchConnect(MemConnect memConnect, String baseDir){
         this.baseDir=Constants.TORCH_RES_BASE_DIR+"/"+baseDir;
         this.memConnect=memConnect;
-        this.context=context;
-        this.helper=new TorchSQLiteHelper(context,this.baseDir+"/Torch/db/"+baseDir+".db");
+//        this.helper=new TorchSQLiteHelper(this.baseDir+"/Torch/db/"+baseDir+".db");
     }
 
     public void testSQLiteHelper(){
-        File databasePath = context.getDatabasePath("Torch_Porto_test.db");
+//        File databasePath = context.getDatabasePath("Torch_Porto_test.db");
         String attr="id";
         String sql = "SELECT content from " + "edge" + " WHERE "+attr+ " = ?";
         String selection = attr+" = ?";
         String[] selectionArgs = {"1"};
-        String ret = helper.query("edge", selection, selectionArgs);
+//        String ret = helper.query("edge", selection, selectionArgs);
 //        Cursor cursor = helper.execSql("Select * from edge;");
 //        Cursor cursor = helper.execSql("SELECT content from edge WHERE id = 1;");
 //        System.out.println(cursor.getString(1));
 //        helper.query("SELECT content from edge WHERE id = 1;");
     }
 
-    public static void init(MemConnect memConnect, String baseDir, Context context){
-        torchConnect=new TorchConnect(memConnect, baseDir,context);
+    public static void init(MemConnect memConnect, String baseDir){
+        torchConnect=new TorchConnect(memConnect, baseDir);
     }
 
     public static TorchConnect getTorchConnect(){
@@ -112,17 +107,17 @@ public class TorchConnect {
         };
 
         QueryResult topK = engine.findTopK(queries.get(0), 3);
-        QueryResult result = this.engine.findOnPath(queries.get(0));
+        QueryResult result = engine.findOnPath(queries.get(0));
         System.out.println((topK.toJSON(10)));
         System.out.println(result.toJSON(10));
     }
 
     public void updateMeta() throws IOException {
-        FileWriter fr = new FileWriter("/data/data/drz.tmdb/res/Torch_Porto_test/meta");
+        FileWriter fr = new FileWriter("/data/data/edu.whu.tmdb/res/Torch_Porto_test/meta");
         BufferedWriter bufferedWriter=new BufferedWriter(fr);
         bufferedWriter.write("car");
         bufferedWriter.newLine();
-        bufferedWriter.write("/data/data/drz.tmdb/res/Porto.osm.pbf");
+        bufferedWriter.write("/data/data/edu.whu.tmdb/res/Porto.osm.pbf");
         bufferedWriter.close();
     }
 
@@ -149,7 +144,7 @@ public class TorchConnect {
     }
 
     public void initEngine(){
-        engine=Engine.getBuilder().baseDir(baseDir).build(helper);
+        engine=Engine.getBuilder().baseDir(baseDir).build();
 //        System.out.println(1);
     }
 
@@ -179,7 +174,7 @@ public class TorchConnect {
     }
 
     public List<Trajectory<TrajEntry>> topkQuery(Trajectory trajectory,int k,String similarityFunction){
-        engine=Engine.getBuilder().preferedSimilarityMeasure(similarityFunction).baseDir(baseDir).build(helper);
+        engine=Engine.getBuilder().preferedSimilarityMeasure(similarityFunction).baseDir(baseDir).build();
         QueryResult onPath = engine.findTopK(trajectory,k);
         return onPath.resolvedRet;
     }
@@ -198,7 +193,7 @@ public class TorchConnect {
         create.create(CCJSqlParserUtil.parse(sql));
         try {
             // 读取文件路径
-            String filePath = "/data/data/drz.tmdb/res/porto_raw_trajectory.txt";
+            String filePath = "/data/data/edu.whu.tmdb/res/porto_raw_trajectory.txt";
             reader = new BufferedReader(new FileReader(filePath));
             String line;
             List<List<TrajEntry>> list=new ArrayList<>();
@@ -353,7 +348,7 @@ public class TorchConnect {
     }
 
     private String getFilePath(String baseDir){
-        return "/data/data/drz.tmdb/res/"+baseDir+"/Torch/";
+        return "/data/data/edu.whu.tmdb/res/"+baseDir+"/Torch/";
     }
 }
 

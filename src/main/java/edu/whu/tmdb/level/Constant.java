@@ -1,4 +1,4 @@
-package drz.tmdb.level;
+package edu.whu.tmdb.level;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 public class Constant {
 
     // LSM-Tree文件目录
-    public static final String DATABASE_DIR = "/data/data/drz.tmdb/level/";
+    public static final String DATABASE_DIR = "data/level/";
 
     // 最大level数
     public static final int MAX_LEVEL = 6;

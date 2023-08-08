@@ -1,7 +1,5 @@
-package drz.tmdb.Log;
+package edu.whu.tmdb.Log;
 
-
-import com.alibaba.fastjson.JSON;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -15,8 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import drz.tmdb.memory.MemManager;
-import drz.tmdb.memory.Tuple;
+import com.alibaba.fastjson2.JSON;
+import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.util.FileOperation;
 
 public class LogManager {
     public File logFile;//日志文件
@@ -27,20 +27,19 @@ public class LogManager {
     public static RandomAccessFile logIOAccess;
     public static int checkpoint;//日志检查点
     public static long check_off;//检查点在日志中偏移位置
-    static  long limitedSize=10*10*1024;//日志文件限制大小
-    static  long writeB_size=5*10*1024;//写b树时日志文件大小
+    static long limitedSize = 10 * 10 * 1024;//日志文件限制大小
+    static long writeB_size = 5 * 10 * 1024;//写b树时日志文件大小
     static long currentOffset;
     static int currentId;
-
 
 
     public MemManager memManager;
 
     //初始化索引b树
-    public BTree_Indexer<String , Long> bTree_indexer;
+    public BTree_Indexer<String, Long> bTree_indexer;
 
     //建立hashmap将日志记录按对象分类
-    public static java.util.Map< String, List<Integer>> Map;
+    public static java.util.Map<String, List<Integer>> Map;
     //遍历hashMap的keySet
     public Iterator<Map.Entry<String, List<Integer>>> iterator;
 
@@ -48,45 +47,41 @@ public class LogManager {
         this.memManager = memManager;
 
         File dir = new File(Constants.LOG_BASE_DIR);
-        if(!dir.exists()){
+        if (!dir.exists()) {
             boolean mkdirs = dir.mkdirs();
 //            System.out.println(mkdirs);
         }
         logFile = new File(Constants.LOG_BASE_DIR + "tmdblog");
         fileTree = new File(Constants.LOG_BASE_DIR + "log_btree");
-        if(!logFile.exists())
-            logFile.createNewFile();
-        if(!fileTree.exists())
-            fileTree.createNewFile();
+        FileOperation.createNewFile(logFile);
+        FileOperation.createNewFile(fileTree);
         bTreeWriteAccess = new BufferedOutputStream(new FileOutputStream(fileTree));
         logIOAccess = new RandomAccessFile(logFile, "rw");
-        Map= new HashMap< String, List<Integer>>();
-        checkpoint=-1;
-        check_off=-1;
+        Map = new HashMap<String, List<Integer>>();
+        checkpoint = -1;
+        check_off = -1;
         currentOffset = 0;
         currentId = 0;
         //app启动时将b树从磁盘加载到内存
-        if(fileTree.length()==0){
+        if (fileTree.length() == 0) {
             bTree_indexer = new BTree_Indexer<>();
-        }else{
-            bTree_indexer=new BTree_Indexer<>("log_btree",0);
+        } else {
+            bTree_indexer = new BTree_Indexer<>("log_btree", 0);
         }
     }
 
     //初始化新日志文件与新索引b树文件
     public void init() throws IOException {
         Map.clear();//删除Map中所有键值对
-        if(deleteDirectory(Constants.LOG_BASE_DIR)) {
+        if (deleteDirectory(Constants.LOG_BASE_DIR)) {
             File dir = new File(Constants.LOG_BASE_DIR);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
             logFile = new File(Constants.LOG_BASE_DIR + "tmdblog");
             fileTree = new File(Constants.LOG_BASE_DIR + "log_btree");
-            if (!logFile.exists())
-                logFile.createNewFile();
-            if (!fileTree.exists())
-                fileTree.createNewFile();
+            FileOperation.createNewFile(logFile);
+            FileOperation.createNewFile(fileTree);
             bTreeWriteAccess = new BufferedOutputStream(new FileOutputStream(fileTree));
             logIOAccess = new RandomAccessFile(logFile, "rw");
             checkpoint = -1;
@@ -155,10 +150,9 @@ public class LogManager {
     }
 
 
-
     //给定参数LogTableItem对象将日志持久化到磁盘
-    public void writeLogItemToSSTable(LogTableItem log){
-        try{
+    public void writeLogItemToSSTable(LogTableItem log) {
+        try {
             logIOAccess.seek(currentOffset);
 
             logIOAccess.writeInt(log.logid);
@@ -177,17 +171,18 @@ public class LogManager {
              **/
             currentOffset = logIOAccess.getFilePointer();
 
-        }catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     //给定参数key、op、value，将日志持久化到磁盘
-    public void WriteLog(String k,Byte op,String v){
-        int flag=0;
-        LogTableItem LogItem = new LogTableItem(currentId,op,k,v);     //把语句传入logItem，这个时候都是未完成
-        LogItem.offset=currentOffset;
+    public void WriteLog(String k, Byte op, String v) {
+        int flag = 0;
+        LogTableItem LogItem = new LogTableItem(currentId, op, k, v);     //把语句传入logItem，这个时候都是未完成
+        LogItem.offset = currentOffset;
         currentId++;
         writeLogItemToSSTable(LogItem);
         //System.out.println("该条日志已写入，详细信息为：" + LogItem);
@@ -197,13 +192,13 @@ public class LogManager {
 
         while (iterator.hasNext()) {
             Map.Entry<String, List<Integer>> entry = iterator.next();
-            if(LogItem.value==entry.getKey()){
+            if (LogItem.value == entry.getKey()) {
                 entry.getValue().add(LogItem.logid);
-                flag=1;
+                flag = 1;
                 break;
             }
         }
-        if(flag==0) {
+        if (flag == 0) {
             List<Integer> list = new ArrayList<Integer>();//hashmap里没找到该对象则新建一个列表
             list.add(LogItem.logid);
             Map.put(LogItem.value, list);
@@ -219,9 +214,9 @@ public class LogManager {
          Map.put("v4",list1);
          **/
 
-        bTree_indexer.insert(Integer.toString(LogItem.logid),LogItem.offset);//将记录offset的节点插入b树中
-        int type=checkFileInSize();
-        if(type==2){//将索引B树持久化到磁盘
+        bTree_indexer.insert(Integer.toString(LogItem.logid), LogItem.offset);//将记录offset的节点插入b树中
+        int type = checkFileInSize();
+        if (type == 2) {//将索引B树持久化到磁盘
             bTree_indexer.write(bTreeWriteAccess, 0);
         }
     }
@@ -229,10 +224,10 @@ public class LogManager {
 
     //设置检查点
     public void setCheckpoint() throws IOException {
-        int type=checkFileInSize();
-        if(type==1){//新建日志文件与索引b树文件重新写
+        int type = checkFileInSize();
+        if (type == 1) {//新建日志文件与索引b树文件重新写
             init();
-        }else {
+        } else {
             checkpoint = currentId;
             check_off = currentOffset;
         }
@@ -242,16 +237,16 @@ public class LogManager {
     //加载REDO log
     public LogTableItem[] readRedo() throws IOException {
         int redo_num = 0;
-        LogTableItem[] redo_log = new LogTableItem[currentId+2];
+        LogTableItem[] redo_log = new LogTableItem[currentId + 2];
         //数组初始化
-        for(int j=0;j<currentId+2;j++){
-            redo_log[j]=new LogTableItem(0, (byte) 0,null,null);
+        for (int j = 0; j < currentId + 2; j++) {
+            redo_log[j] = new LogTableItem(0, (byte) 0, null, null);
         }
-        int i=0;
-        if(checkpoint==-1){//还没有检查点，从头开始redo
+        int i = 0;
+        if (checkpoint == -1) {//还没有检查点，从头开始redo
             long readpos = 0;
-            redo_num = currentId+1;
-            while (redo_num!=0) {
+            redo_num = currentId + 1;
+            while (redo_num != 0) {
                 logIOAccess.seek(readpos);
 
                 redo_log[i].logid = logIOAccess.readInt();
@@ -263,10 +258,10 @@ public class LogManager {
                 i++;
                 readpos = logIOAccess.getFilePointer();
             }
-        }else {
-            redo_num=currentId-checkpoint;
+        } else {
+            redo_num = currentId - checkpoint;
             long readpos = check_off;
-            while (redo_num!=0) {
+            while (redo_num != 0) {
                 logIOAccess.seek(readpos);
 
                 redo_log[i].logid = logIOAccess.readInt();
@@ -284,14 +279,14 @@ public class LogManager {
 
     //REDO
     public void redo() throws IOException {
-        int redo_num=currentId-checkpoint;
-        LogTableItem[] redo_log = new LogTableItem[redo_num+1];
+        int redo_num = currentId - checkpoint;
+        LogTableItem[] redo_log = new LogTableItem[redo_num + 1];
         //数组初始化
-        for(int j=0;j<redo_num;j++){
-            redo_log[j]=new LogTableItem(0, (byte) 0,null,null);
+        for (int j = 0; j < redo_num; j++) {
+            redo_log[j] = new LogTableItem(0, (byte) 0, null, null);
         }
         redo_log = readRedo();
-        for(int i=0;i<redo_num;i++){
+        for (int i = 0; i < redo_num; i++) {
             Tuple t = JSON.parseObject(redo_log[i].value, Tuple.class);
             System.out.println("崩溃后redo，数据重新恢复到数据库中！");
             memManager.add(t);
@@ -301,13 +296,12 @@ public class LogManager {
 
     //检查日志文件大小是否超过限制
     private int checkFileInSize() {
-        if(logFile.length()>limitedSize){
+        if (logFile.length() > limitedSize) {
             return 1;
         }
-        if(logFile.length()>writeB_size){
+        if (logFile.length() > writeB_size) {
             return 2;
-        }
-        else{
+        } else {
             return 0;
         }
     }
@@ -357,15 +351,15 @@ public class LogManager {
 
     public void loadLog() throws IOException {
         logIOAccess.seek(0);
-        for(int i=0;i<currentId;i++){
-            System.out.println("id为"+ logIOAccess.readInt()+" op为"+ logIOAccess.readByte()+" key为"
-                    + logIOAccess.readUTF()+" value为"+ logIOAccess.readUTF()+" offset为"+ logIOAccess.readLong());
+        for (int i = 0; i < currentId; i++) {
+            System.out.println("id为" + logIOAccess.readInt() + " op为" + logIOAccess.readByte() + " key为"
+                    + logIOAccess.readUTF() + " value为" + logIOAccess.readUTF() + " offset为" + logIOAccess.readLong());
         }
     }
 
     //寻找指定logid的日志在文件中的位置并返回该日志对象
     public LogTableItem searchLog(int logID) throws IOException {
-        long off= bTree_indexer.search(Integer.toString(logID));
+        long off = bTree_indexer.search(Integer.toString(logID));
         logIOAccess.seek(off);
         LogTableItem logItem = new LogTableItem();
         logItem.logid = logIOAccess.readInt();
@@ -375,8 +369,6 @@ public class LogManager {
         logItem.offset = logIOAccess.readLong();
         return logItem;
     }
-
-
 
 
 }

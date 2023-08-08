@@ -1,5 +1,7 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
+
+import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 
@@ -8,19 +10,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import au.edu.rmit.bdm.Torch.base.model.Coordinate;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Insert;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
-import drz.tmdb.Transaction.Transactions.utils.TrajTrans;
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.ClassTableItem;
-import drz.tmdb.memory.SystemTable.DeputyTableItem;
-import drz.tmdb.memory.SystemTable.ObjectTableItem;
-import drz.tmdb.memory.SystemTable.SwitchingTableItem;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
+
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Insert;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.Transaction.Transactions.utils.traj.TrajTrans;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
 
 public class InsertImpl implements Insert {
     MemConnect memConnect=new MemConnect();
@@ -33,6 +35,7 @@ public class InsertImpl implements Insert {
 
     public InsertImpl(){}
 
+    @Override
     public ArrayList<Integer> insert(Statement stmt) throws TMDBException {
         net.sf.jsqlparser.statement.insert.Insert statement=(net.sf.jsqlparser.statement.insert.Insert) stmt;
         //获取插入的table名
@@ -95,7 +98,7 @@ public class InsertImpl implements Insert {
      */
     private Integer insert(int classId, List<String> columns, Tuple tuple, int l, int[] index) throws TMDBException {
         SelectImpl select=new SelectImpl(memConnect);
-        int tupleid = memConnect.getTopt().maxTupleId++;
+        int tupleid = MemConnect.getTopt().maxTupleId++;
         Object[] temp=new Object[l];
         if(tuple.tuple.length!=columns.size()){
             throw new TMDBException("Insert error: columns size not equals to tuple size");
@@ -111,7 +114,7 @@ public class InsertImpl implements Insert {
         tuple.tupleIds=ids;
         tuple.tupleId=tupleid;
         memConnect.InsertTuple(tuple);
-        memConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
+        MemConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
         ArrayList<Integer> pointTo = deputySize(classId);
         ArrayList<HashMap<Integer, Integer>> deputyAttr = getDeputyAttr(pointTo.size(), classId);
         for (int i = 0; i < pointTo.size(); i++) {
@@ -120,7 +123,7 @@ public class InsertImpl implements Insert {
             List<String> tempColumns=getInsertColumns(classId,tempClassId,tempMap,columns);
             Tuple tuple1=getDeputyTuple(tempMap,tuple,columns);
             int i1 = executeTuple(tempClassId, tempColumns, tuple1);
-            memConnect.getBiPointerT().biPointerTable.add(
+            MemConnect.getBiPointerT().biPointerTable.add(
                     new BiPointerTableItem(classId,tupleid,tempClassId,i1)
             );
         }
@@ -163,7 +166,7 @@ public class InsertImpl implements Insert {
                         temp1.tuple[2]=temps;
                         //调用一下方法在代理类中也插入新tuple
                         int i1 = executeTuple(deputyId, columns, temp1);
-                        memConnect.getBiPointerT().biPointerTable.add(
+                        MemConnect.getBiPointerT().biPointerTable.add(
                                 new BiPointerTableItem(classId, tupleid, deputyId, i1)
                         );
                     }
@@ -179,9 +182,9 @@ public class InsertImpl implements Insert {
     }
 
     private int getAnotherDeputy(int deputyId, int classId) {
-        for (int i = 0; i < memConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTable.get(i);
-            if(deputyTableItem.deputyrule[0].equals("5") &&
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
+            if("5".equals(deputyTableItem.deputyrule[0]) &&
             deputyTableItem.originid!=classId &&
             deputyTableItem.deputyid==deputyId){
                 return deputyTableItem.originid;
@@ -195,8 +198,8 @@ public class InsertImpl implements Insert {
         HashMap<String,String> map2=new HashMap<>();
         HashMap<Integer,String> tempmap1=new HashMap<>();
         HashMap<Integer,String> tempmap2=new HashMap<>();
-        for (int i = 0; i < memConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = memConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
             if(classTableItem.classid==classId){
                 tempmap1.put(classTableItem.attrid,classTableItem.attrname);
             }
@@ -238,8 +241,8 @@ public class InsertImpl implements Insert {
 
     public List<String> getColumns(String tableName){
         List<String> res=new ArrayList<>();
-        for (int i = 0; i < memConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = memConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
             if(classTableItem.classname.equals(tableName)){
                 res.add(classTableItem.attrname);
             }
@@ -251,15 +254,15 @@ public class InsertImpl implements Insert {
         int i=0;
         int c=-1;
         ArrayList<HashMap<Integer,Integer>> res=new ArrayList<>();
-        while(i<memConnect.getSwitchingT().switchingTable.size()){
-            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTable.get(i);
+        while(i< MemConnect.getSwitchingT().switchingTable.size()){
+            SwitchingTableItem switchingTableItem = MemConnect.getSwitchingT().switchingTable.get(i);
             if(switchingTableItem.oriId==oriId){
                 c=switchingTableItem.deputyId;
                 HashMap<Integer,Integer> map=new HashMap<>();
-                while(i<memConnect.getSwitchingT().switchingTable.size() &&
-                        memConnect.getSwitchingT().switchingTable.get(i).deputyId==c){
-                    map.put(memConnect.getSwitchingT().switchingTable.get(i).oriAttrid,
-                            memConnect.getSwitchingT().switchingTable.get(i).deputyAttrId);
+                while(i< MemConnect.getSwitchingT().switchingTable.size() &&
+                        MemConnect.getSwitchingT().switchingTable.get(i).deputyId==c){
+                    map.put(MemConnect.getSwitchingT().switchingTable.get(i).oriAttrid,
+                            MemConnect.getSwitchingT().switchingTable.get(i).deputyAttrId);
                     i++;
                 }
                 res.add(map);
@@ -306,9 +309,9 @@ public class InsertImpl implements Insert {
 //    }
 
     private int getLength(int classId) {
-        for (int i = 0; i < memConnect.getClasst().classTable.size(); i++) {
-            if(memConnect.getClasst().classTable.get(i).classid==classId){
-                return memConnect.getClasst().classTable.get(i).attrnum;
+        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
+            if(MemConnect.getClasst().classTable.get(i).classid==classId){
+                return MemConnect.getClasst().classTable.get(i).attrnum;
             }
         }
         try {
@@ -322,8 +325,8 @@ public class InsertImpl implements Insert {
     private int[] getTemplate(int classId, List<String> columns) {
         HashMap<Integer,ClassTableItem> map=new HashMap<>();
         ArrayList<ClassTableItem> list=new ArrayList<>();
-        for (int j = 0; j < memConnect.getClasst().classTable.size(); j++) {
-            ClassTableItem classTableItem = memConnect.getClasst().classTable.get(j);
+        for (int j = 0; j < MemConnect.getClasst().classTable.size(); j++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(j);
             if(classTableItem.classid==classId){
                 list.add(classTableItem);
             }
@@ -343,8 +346,8 @@ public class InsertImpl implements Insert {
 
     private ArrayList<Integer> deputySize(int classId) {
         ArrayList<Integer> deputy=new ArrayList<>();
-        for (int i = 0; i < memConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
             if(deputyTableItem.originid==classId && !deputyTableItem.deputyrule[0].equals("5")){
                 deputy.add(deputyTableItem.deputyid);
             }
@@ -354,8 +357,8 @@ public class InsertImpl implements Insert {
 
     private ArrayList<Integer> tJoinDeputySize(int classId) {
         ArrayList<Integer> deputy=new ArrayList<>();
-        for (int i = 0; i < memConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
             if(deputyTableItem.originid==classId && deputyTableItem.deputyrule[0].equals("5")){
                 deputy.add(deputyTableItem.deputyid);
             }
@@ -365,13 +368,13 @@ public class InsertImpl implements Insert {
 
     public int tupleInsert(int classId, Tuple tuple, boolean hasDeputy){
 
-        int tupleid = memConnect.getTopt().maxTupleId++;
+        int tupleid = MemConnect.getTopt().maxTupleId++;
         tuple.tupleHeader=tuple.tuple.length;
         int[] ids=new int[tuple.tupleHeader];
         Arrays.fill(ids,tupleid);
         tuple.tupleId=tupleid;
         memConnect.InsertTuple(tuple);
-        memConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
+        MemConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
         if(hasDeputy){
 
         }

@@ -1,9 +1,9 @@
-package drz.tmdb.cache;
+package edu.whu.tmdb.cache;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import drz.tmdb.level.SSTable;
+import edu.whu.tmdb.level.SSTable;
 
 // 缓存level 0 - level 2 的SSTable的meta block
 public class MetaCache {

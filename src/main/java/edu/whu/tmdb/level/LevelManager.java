@@ -1,10 +1,9 @@
-package drz.tmdb.level;
+package edu.whu.tmdb.level;
 
-import static drz.tmdb.level.Constant.DATABASE_DIR;
-import static drz.tmdb.level.Constant.INT_TO_BYTES;
+import static edu.whu.tmdb.level.Constant.DATABASE_DIR;
+import static edu.whu.tmdb.level.Constant.INT_TO_BYTES;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,7 +22,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-import drz.tmdb.cache.CacheManager;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import edu.whu.tmdb.cache.CacheManager;
+import edu.whu.tmdb.util.FileOperation;
 
 
 public class LevelManager {
@@ -99,14 +101,8 @@ public class LevelManager {
     // 退出时将索引表持久化保存
     public void saveMetaToFile(){
         try{
-            File dir = new File(DATABASE_DIR);
-            if(!dir.exists()){
-                dir.mkdirs();
-            }
             File metaFile = new File(DATABASE_DIR + "meta");
-            if(!metaFile.exists()){
-                metaFile.createNewFile();
-            }
+            FileOperation.createNewFile(metaFile);
             BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(metaFile));
             String s_in = JSONObject.toJSONString(this.levelInfo);
             byte[] in = s_in.getBytes();

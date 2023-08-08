@@ -1,17 +1,17 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import net.sf.jsqlparser.statement.Statement;
 
 import java.util.ArrayList;
 
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.ClassTableItem;
-import drz.tmdb.memory.SystemTable.DeputyTableItem;
-import drz.tmdb.memory.SystemTable.ObjectTableItem;
-import drz.tmdb.memory.SystemTable.SwitchingTableItem;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Drop;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Drop;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
 
 public class DropImpl implements Drop {
     private MemConnect memConnect;
@@ -21,6 +21,8 @@ public class DropImpl implements Drop {
     }
 
     public DropImpl() {}
+
+    @Override
     public boolean drop(Statement statement) throws TMDBException {
         return execute((net.sf.jsqlparser.statement.drop.Drop) statement);
     }
@@ -34,15 +36,15 @@ public class DropImpl implements Drop {
 
     public void drop(int classId){
         ArrayList<ClassTableItem> tempC=new ArrayList<>();
-        for (int i = 0; i < memConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = memConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
             if(classTableItem.classid==classId){
                 tempC.add(classTableItem);
             }
         }
         for (ClassTableItem temp :
                 tempC) {
-            memConnect.getClasst().classTable.remove(temp);
+            MemConnect.getClasst().classTable.remove(temp);
         }
         ArrayList<DeputyTableItem> tempD=new ArrayList<>();
         ArrayList<Integer> toDrop=new ArrayList<>();
@@ -54,7 +56,7 @@ public class DropImpl implements Drop {
             }
         }
         for(DeputyTableItem temp: tempD){
-            memConnect.getDeputyt().deputyTable.remove(temp);
+            MemConnect.getDeputyt().deputyTable.remove(temp);
         }
         ArrayList<BiPointerTableItem> tempB=new ArrayList<>();
         for (int i = 0; i < memConnect.getBiPointerT().biPointerTable.size(); i++) {

@@ -1,4 +1,4 @@
-package drz.tmdb.Log;
+package edu.whu.tmdb.Log;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -10,7 +10,7 @@ import java.io.IOException;
 public class Constants {
 
     // 日志文件目录
-    public static final String LOG_BASE_DIR = "/data/data/drz.tmdb/log/";
+    public static final String LOG_BASE_DIR = "data/log/";
 
     // 从文件的offset偏移处读取长度为length的字节流
     public static byte[] readBytesFromFile( long offset, int length, String fileName) {

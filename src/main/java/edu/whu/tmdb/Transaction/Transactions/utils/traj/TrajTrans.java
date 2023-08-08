@@ -1,7 +1,12 @@
-package edu.whu.tmdb.Transaction.Transactions.utils;
+package edu.whu.tmdb.Transaction.Transactions.utils.traj;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 import edu.whu.tmdb.memory.Tuple;
 import edu.whu.tmdb.memory.TupleList;
 

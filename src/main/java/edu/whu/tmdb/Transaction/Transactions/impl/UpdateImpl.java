@@ -1,4 +1,4 @@
-package drz.tmdb.Transaction.Transactions.impl;
+package edu.whu.tmdb.Transaction.Transactions.impl;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.StringValue;
@@ -13,15 +13,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.SwitchingTableItem;
-import drz.tmdb.memory.Tuple;
-import drz.tmdb.memory.TupleList;
-import drz.tmdb.Transaction.Transactions.Exception.TMDBException;
-import drz.tmdb.Transaction.Transactions.Select;
-import drz.tmdb.Transaction.Transactions.Update;
-import drz.tmdb.Transaction.Transactions.utils.MemConnect;
-import drz.tmdb.Transaction.Transactions.utils.SelectResult;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.Transaction.Transactions.Exception.TMDBException;
+import edu.whu.tmdb.Transaction.Transactions.Select;
+import edu.whu.tmdb.Transaction.Transactions.Update;
+import edu.whu.tmdb.Transaction.Transactions.utils.MemConnect;
+import edu.whu.tmdb.Transaction.Transactions.utils.SelectResult;
 
 public class UpdateImpl implements Update {
     private MemConnect memConnect;

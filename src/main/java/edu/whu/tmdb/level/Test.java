@@ -1,4 +1,4 @@
-package drz.tmdb.level;
+package edu.whu.tmdb.level;
 
 
 public class Test {
@@ -155,7 +155,7 @@ public class Test {
 //    public static void test10(){
 //        long time1 = System.currentTimeMillis();
 //        try{
-//            File file = new File("/data/data/drz.tmdb/level/test1");
+//            File file = new File("/data/data/edu.whu.tmdb/level/test1");
 //            //file.createNewFile();
 //            // 写data
 //            byte[] data = new byte[]{1, 2, 3, 5};
@@ -175,7 +175,7 @@ public class Test {
 //
 //        time1 = System.currentTimeMillis();
 //        try{
-//            File file = FileUtils.getFile("/data/data/drz.tmdb/level/test2");
+//            File file = FileUtils.getFile("/data/data/edu.whu.tmdb/level/test2");
 //            //file.createNewFile();
 //            byte[] data = new byte[]{1, 2, 3, 5};
 //            for(int i=0; i<10000; i++){
@@ -189,7 +189,7 @@ public class Test {
 //
 //        time1 = System.currentTimeMillis();
 //        try{
-//            RandomAccessFile raf = new RandomAccessFile("/data/data/drz.tmdb/level/test2", "rw");
+//            RandomAccessFile raf = new RandomAccessFile("/data/data/edu.whu.tmdb/level/test2", "rw");
 //            long fileLength = raf.length();
 //            raf.seek(fileLength);
 //            byte[] data = new byte[]{1, 2, 3, 5};
@@ -214,7 +214,7 @@ public class Test {
 //        System.out.println("旧版read  用时" + (time2 - time1) + "ms"); // 687ms
 //
 //        time1 = System.currentTimeMillis();
-//        RandomAccessFile raf = new RandomAccessFile("/data/data/drz.tmdb/level/SSTable1", "rw");
+//        RandomAccessFile raf = new RandomAccessFile("/data/data/edu.whu.tmdb/level/SSTable1", "rw");
 //        for(int i=0; i<10000; i++){
 //            raf.seek(i * 5);
 //            byte[] b = new byte[10];

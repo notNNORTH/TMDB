@@ -1,10 +1,12 @@
-package drz.tmdb.memory;
+package edu.whu.tmdb.memory;
 
-//import static drz.tmdb.Level.Test.*;
+//import static edu.whu.tmdb.Level.Test.*;
 
 
-import com.alibaba.fastjson.JSONObject;
 
+
+import com.alibaba.fastjson2.JSONObject;
+import edu.whu.tmdb.util.FileOperation;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import java.io.BufferedOutputStream;
@@ -14,21 +16,21 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
-import drz.tmdb.Log.LogManager;
-import drz.tmdb.cache.CacheManager;
-import drz.tmdb.level.Constant;
-import drz.tmdb.level.LevelManager;
-import drz.tmdb.level.SSTable;
-import drz.tmdb.memory.SystemTable.BiPointerTable;
-import drz.tmdb.memory.SystemTable.BiPointerTableItem;
-import drz.tmdb.memory.SystemTable.ClassTable;
-import drz.tmdb.memory.SystemTable.ClassTableItem;
-import drz.tmdb.memory.SystemTable.DeputyTable;
-import drz.tmdb.memory.SystemTable.DeputyTableItem;
-import drz.tmdb.memory.SystemTable.ObjectTable;
-import drz.tmdb.memory.SystemTable.ObjectTableItem;
-import drz.tmdb.memory.SystemTable.SwitchingTable;
-import drz.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.Log.LogManager;
+import edu.whu.tmdb.cache.CacheManager;
+import edu.whu.tmdb.level.Constant;
+import edu.whu.tmdb.level.LevelManager;
+import edu.whu.tmdb.level.SSTable;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTable;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ClassTable;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.memory.SystemTable.DeputyTable;
+import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.memory.SystemTable.ObjectTable;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
 
 public class MemManager {
 
@@ -57,7 +59,7 @@ public class MemManager {
     // 构造函数
     // 从文件中读取历史数据，将系统表加载到内存中
     public MemManager() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR);
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR);
         if(!f.exists()){
             f.mkdirs();
             return;
@@ -120,7 +122,7 @@ public class MemManager {
 
 
         // 如果内存数据大小超过限制则开始compaction
-        if(this.currentMemSize > drz.tmdb.memory.Constant.MAX_MEM_SIZE){
+        if(this.currentMemSize > edu.whu.tmdb.memory.Constant.MAX_MEM_SIZE){
             try{
                 System.out.println("内存已满，开始写入外存--------");
                 long t1 = System.currentTimeMillis();
@@ -240,7 +242,7 @@ public class MemManager {
     // BiPointerTableItem 有四个int属性
     // classid  objectid deputyid  deputyobjectid
     public void saveBiPointerTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
@@ -259,7 +261,7 @@ public class MemManager {
     }
 
     public void loadBiPointerTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -285,7 +287,7 @@ public class MemManager {
     // String   classtype
     // String   alias
     public void saveClassTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
@@ -324,7 +326,7 @@ public class MemManager {
     }
 
     public void loadClassTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -386,7 +388,7 @@ public class MemManager {
     // int deputyid
     // String[] deputyrule
     public void saveDeputyTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
@@ -407,7 +409,7 @@ public class MemManager {
     }
 
     public void loadDeputyTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -442,9 +444,8 @@ public class MemManager {
     // String deputy
     // String rule
     public void saveSwitchingTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
-        if(!f.exists())
-            f.createNewFile();
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
+        FileOperation.createNewFile(f);
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
         for(SwitchingTableItem item: this.switchingTable.switchingTable){
             // 存oriclassid
@@ -468,7 +469,7 @@ public class MemManager {
     }
 
     public void loadSwitchingTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -515,9 +516,8 @@ public class MemManager {
     // int tupleid
     // int sstSuffix
     public void saveObjectTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
-        if(!f.exists())
-            f.createNewFile();
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
+        FileOperation.createNewFile(f);
         RandomAccessFile raf = new RandomAccessFile(f, "rw");
 
         // 用int记录maxTupleId
@@ -536,7 +536,7 @@ public class MemManager {
     }
 
     public void loadObjectTable() throws IOException {
-        File f = new File(drz.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
+        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
