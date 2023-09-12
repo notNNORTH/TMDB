@@ -1,0 +1,182 @@
+package edu.whu.tmdb.query.operations.utils;
+
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.alibaba.fastjson2.JSON;
+import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTable;
+import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.memory.SystemTable.ClassTable;
+import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.memory.SystemTable.DeputyTable;
+import edu.whu.tmdb.memory.SystemTable.ObjectTable;
+import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+
+public class MemConnect {
+    //进行内存操作的一些一些方法和数据
+    private MemManager mem;
+
+    public static ObjectTable topt;
+    private static ClassTable classt;
+    private static DeputyTable deputyt;
+    private static BiPointerTable biPointerT;
+    private static SwitchingTable switchingT;
+
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    public MemConnect() {
+    }
+
+    public MemConnect(MemManager mem) {
+        this.mem = mem;
+        topt = MemManager.objectTable;
+        classt = MemManager.classTable;
+        deputyt = MemManager.deputyTable;
+        biPointerT = MemManager.biPointerTable;
+        switchingT = MemManager.switchingTable;
+    }
+
+
+
+    //获取tuple
+    public Tuple GetTuple(int id) {
+        rwLock.readLock().lock(); // 获取读锁
+        Tuple t = null;
+        try {
+            Object searchResult = this.mem.search("t" + id);
+            if (searchResult == null)
+                t= null;
+            if (searchResult instanceof Tuple)
+                t = (Tuple) searchResult;
+            else if (searchResult instanceof String)
+                t= JSON.parseObject((String) searchResult, Tuple.class);
+            if (t.delete)
+                t= null;
+        }finally {
+            rwLock.readLock().unlock();
+            return t;
+        }
+    }
+
+    //插入tuple
+    public void InsertTuple(Tuple tuple) {
+        rwLock.writeLock().lock(); // 获取写锁
+        try {
+            this.mem.add(tuple);
+        }finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    //删除tuple
+    public void DeleteTuple(int id) {
+        rwLock.writeLock().lock();
+        try {
+            if (id >= 0) {
+                Tuple tuple = new Tuple();
+                tuple.tupleId = id;
+                tuple.delete = true;
+                mem.add(tuple);
+            }
+        }finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    //更新tuple
+    public void UpateTuple(Tuple tuple, int tupleId) {
+        rwLock.writeLock().unlock();
+        try {
+            tuple.tupleId = tupleId;
+            this.mem.add(tuple);
+        }finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+//   获取表在classTable中的id值
+    public int getClassId(String fromItem) throws TMDBException {
+        for (ClassTableItem item : classt.classTable) {
+            if (item.classname.equals(fromItem)) {
+                return item.classid;
+            }
+        }
+        return -1;
+    }
+
+    public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {
+        String value = value1.replace("\"", "");
+        switch (attrtype) {
+            case "int":
+                int value_int = Integer.parseInt(value);
+                if (Integer.parseInt((String) tuple.tuple[attrid]) == value_int)
+                    return true;
+                break;
+            case "char":
+                String value_string = value;
+                if (tuple.tuple[attrid].equals(value_string))
+                    return true;
+                break;
+
+        }
+        return false;
+    }
+
+    public void SaveAll() throws IOException {
+        mem.saveAll();
+    }
+
+    public void reload() throws IOException {
+        mem.loadClassTable();
+        mem.loadDeputyTable();
+        mem.loadBiPointerTable();
+        mem.loadSwitchingTable();
+    }
+
+    public static class OandB {
+        public List<ObjectTableItem> o = new ArrayList<>();
+        public List<BiPointerTableItem> b = new ArrayList<>();
+
+        public OandB() {
+        }
+
+        public OandB(MemConnect.OandB oandB) {
+            this.o = oandB.o;
+            this.b = oandB.b;
+        }
+
+        public OandB(List<ObjectTableItem> o, List<BiPointerTableItem> b) {
+            this.o = o;
+            this.b = b;
+        }
+    }
+
+
+    public static ObjectTable getTopt() {
+        return topt;
+    }
+
+    public static ClassTable getClasst() {
+        return classt;
+    }
+
+    public static DeputyTable getDeputyt() {
+        return deputyt;
+    }
+
+    public static BiPointerTable getBiPointerT() {
+        return biPointerT;
+    }
+
+    public static SwitchingTable getSwitchingT() {
+        return switchingT;
+    }
+}

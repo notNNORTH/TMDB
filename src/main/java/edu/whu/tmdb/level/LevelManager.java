@@ -88,9 +88,6 @@ public class LevelManager {
                 levels[level].add(suffix);
             }
         }
-
-
-
     }
 
     // 用于test

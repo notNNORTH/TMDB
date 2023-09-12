@@ -544,7 +544,7 @@ public class MemManager {
         long cur = 0L;
 
         // 读 maxTupleId
-        this.objectTable.maxTupleId = raf.readInt();
+        objectTable.maxTupleId = raf.readInt();
         cur += Integer.BYTES;
 
         while(cur < l){
@@ -559,7 +559,7 @@ public class MemManager {
             item.sstSuffix = raf.readInt();
             cur += Integer.BYTES;
 
-            this.objectTable.objectTable.add(item);
+            objectTable.objectTable.add(item);
         }
     }
 
