@@ -4,6 +4,7 @@ import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
+import edu.whu.tmdb.memory.MemManager;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -16,6 +17,7 @@ import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,22 +34,19 @@ import edu.whu.tmdb.memory.TupleList;
 public class Where {
     private MemConnect memConnect;
 
-    public Where(MemConnect memConnect) {
-        this.memConnect = memConnect;
-    }
-
-    public Where() throws TMDBException {
+    public Where() throws TMDBException, IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
     Formula formula=new Formula();
-    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException {
+    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException, IOException {
         execute(plainSelect.getWhere(),selectResult);
 
         return selectResult;
     }
 
     //核心类，将整个where语法树进行后续遍历
-    public SelectResult execute(Expression expression,SelectResult selectResult) throws TMDBException {
+    public SelectResult execute(Expression expression,SelectResult selectResult) throws TMDBException, IOException {
         SelectResult res=new SelectResult();
 //        if(selectResult.getTpl().tuplelist.isEmpty()) return selectResult;
         String a=expression.getClass().getSimpleName();
@@ -174,7 +173,7 @@ public class Where {
 
 
 
-    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException {
+    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException, IOException {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -189,7 +188,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,overlap);
     }
 
-    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException {
+    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException, IOException {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -203,7 +202,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,selectResultSet1);
     }
 
-    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException {
+    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException, IOException {
         ArrayList<Object> left=formula.formulaExecute(expression.getLeftExpression(),selectResult);
         List<Object> right=new ArrayList<>();
         //in表达式右边可能是一个list
@@ -215,7 +214,7 @@ public class Where {
         }
         //in表达式的右边可能是一个SubSelect
         else if(expression.getRightExpression().getClass().getSimpleName().equals("SubSelect")){
-            Select select=new SelectImpl(memConnect);
+            Select select=new SelectImpl();
             SelectResult temp=select.select(expression.getRightExpression());
             for(int i=0;i<temp.getTpl().tuplelist.size();i++){
                 right.add(transType(temp.getTpl().tuplelist.get(i).tuple[0]));

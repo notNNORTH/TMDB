@@ -1,8 +1,10 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import java.io.IOException;
 import java.util.List;
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import edu.whu.tmdb.memory.MemManager;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.query.operations.utils.traj.TrajTrans;
@@ -14,13 +16,10 @@ public class TJoinSelect extends SelectImpl{
 
     private MemConnect memConnect;
 
-    public TJoinSelect(MemConnect memConnect) {
-        super(memConnect);
-        this.memConnect = memConnect;
-    }
 
-    public TJoinSelect() {
-
+    public TJoinSelect() throws IOException {
+        super();
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
     //TODO TMDB

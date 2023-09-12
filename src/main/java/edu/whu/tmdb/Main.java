@@ -17,30 +17,34 @@ import net.sf.jsqlparser.statement.Statement;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
+
 public class Main {
     public static void main(String[] args) throws TMDBException, JSQLParserException, IOException {
 //        execute("CREATE CLASS company (name char,age int, salary int);");
 //        execute("select * from traj;");
-//        transaction.query("",-1,
-//                "create selectdeputy deputy as select name as n, age as a, salary as s from company, test;");
+//        execute("select * from traj"+
+//                " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");
 //        execute(args[0]);
 //        transaction.test();
 //        transaction.test2();
-        testTorch();
+//        testTorch();
+        testTorch2();
     }
 
     public static void testTorch() throws TMDBException, JSQLParserException, IOException {
-        Transaction transaction = new Transaction();
+        Transaction transaction = Transaction.getInstance();
         transaction.test3();
         transaction.SaveAll();
     }
 
     public static void testTorch2() throws TMDBException, JSQLParserException, IOException{
-        Transaction transaction = new Transaction();
+        Transaction transaction = Transaction.getInstance();
+        transaction.test();
     }
 
     public static SelectResult execute(String s) throws TMDBException, JSQLParserException, IOException {
-        Transaction transaction = new Transaction();
+        Transaction transaction = Transaction.getInstance();
         Statement stmt = null;
         SelectResult selectResult = new SelectResult();
         try {

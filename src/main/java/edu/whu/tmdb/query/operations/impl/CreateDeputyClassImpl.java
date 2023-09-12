@@ -1,12 +1,14 @@
 package edu.whu.tmdb.query.operations.impl;
 
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,18 +30,16 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 
 public class CreateDeputyClassImpl implements CreateDeputyClass {
     private MemConnect memConnect;
-    public CreateDeputyClassImpl(MemConnect memConnect){
-        this.memConnect=memConnect;
-    }
 
-    public CreateDeputyClassImpl() {
+    public CreateDeputyClassImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
-    public boolean createDeputyClass(Statement stmt) throws TMDBException {
+    public boolean createDeputyClass(Statement stmt) throws TMDBException, IOException {
         return execute((net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass) stmt);
     }
-    public boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) throws TMDBException {
+    public boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) throws TMDBException, IOException {
         //获取新创建代理类的名称
         String deputyClass=stmt.getDeputyClass().toString();
         int deputyType=getDeputyType(stmt);
@@ -52,7 +52,9 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         return createDeputyClassStreamLine(selectResult,deputyType,deputyClass);
     }
 
-    public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException {
+
+
+    public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException, IOException {
         int deputyId = createDeputyClass(deputyClass, selectResult, deputyType);
         insertDeputyTable(selectResult.getClassName(),deputyType,deputyId);
         insertTuple(selectResult,deputyId);
@@ -61,8 +63,8 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
 
 
-    private List<String> getColumns(Select select) {
-        SelectImpl select1=new SelectImpl(memConnect);
+    private List<String> getColumns(Select select) throws IOException {
+        SelectImpl select1=new SelectImpl();
         ArrayList<SelectItem> selectItemList=(ArrayList<SelectItem>)((PlainSelect)select.getSelectBody()).getSelectItems();
         HashMap<SelectItem,ArrayList<Column>> selectItemToColumn=select1.getSelectItemColumn(selectItemList);
         List<Column> selectColumnList=select1.getSelectColumnList(selectItemToColumn);
@@ -84,8 +86,8 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     //将创建deputyclass后面的select语句中的selectResult拿到，用于后面的处理
-     private SelectResult getSelectResult(Select select) throws TMDBException{
-         SelectImpl select1 = new SelectImpl(this.memConnect);
+     private SelectResult getSelectResult(Select select) throws TMDBException, IOException {
+         SelectImpl select1 = new SelectImpl();
         SelectResult selectResult=select1.select(select);
         return selectResult;
     }
@@ -151,8 +153,8 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     //第三步，在ObjectTable中插入实际值
-    private void insertTuple(SelectResult selectResult, int deputyId) throws TMDBException {
-        InsertImpl insert=new InsertImpl(memConnect);
+    private void insertTuple(SelectResult selectResult, int deputyId) throws TMDBException, IOException {
+        InsertImpl insert=new InsertImpl();
         List<String> columns= Arrays.asList(selectResult.getAttrname());
         for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
             Tuple tuple=selectResult.getTpl().tuplelist.get(i);
@@ -178,5 +180,6 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         }
         return res;
     } 
+
 
 }

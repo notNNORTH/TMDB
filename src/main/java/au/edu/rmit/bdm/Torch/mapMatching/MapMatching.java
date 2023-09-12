@@ -10,10 +10,13 @@ import au.edu.rmit.bdm.Torch.mapMatching.algorithm.TorGraph;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.mapMatching.algorithm.TorDijkstra;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -84,7 +87,7 @@ public class MapMatching {
      *
      * @see Builder#setBatchSize(int)
      */
-    public void start(){
+    public void start() throws IOException, TMDBException, JSQLParserException {
 
         MemoryUsage.start();
 
@@ -200,7 +203,7 @@ public class MapMatching {
         /**
          * construct an MapMatching object with required files.
          *
-         * @param trajSrcPath raw trajectory file with following format
+         * @param trajSrcName raw trajectory file with following format
          *                1    [[39.92123, 116.51172],[39.93883, 116.51135],[39.91034, 116.51627]]
          *                1 represents the hash of current trajectory.
          *                separated by \t character, a tuple of gps coordinates( lat, lng) that defines the trajectory.
@@ -208,9 +211,9 @@ public class MapMatching {
          * @param osmPath map data in format of *.osm.pbf
          * @return mapMatching object
          */
-        public MapMatching build(String trajSrcPath, String osmPath){
+        public MapMatching build(String trajSrcName, String osmPath){
 
-            props.trajSrcPath = trajSrcPath;
+            props.trajSrcPath = trajSrcName;
             props.osmPath = osmPath;
 
             MapMatching mm = new MapMatching(new MMProperties(props));

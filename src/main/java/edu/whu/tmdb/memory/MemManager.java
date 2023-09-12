@@ -6,6 +6,7 @@ package edu.whu.tmdb.memory;
 
 
 import com.alibaba.fastjson2.JSONObject;
+import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.util.FileOperation;
 import org.apache.lucene.util.RamUsageEstimator;
 
@@ -55,10 +56,30 @@ public class MemManager {
 
     // 日志管理
     public LogManager logManager = new LogManager(this);
+    // 1. 私有静态变量，用于保存MemManager的单一实例
+    private static volatile MemManager instance = null;
 
+    // 3. 提供一个全局访问点
+    public static MemManager getInstance() throws IOException {
+        // 双重检查锁定模式
+        if (instance == null) { // 第一次检查
+            synchronized (MemManager.class) {
+                if (instance == null) { // 第二次检查
+                    instance = new MemManager();
+                }
+            }
+        }
+        return instance;
+    }
+
+    // 2. 私有构造函数，确保不能从类外部实例化
     // 构造函数
     // 从文件中读取历史数据，将系统表加载到内存中
     public MemManager() throws IOException {
+        // 防止通过反射创建多个实例
+        if (instance != null) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
         File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR);
         if(!f.exists()){
             f.mkdirs();

@@ -37,7 +37,7 @@ public class TorDijkstra {
      *
      * @see ShortestPathCache.ShortestPathEntry
      */
-     void run(TowerVertex src) {
+     public void run(TowerVertex src) {
 
         Map<String, Double> dist = new HashMap<>();
         Set<String> visited = new HashSet<>();

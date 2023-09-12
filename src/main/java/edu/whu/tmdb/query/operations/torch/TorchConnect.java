@@ -1,15 +1,14 @@
 package edu.whu.tmdb.query.operations.torch;
 
+import edu.whu.tmdb.query.operations.torch.proto.IdEdge;
+import edu.whu.tmdb.query.operations.torch.proto.IdEdgeRaw;
+import edu.whu.tmdb.query.operations.torch.proto.IdVertex;
+import edu.whu.tmdb.query.operations.torch.proto.TrajectoryTimePartial;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,8 +30,8 @@ import edu.whu.tmdb.query.operations.impl.SelectImpl;
 import edu.whu.tmdb.query.operations.utils.Constants;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
-import edu.whu.tmdb.query.operations.utils.traj.TrajTrans;
-import edu.whu.tmdb.memory.Tuple;
+
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class TorchConnect {
 
@@ -56,11 +55,6 @@ public class TorchConnect {
         String sql = "SELECT content from " + "edge" + " WHERE "+attr+ " = ?";
         String selection = attr+" = ?";
         String[] selectionArgs = {"1"};
-//        String ret = helper.query("edge", selection, selectionArgs);
-//        Cursor cursor = helper.execSql("Select * from edge;");
-//        Cursor cursor = helper.execSql("SELECT content from edge WHERE id = 1;");
-//        System.out.println(cursor.getString(1));
-//        helper.query("SELECT content from edge WHERE id = 1;");
     }
 
     public static void init(MemConnect memConnect, String baseDir){
@@ -124,22 +118,7 @@ public class TorchConnect {
 
 
     public void mapMatching() throws IOException, JSQLParserException, TMDBException {
-//        Select select=new SelectImpl(memConnect);
-//        String sql="select * from traj;";
-//        Statement parse =CCJSqlParserUtil.parse(sql);
-//        SelectResult select1 = select.select(parse);
         String filePath = Constants.TORCH_RES_BASE_DIR+"/raw/porto_raw_trajectory.txt"; // 替换为实际的文件路径
-//        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-//            int n=select1.getTpl().tuplelist.size();
-//            for (int i = 0; i < n; i++) {
-//                Tuple tuple = select1.getTpl().tuplelist.get(i);
-//                String temp=tuple.tuple[0]+"\t"+ TrajTrans.getTorchTraj((String) tuple.tuple[2]);
-//                writer.write(temp);
-//                writer.newLine();
-//            }
-//        } catch (IOException e) {
-//            System.out.println("写入文件失败：" + e.getMessage());
-//        }
         String pbfFilePath=Constants.TORCH_RES_BASE_DIR+"/raw/Porto.osm.pbf";
         Test.init(baseDir,filePath,pbfFilePath);
     }
@@ -187,10 +166,10 @@ public class TorchConnect {
 
 
     //将traj数据插入tmdb中，原始的轨迹数据
-    public void insert() throws JSQLParserException, TMDBException {
+    public void insert(String srcPath) throws JSQLParserException, TMDBException, IOException {
         BufferedReader reader = null;
-        String sql="CREATE CLASS traj (traj_id int,user_id char, traj char);";
-        Create create=new CreateImpl(memConnect);
+        String sql="CREATE CLASS traj (traj_id int,user_id char,traj_name char,traj char);";
+        Create create=new CreateImpl();
         try {
             create.create(CCJSqlParserUtil.parse(sql));
         }catch (TMDBException e){
@@ -198,7 +177,7 @@ public class TorchConnect {
         }
         try {
             // 读取文件路径
-            String filePath = Constants.TORCH_RES_BASE_DIR+"/raw/porto_raw_trajectory.txt";
+            String filePath = srcPath;
             reader = new BufferedReader(new FileReader(filePath));
             String line;
             List<List<TrajEntry>> list=new ArrayList<>();
@@ -207,8 +186,8 @@ public class TorchConnect {
                 String[] sa=line.split("\\s+");
                 String traj=sa[1];
                 traj=traj.replace("[","").replace("]","").replace(",","|");
-                InsertImpl insert=new InsertImpl(memConnect);
-                sql="Insert into traj values ("+sa[0]+",-1,"+traj+")";
+                InsertImpl insert=new InsertImpl();
+                sql="Insert into traj values ("+sa[0]+",-1,"+getFileNameWithoutExtension(srcPath)+","+traj+")";
                 net.sf.jsqlparser.statement.insert.Insert parse = (net.sf.jsqlparser.statement.insert.Insert)CCJSqlParserUtil.parse(sql);
                 insert.insert(parse);
             }
@@ -230,19 +209,19 @@ public class TorchConnect {
         }
     }
 
-    public void toTMDB(String baseDir) throws JSQLParserException, TMDBException {
+    public void toTMDB(String baseDir) throws JSQLParserException, TMDBException, IOException {
         String sql="select * from engine where base_dir="+baseDir;
         Statement parse = CCJSqlParserUtil.parse(sql);
-        Select select=new SelectImpl(memConnect);
+        Select select=new SelectImpl();
         SelectResult selectResult = select.select(parse);
         if(selectResult.getTpl().tuplelist.isEmpty()){
             buildTMDBData(baseDir);
         }
     }
 
-    private void buildTMDBData(String baseDir) throws JSQLParserException, TMDBException {
+    private void buildTMDBData(String baseDir) throws JSQLParserException, TMDBException, IOException {
         String sql="inset into engine values("+baseDir+");";
-        Insert insert=new InsertImpl(memConnect);
+        Insert insert=new InsertImpl();
         insert.insert(CCJSqlParserUtil.parse(sql));
         idVertex(baseDir);
         idEdge(baseDir);
@@ -357,51 +336,4 @@ public class TorchConnect {
     }
 }
 
-class TrajectoryTimePartial{
-    String id;
-    String start;
-    String end;
 
-    public TrajectoryTimePartial(String id, String start, String end) {
-        this.id = id;
-        this.start = start;
-        this.end = end;
-    }
-}
-
-
-class IdVertex{
-    int id;
-    Double lat;
-    Double lng;
-
-    public IdVertex(int id, Double lat, Double lng) {
-        this.id = id;
-        this.lat = lat;
-        this.lng = lng;
-    }
-}
-
-class IdEdgeRaw{
-    int id;
-    String lats;
-    String lngs;
-
-    public IdEdgeRaw(int id, String lats, String lngs) {
-        this.id = id;
-        this.lats = lats;
-        this.lngs = lngs;
-    }
-}
-
-class IdEdge{
-    Integer edgeId;
-    Integer vertexId1;
-    Integer vertexId2;
-
-    public IdEdge(Integer edgeId, Integer vertexId1, Integer vertexId2) {
-        this.edgeId = edgeId;
-        this.vertexId1 = vertexId1;
-        this.vertexId2 = vertexId2;
-    }
-}

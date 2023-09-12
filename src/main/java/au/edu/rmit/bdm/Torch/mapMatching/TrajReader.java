@@ -3,6 +3,14 @@ package au.edu.rmit.bdm.Torch.mapMatching;
 import au.edu.rmit.bdm.Torch.base.model.TrajNode;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.query.Transaction;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.query.operations.Select;
+import edu.whu.tmdb.query.operations.impl.SelectImpl;
+import edu.whu.tmdb.query.operations.utils.MemConnect;
+import edu.whu.tmdb.query.operations.utils.SelectResult;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +19,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 /**
  * The class is for reading trajectories following the certain format from file.
@@ -34,12 +44,12 @@ public class TrajReader {
      * Read raw trajectories.
      * Trajectories that do not follow the format or contain illegal data will be discarded.
      *
-     * @param trajSrcPath File containing trajectories.
+     * @param trajSrcName tmdb data contains origin trajectory
      * @param dateDataPath File containing timestamp of nodes in trajectories.
      *                 This file could be null and if this is the case, the program will leave time field in trajectory model blank.
      * @return a list of trajectories.
      */
-    public boolean readBatch(String trajSrcPath, File dateDataPath, List<Trajectory<TrajEntry>> trajectoryList) {
+    public boolean readBatch(String trajSrcName, File dateDataPath, List<Trajectory<TrajEntry>> trajectoryList) throws IOException, TMDBException, JSQLParserException {
 
         logger.info("now reading trajectories");
 
@@ -48,10 +58,12 @@ public class TrajReader {
         boolean finished = false;
         SimpleDateFormat sdfmt = null;
         if (hasDate) sdfmt = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-
+        Transaction transaction = Transaction.getInstance();
         try {
+            SelectResult query = transaction.query("select * from traj"+
+                    " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");
             if (trajReader == null)
-                trajReader = new LineNumberReader(new FileReader(trajSrcPath));
+                trajReader = new LineNumberReader(new FileReader(trajSrcName));
             if (hasDate) dateReader = new BufferedReader(new FileReader(dateDataPath));
 
             String trajLine = null;

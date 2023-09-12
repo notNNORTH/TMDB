@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -12,6 +13,7 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 import net.sf.jsqlparser.statement.values.ValuesStatement;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,15 +44,12 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     private MemConnect memConnect;
 
-    public SelectImpl(MemConnect memConnect) {
-        this.memConnect = memConnect;
-    }
-
-    public SelectImpl() {
+    public SelectImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
-    public SelectResult select(Object stmt) throws TMDBException {
+    public SelectResult select(Object stmt) throws TMDBException, IOException {
         SelectBody selectBody = null;
         //如果语法树的形式是Select，将查询主题赋值给selectBody
         if(stmt.getClass().getSimpleName().equals("Select")) selectBody=((net.sf.jsqlparser.statement.select.Select)stmt).getSelectBody();
@@ -71,7 +70,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return res;
     }
 
-    public SelectResult plainSelect(SelectBody stmt) throws TMDBException {
+    public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException {
 //      //Values 也是一种plainSelect，如果是values，由values方法处理
         if(stmt.getClass().getSimpleName().equals("ValuesStatement")) return values((ValuesStatement) stmt);
 
@@ -87,7 +86,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         SelectResult selectResult=from(plainSelect);
         //通过where进行筛选
         if(plainSelect.getWhere()!=null){
-            Where where=new Where(memConnect);
+            Where where=new Where();
             selectResult=where.where(plainSelect,selectResult);
         }
         if(plainSelect.getGroupBy()!=null){
@@ -362,48 +361,6 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return result;
     }
 
-//    public ArrayList<Integer> getElicitIndexList(List<Column> selectColumnList,SelectResult selectResult){
-//        ArrayList<Integer> elicitIndexList=new ArrayList<>();
-//        for(Column column:selectColumnList){
-//            for(int i=0;i<selectResult.getAttrname().length;i++){
-//                if(selectResult.getAttrname()[i].equals(column.getColumnName())) {
-//                    if (column.getTable()==null || selectResult.className[i].equals(column.getTable().toString())) {
-//                        elicitIndexList.add(i);
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//        return elicitIndexList;
-//    }
-//
-//    public SelectResult getElicitSelectResult(ArrayList<Integer> elicitIndexList,SelectResult selectResult){
-//        SelectResult res=new SelectResult();
-//        res.className=new String[elicitIndexList.size()];
-//        res.getAttrname()=new String[elicitIndexList.size()];
-//        res.attrid=new int[elicitIndexList.size()];
-//        res.type=new String[elicitIndexList.size()];
-//        for(int i=0;i<elicitIndexList.size();i++){
-//            res.className[i]=selectResult.className[elicitIndexList.get(i)];
-//            res.attrid[i]=selectResult.attrid[elicitIndexList.get(i)];
-//            res.getAttrname()[i]=selectResult.getAttrname()[elicitIndexList.get(i)];
-//            res.type[i]=selectResult.type[elicitIndexList.get(i)];
-//        }
-//        TupleList elicitTupleList=new TupleList();
-//        for(Tuple tuple:selectResult.getTpl().tuplelist) {
-//            Tuple elicitTuple=new Tuple();
-//            Object[] temp=new Object[elicitIndexList.size()];
-//            for(int i=0;i<elicitIndexList.size();i++) {
-//                temp[i]=tuple.tuple[elicitIndexList.get(i)];
-//            }
-//            elicitTuple.tuple=temp;
-//            elicitTupleList.addTuple(elicitTuple);
-//        }
-//
-//        res.getTpl()=elicitTupleList;
-//        return res;
-//    }
-
     //from部分
     public SelectResult from(PlainSelect plainSelect) throws TMDBException {
         //获取plainselect的fromItem（多表查询的话，会取第一个table名）
@@ -445,7 +402,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     //进行union这种操作的方法
-    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException {
+    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException, IOException {
         SelectResult selectResult=new SelectResult();
         //提取出不同的select
         List<SelectBody> plainSelectList=setOperationList.getSelects();

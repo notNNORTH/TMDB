@@ -20,6 +20,8 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,7 @@ public class Test {
     static Logger logger = LoggerFactory.getLogger(Test.class);
     static FileSetting setting = new FileSetting("data/Torch_Porto");
     
-    public static void main(String[] args)throws IOException{
+    public static void main(String[] args) throws IOException, TMDBException, JSQLParserException {
 
 //        Engine engine = Engine.getBuilder().baseDir("Torch_Porto").build();
 //
@@ -43,7 +45,7 @@ public class Test {
 
     }
 
-    public static void init(String baseDir, String trajSrcPath, String osmPath) throws IOException {
+    public static void init(String baseDir, String trajSrcPath, String osmPath) throws IOException, TMDBException, JSQLParserException {
         MapMatching mm = MapMatching.getBuilder().setBaseDir(baseDir).build(trajSrcPath,osmPath);
         mm.start();
         setting=new FileSetting(baseDir);
@@ -55,7 +57,7 @@ public class Test {
     }
 
 
-    public static void useOwnDataset() throws IOException {
+    public static void useOwnDataset() throws IOException, TMDBException, JSQLParserException {
         MapMatching mm = MapMatching.getBuilder().setBaseDir("data/res/Torch_Porto_test").build("data/res/raw/porto_raw_trajectory.txt","data/res/raw/porto.osm.pbf");
         mm.start();
         setting=new FileSetting("Torch_Porto_test");

@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -7,6 +8,7 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
@@ -24,19 +26,16 @@ public class DeleteImpl implements Delete {
     private MemConnect memConnect;
     private ArrayList<Integer> deleteId=new ArrayList<>();
 
-    public DeleteImpl(MemConnect memConnect) {
-        this.memConnect = memConnect;
-    }
-
-    public DeleteImpl() {
+    public DeleteImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
-    public ArrayList<Integer> delete(Statement statement) throws JSQLParserException, TMDBException {
+    public ArrayList<Integer> delete(Statement statement) throws JSQLParserException, TMDBException, IOException {
         return execute((net.sf.jsqlparser.statement.delete.Delete) statement);
     }
 
-    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.delete.Delete delete) throws JSQLParserException, TMDBException {
+    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.delete.Delete delete) throws JSQLParserException, TMDBException, IOException {
         //获取需要删除的表名
         Table table = delete.getTable();
         //获取delete中的where表达式
@@ -44,7 +43,7 @@ public class DeleteImpl implements Delete {
         String sql="select * from " + table + " where " + where.toString() + ";";
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sql.getBytes());
         net.sf.jsqlparser.statement.select.Select parse = (net.sf.jsqlparser.statement.select.Select) CCJSqlParserUtil.parse(byteArrayInputStream);
-        Select select=new SelectImpl(memConnect);
+        Select select=new SelectImpl();
         SelectResult selectResult = select.select(parse);
         ArrayList<Integer> integers = new ArrayList<>();
 //        int classid=memConnect.getClassId(table.getName());

@@ -23,7 +23,6 @@ import edu.whu.tmdb.query.operations.Exception.TMDBException;
 public class MemConnect {
     //进行内存操作的一些一些方法和数据
     private MemManager mem;
-
     public static ObjectTable topt;
     private static ClassTable classt;
     private static DeputyTable deputyt;
@@ -32,10 +31,31 @@ public class MemConnect {
 
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    public MemConnect() {
+    // 1. 私有静态变量，用于保存MemConnect的单一实例
+    private static volatile MemConnect instance = null;
+
+    // 2. 私有构造函数，确保不能从类外部实例化
+    private MemConnect() {
+        // 防止通过反射创建多个实例
+        if (instance != null) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
     }
 
-    public MemConnect(MemManager mem) {
+    // 3. 提供一个全局访问点
+    public static MemConnect getInstance(MemManager mem) {
+        // 双重检查锁定模式
+        if (instance == null) { // 第一次检查
+            synchronized (MemConnect.class) {
+                if (instance == null) { // 第二次检查
+                    instance = new MemConnect(mem);
+                }
+            }
+        }
+        return instance;
+    }
+
+    private MemConnect(MemManager mem) {
         this.mem = mem;
         topt = MemManager.objectTable;
         classt = MemManager.classTable;

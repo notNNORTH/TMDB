@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass;
@@ -9,6 +10,7 @@ import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,22 +21,21 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
     private MemConnect memConnect;
 
-    public CreateTJoinDeputyClassImpl(MemConnect memConnect) {
-        super(memConnect);
-        this.memConnect=memConnect;
+
+
+    public CreateTJoinDeputyClassImpl() throws IOException {
+        super();
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
-    public CreateTJoinDeputyClassImpl() {
-    }
 
-
-    private boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass stmt) throws TMDBException {
+    private boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass stmt) throws TMDBException, IOException {
         Table deputyClass = stmt.getDeputyClass();
         if(memConnect.getClassId(String.valueOf(deputyClass))!=-1){
             throw new TMDBException(deputyClass+" already exists");
         }
         Select select = stmt.getSelect();
-        TJoinSelect tJoinSelect=new TJoinSelect(memConnect);
+        TJoinSelect tJoinSelect=new TJoinSelect();
         SelectResult selectResult = tJoinSelect.select(select);
         List<SelectBody> selects = ((SetOperationList) select.getSelectBody()).getSelects();
         String[] strings = new String[0];
@@ -59,7 +60,7 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
         super.insertDeputyTable(strings,i,classId);
     }
 
-    public boolean createTJoinDeputyClass(Statement stmt) throws TMDBException {
+    public boolean createTJoinDeputyClass(Statement stmt) throws TMDBException, IOException {
         return execute((CreateTJoinDeputyClass) stmt);
     }
 }

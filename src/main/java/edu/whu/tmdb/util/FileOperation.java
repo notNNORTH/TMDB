@@ -9,6 +9,8 @@ package edu.whu.tmdb.util;/*
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileOperation {
     public static void createNewFile(File file) {
@@ -27,5 +29,15 @@ public class FileOperation {
             e.printStackTrace();
             System.out.println("Error creating file: " + e.getMessage());
         }
+    }
+
+    public static String getFileNameWithoutExtension(String srcPath) {
+        Path path = Paths.get(srcPath);
+        String fileName = path.getFileName().toString();
+        int dotIndex = fileName.lastIndexOf('.');
+        if(dotIndex > 0) {
+            return fileName.substring(0, dotIndex);
+        }
+        return fileName;
     }
 }

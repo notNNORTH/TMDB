@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -7,6 +8,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.update.UpdateSet;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,27 +28,26 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 public class UpdateImpl implements Update {
     private MemConnect memConnect;
     private ArrayList<Integer> changedTupleIndex=new ArrayList<>();
-    public UpdateImpl(MemConnect memConnect) {
-        this.memConnect = memConnect;
+
+    public UpdateImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
-    public UpdateImpl() {
-    }
-
-    public ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException {
+    @Override
+    public ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException, IOException {
         return execute((net.sf.jsqlparser.statement.update.Update) stmt);
     }
 
     //UPDATE Song SET type = ‘jazz’ WHERE songId = 100;
     //OPT_CREATE_UPDATE，Song，type，“jazz”，songId，=，100
     //0                  1     2      3        4      5  6
-    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.update.Update update) throws JSQLParserException, TMDBException {
+    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.update.Update update) throws JSQLParserException, TMDBException, IOException {
         String updateTable=update.getTable().getName();
         int classId=memConnect.getClassId(updateTable);
         String sql="select * from " + updateTable + " where " + update.getWhere().toString() + ";";
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sql.getBytes());
         net.sf.jsqlparser.statement.select.Select parse = (net.sf.jsqlparser.statement.select.Select) CCJSqlParserUtil.parse(byteArrayInputStream);
-        Select select=new SelectImpl(memConnect);
+        Select select=new SelectImpl();
         SelectResult selectResult = select.select(parse);
         ArrayList<UpdateSet> updateSets = update.getUpdateSets();
         int[] indexs=new int[updateSets.size()];

@@ -5,8 +5,10 @@ package edu.whu.tmdb.query;
 import edu.whu.tmdb.query.operations.impl.*;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,11 +37,31 @@ public class Transaction {
 
     private MemConnect memConnect;
 
-    public Transaction() throws IOException, JSQLParserException, TMDBException {
-//        test21();
-        this.mem = new MemManager();
+    // 1. 私有静态变量，用于保存MemConnect的单一实例
+    private static volatile Transaction instance = null;
+
+    // 3. 提供一个全局访问点
+    public static Transaction getInstance() throws TMDBException, JSQLParserException, IOException {
+        // 双重检查锁定模式
+        if (instance == null) { // 第一次检查
+            synchronized (Transaction.class) {
+                if (instance == null) { // 第二次检查
+                    instance = new Transaction();
+                }
+            }
+        }
+        return instance;
+    }
+
+    private Transaction() throws IOException, JSQLParserException, TMDBException {
+        // 防止通过反射创建多个实例
+        if (instance != null) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
+        this.mem = MemManager.getInstance();
         this.levelManager = mem.levelManager;
-        this.memConnect=new MemConnect(mem);
+        this.memConnect=MemConnect.getInstance(mem);
+
     }
 
 
@@ -85,6 +107,14 @@ public class Transaction {
 
     }
 
+    public SelectResult query(String s) throws JSQLParserException {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
+        //使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树。
+        Statement stmt= CCJSqlParserUtil.parse(byteArrayInputStream);
+        SelectResult query = this.query("", -1, stmt);
+        return query;
+    }
+
 
     public SelectResult query(String k, int op, Statement stmt) {
         //Action action = new Action();
@@ -98,38 +128,38 @@ public class Transaction {
             switch (sqlType) {
                 case "CreateTable":
 //                    log.WrteLog(s);
-                    Create create =new CreateImpl(memConnect);
+                    Create create =new CreateImpl();
                     create.create(stmt);
                     break;
                 case "CreateDeputyClass":
 //                    switch
 //                    log.WriteLog(id,k,op,s);
-                    CreateDeputyClass createDeputyClass=new CreateDeputyClassImpl(memConnect);
+                    CreateDeputyClass createDeputyClass=new CreateDeputyClassImpl();
                     createDeputyClass.createDeputyClass(stmt);
                     break;
                 case "CreateTJoinDeputyClass":
 //                    switch
                     //                   log.WriteLog(id,k,op,s);
-                    CreateTJoinDeputyClassImpl createTJoinDeputyClass=new CreateTJoinDeputyClassImpl(memConnect);
+                    CreateTJoinDeputyClassImpl createTJoinDeputyClass=new CreateTJoinDeputyClassImpl();
                     createTJoinDeputyClass.createTJoinDeputyClass(stmt);
                     break;
                 case "Drop":
 //                    log.WriteLog(id,k,op,s);
-                    Drop drop=new DropImpl(memConnect);
+                    Drop drop=new DropImpl();
                     drop.drop(stmt);
                     break;
                 case "Insert":
 //                    log.WriteLog(id,k,op,s);
-                    Insert insert=new InsertImpl(memConnect);
+                    Insert insert=new InsertImpl();
                     tuples=insert.insert(stmt);
                     break;
                 case "Delete":
  //                   log.WriteLog(id,k,op,s);
-                    Delete delete=new DeleteImpl(memConnect);
+                    Delete delete=new DeleteImpl();
                     tuples= delete.delete(stmt);
                     break;
                 case "Select":
-                    Select select=new SelectImpl(memConnect);
+                    Select select=new SelectImpl();
                     selectResult=select.select((net.sf.jsqlparser.statement.select.Select) stmt);
                     for (Tuple t:
                          selectResult.getTpl().tuplelist) {
@@ -138,7 +168,7 @@ public class Transaction {
                     break;
                 case "Update":
  //                   log.WriteLog(id,k,op,s);
-                    Update update=new UpdateImpl(memConnect);
+                    Update update=new UpdateImpl();
                     tuples=update.update(stmt);
                     break;
                 default:
@@ -149,6 +179,8 @@ public class Transaction {
             e.printStackTrace();
         } catch (TMDBException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         int[] ints = new int[tuples.size()];
         for (int i = 0; i < tuples.size(); i++) {
@@ -160,8 +192,8 @@ public class Transaction {
 
     public void test() throws IOException, TMDBException, JSQLParserException {
         TorchConnect torchConnect = new TorchConnect(memConnect,"Torch_Porto_test");
-        torchConnect.insert();
-        this.SaveAll();
+//        torchConnect.insert("data/res/raw/porto_raw_trajectory.txt");
+//        this.SaveAll();
         torchConnect.mapMatching();
     }
 
@@ -173,7 +205,9 @@ public class Transaction {
 
     public void test3() throws IOException, TMDBException, JSQLParserException {
         TorchConnect torchConnect = new TorchConnect(memConnect,"Torch_Porto_test");
-        torchConnect.insert();
+        torchConnect.insert("data/res/raw/porto_raw_trajectory.txt");
     }
+
+
 }
 

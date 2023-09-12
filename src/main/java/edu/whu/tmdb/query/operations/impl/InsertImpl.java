@@ -2,9 +2,11 @@ package edu.whu.tmdb.query.operations.impl;
 
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,18 +27,16 @@ import edu.whu.tmdb.memory.Tuple;
 import edu.whu.tmdb.memory.TupleList;
 
 public class InsertImpl implements Insert {
-    MemConnect memConnect=new MemConnect();
+    private MemConnect memConnect;
 
     ArrayList<Integer> indexs=new ArrayList<>();
 
-    public InsertImpl(MemConnect memConnect) {
-        this.memConnect = memConnect;
+    public InsertImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
-    public InsertImpl(){}
-
     @Override
-    public ArrayList<Integer> insert(Statement stmt) throws TMDBException {
+    public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException {
         net.sf.jsqlparser.statement.insert.Insert statement=(net.sf.jsqlparser.statement.insert.Insert) stmt;
         //获取插入的table名
         Table table= statement.getTable();
@@ -52,7 +52,7 @@ public class InsertImpl implements Insert {
             }
         }
         //插入的TupleList
-        SelectImpl select=new SelectImpl(memConnect);
+        SelectImpl select=new SelectImpl();
 
         //insert后面的values是一个select节点，获取values或者其它类型select的值
         SelectResult selectResult=select.select(statement.getSelect());
@@ -62,7 +62,7 @@ public class InsertImpl implements Insert {
         return indexs;
     }
 
-    public void execute(String table, List<String> columns, TupleList tupleList) throws TMDBException {
+    public void execute(String table, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int classId=memConnect.getClassId(table);
         int l=getLength(classId);
         int[] index=getTemplate(classId,columns);
@@ -70,7 +70,7 @@ public class InsertImpl implements Insert {
             indexs.add(insert(classId,columns,tupleList.tuplelist.get(i),l,index));
         }
     }
-    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException {
+    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int l=getLength(classId);
         int[] index=getTemplate(classId,columns);
         for (int i = 0; i < tupleList.tuplelist.size(); i++) {
@@ -78,7 +78,7 @@ public class InsertImpl implements Insert {
         }
     }
 
-    public int executeTuple(int classId, List<String> columns, Tuple tuple) throws TMDBException {
+    public int executeTuple(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException {
         int l=getLength(classId);
         int[] index=getTemplate(classId,columns);
         int insert = insert(classId, columns, tuple, l, index);
@@ -98,9 +98,9 @@ public class InsertImpl implements Insert {
      * @return
      * @throws TMDBException
      */
-    private Integer insert(int classId, List<String> columns, Tuple tuple, int l, int[] index) throws TMDBException {
+    private Integer insert(int classId, List<String> columns, Tuple tuple, int l, int[] index) throws TMDBException, IOException {
         //插入tuple
-        SelectImpl select=new SelectImpl(memConnect);
+        SelectImpl select=new SelectImpl();
         int tupleid = MemConnect.getTopt().maxTupleId++;
         Object[] temp=new Object[l];
         if(tuple.tuple.length!=columns.size()){

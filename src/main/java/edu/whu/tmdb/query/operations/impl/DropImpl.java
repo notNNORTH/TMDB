@@ -1,7 +1,9 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.statement.Statement;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
@@ -16,11 +18,10 @@ import edu.whu.tmdb.query.operations.utils.MemConnect;
 public class DropImpl implements Drop {
     private MemConnect memConnect;
 
-    public DropImpl(MemConnect memConnect) {
-        this.memConnect = memConnect;
-    }
 
-    public DropImpl() {}
+    public DropImpl() throws IOException {
+        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+    }
 
     @Override
     public boolean drop(Statement statement) throws TMDBException {
