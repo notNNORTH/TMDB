@@ -1,12 +1,12 @@
 package au.edu.rmit.bdm.Torch.base.spatialIndex;
 
 
-import au.edu.rmit.bdm.Torch.base.Torch;
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.Index;
+import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
 import au.edu.rmit.bdm.Torch.base.model.Tile;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.queryEngine.model.Circle;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
 import org.slf4j.Logger;

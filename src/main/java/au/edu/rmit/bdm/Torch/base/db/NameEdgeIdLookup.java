@@ -6,15 +6,20 @@ import org.slf4j.LoggerFactory;
 
 public class NameEdgeIdLookup {
     private Logger logger = LoggerFactory.getLogger(NameEdgeIdLookup.class);
+//    private DBManager2 db;
     private DBManager db;
     private FileSetting setting;
 
     public NameEdgeIdLookup(FileSetting setting) {
         this.setting = setting;
-        db = new DBManager(setting);
+//        db = new DBManager(setting);
+        this.db= DBManager.getDB();
     }
 
+
     public int[] get(String edgeName){
+
+
         String content = db.get(setting.EDGENAME_ID_TABLE, edgeName);
         if (content == null)
             return new int[0];

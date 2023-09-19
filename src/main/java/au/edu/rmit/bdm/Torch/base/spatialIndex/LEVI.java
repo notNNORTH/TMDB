@@ -2,25 +2,26 @@ package au.edu.rmit.bdm.Torch.base.spatialIndex;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
 import au.edu.rmit.bdm.Torch.base.TopKQueryIndex;
-import au.edu.rmit.bdm.Torch.base.db.TrajVertexRepresentationPool;
-import au.edu.rmit.bdm.Torch.base.invertedIndex.VertexInvertedIndex;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
-import au.edu.rmit.bdm.Torch.queryEngine.model.Circle;
-import au.edu.rmit.bdm.Torch.queryEngine.model.Geometry;
-import au.edu.rmit.bdm.Torch.queryEngine.model.LightEdge;
-import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
-import au.edu.rmit.bdm.Torch.queryEngine.query.TrajectoryResolver;
-import au.edu.rmit.bdm.Torch.queryEngine.similarity.SimilarityFunction;
 import au.edu.rmit.bdm.Torch.base.WindowQueryIndex;
+import au.edu.rmit.bdm.Torch.base.db.TrajVertexRepresentationPool;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
+import au.edu.rmit.bdm.Torch.base.invertedIndex.VertexInvertedIndex;
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.queryEngine.model.*;
+import au.edu.rmit.bdm.Torch.queryEngine.query.TrajectoryResolver;
+import au.edu.rmit.bdm.Torch.queryEngine.similarity.SimilarityFunction;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
+
+import static au.edu.rmit.bdm.Torch.queryEngine.similarity.SimilarityFunction.*;
 
 /**
  * ﻿LEVI stands for Lightweight edge & vertex vertexInvertedIndex.<p>
@@ -34,18 +35,18 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
     private static final int INITIAL_ROUND_FOR_DTW = 4;
     private static final int INITIAL_ROUND_FOR_H_OR_F = 5;
 
-    private FileSetting setting;
+    private  FileSetting setting;
     private static Logger logger = LoggerFactory.getLogger(LEVI.class);
     private VertexInvertedIndex vertexInvertedIndex;
     private VertexGridIndex gridIndex;
 
-    private SimilarityFunction.MeasureType measureType;
+    private MeasureType measureType;
     private SimilarityFunction<TrajEntry> similarityFunction = SimilarityFunction.DEFAULT;
     private TrajVertexRepresentationPool pool;
     private Map<Integer, TowerVertex> idVertexLookup;
     
     public LEVI(VertexInvertedIndex vertexInvertedIndex, VertexGridIndex gridIndex,
-                SimilarityFunction.MeasureType measureType, TrajVertexRepresentationPool pool, Map<Integer, TowerVertex> idVertexLookup, FileSetting setting){
+                MeasureType measureType, TrajVertexRepresentationPool pool, Map<Integer, TowerVertex> idVertexLookup, FileSetting setting){
 
         this.setting = setting;
         this.vertexInvertedIndex = vertexInvertedIndex;
@@ -94,26 +95,26 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
     }
 
     @Override
-    public <T extends TrajEntry> List<String> findTopK(int k, List<T> pointQuery, List<LightEdge> edgeQuery, TrajectoryResolver resolver){
+    public <T extends TrajEntry> List<String> findTopK(int k, List<T> pointQuery, List<LightEdge> edgeQuery, TrajectoryResolver resolver)  {
 
-        if (measureType == SimilarityFunction.MeasureType.DTW)
+        if (measureType == MeasureType.DTW)
             return topKwithDTW(k, pointQuery, resolver);
 
-        if (measureType == SimilarityFunction.MeasureType.Frechet||
-                measureType == SimilarityFunction.MeasureType.Hausdorff)
+        if (measureType == MeasureType.Frechet||
+                measureType == MeasureType.Hausdorff)
             return topKwithFrechetOrHausdorff(k, pointQuery, resolver);
 
-        if (measureType == SimilarityFunction.MeasureType.LCSS)
+        if (measureType == MeasureType.LCSS)
             return topKwithLCSS(k, pointQuery, resolver);
 
-        if (measureType == SimilarityFunction.MeasureType.EDR)
+        if (measureType == MeasureType.EDR)
             return topKwithEDR(k, pointQuery, resolver);
 
         logger.error("unsupported similarity measure: {}", measureType.toString());
         throw new IllegalStateException("unsupported similarity measure");
     }
 
-    private <T extends TrajEntry> List<String> topKwithEDR(int k, List<T> pointQuery, TrajectoryResolver resolver){
+    private <T extends TrajEntry> List<String> topKwithEDR(int k, List<T> pointQuery, TrajectoryResolver resolver)  {
         Map<String, Integer> trajUpperBound = new HashMap<>();
         Set<Integer> visited = new HashSet<>();
         Map<String, int[]> cache = new HashMap<>();
@@ -184,7 +185,7 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
         return resIDList;
     }
 
-    private <T extends TrajEntry> List<String> topKwithLCSS(int k, List<T> pointQuery, TrajectoryResolver resolver) {
+    private <T extends TrajEntry> List<String> topKwithLCSS(int k, List<T> pointQuery, TrajectoryResolver resolver)  {
 
         Map<String, Integer> trajUpperBound = new HashMap<>();
         Set<Integer> visited = new HashSet<>();
@@ -250,7 +251,7 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
         return resIDList;
     }
 
-    private <T extends TrajEntry> List<String> topKwithDTW(int k, List<T> pointQuery, TrajectoryResolver resolver) {
+    private <T extends TrajEntry> List<String> topKwithDTW(int k, List<T> pointQuery, TrajectoryResolver resolver)  {
 
         PriorityQueue<Pair> topKHeap = new PriorityQueue<>(Comparator.comparingDouble(p -> p.score));
         double bestKthSoFar, overallUnseenUpperBound;
@@ -393,7 +394,7 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
         return resIDList;
     }
 
-    private <T extends TrajEntry> List<String> topKwithFrechetOrHausdorff(int k, List<T> pointQuery, TrajectoryResolver resolver) {
+    private <T extends TrajEntry> List<String> topKwithFrechetOrHausdorff(int k, List<T> pointQuery, TrajectoryResolver resolver)  {
         logger.debug("k: {}", k);
 
         PriorityQueue<Pair> topKHeap = new PriorityQueue<>(Comparator.comparingDouble(p -> p.score));
@@ -547,7 +548,7 @@ public class LEVI implements WindowQueryIndex, TopKQueryIndex {
         return resIDList;
     }
 
-    public void updateMeasureType(SimilarityFunction.MeasureType measureType) {
+    public void updateMeasureType(MeasureType measureType) {
         this.measureType = measureType;
     }
 

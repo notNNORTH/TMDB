@@ -1,13 +1,13 @@
 package au.edu.rmit.bdm.Torch.base.invertedIndex;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
+import au.edu.rmit.bdm.Torch.base.PathQueryIndex;
+import au.edu.rmit.bdm.Torch.base.TopKQueryIndex;
 import au.edu.rmit.bdm.Torch.base.model.TorEdge;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.LightEdge;
 import au.edu.rmit.bdm.Torch.queryEngine.query.TrajectoryResolver;
-import au.edu.rmit.bdm.Torch.base.PathQueryIndex;
-import au.edu.rmit.bdm.Torch.base.TopKQueryIndex;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

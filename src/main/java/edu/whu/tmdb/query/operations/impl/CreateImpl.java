@@ -15,7 +15,7 @@ import edu.whu.tmdb.query.operations.utils.MemConnect;
 
 public class CreateImpl implements Create {
     private MemConnect memConnect;
-    public CreateImpl() throws IOException {
+    public CreateImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
@@ -34,7 +34,7 @@ public class CreateImpl implements Create {
         int classid = MemConnect.getClasst().maxid;
         for(ClassTableItem item : MemConnect.getClasst().classTable){
             if(item.classname.equals(classname)){
-                throw new TMDBException(classname+"已经存在！");
+                throw new TMDBException("table "+classname+"已经存在！");
             }
         }
         for (int i = 0; i < count; i++) {

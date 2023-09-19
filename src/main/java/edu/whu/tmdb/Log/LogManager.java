@@ -43,7 +43,7 @@ public class LogManager {
     //遍历hashMap的keySet
     public Iterator<Map.Entry<String, List<Integer>>> iterator;
 
-    public LogManager(MemManager memManager) throws IOException {
+    public LogManager(MemManager memManager) throws FileNotFoundException {
         this.memManager = memManager;
 
         File dir = new File(Constants.LOG_BASE_DIR);
@@ -71,7 +71,7 @@ public class LogManager {
     }
 
     //初始化新日志文件与新索引b树文件
-    public void init() throws IOException {
+    public void init() throws FileNotFoundException {
         Map.clear();//删除Map中所有键值对
         if (deleteDirectory(Constants.LOG_BASE_DIR)) {
             File dir = new File(Constants.LOG_BASE_DIR);
@@ -223,7 +223,7 @@ public class LogManager {
 
 
     //设置检查点
-    public void setCheckpoint() throws IOException {
+    public void setCheckpoint() throws FileNotFoundException {
         int type = checkFileInSize();
         if (type == 1) {//新建日志文件与索引b树文件重新写
             init();
@@ -308,7 +308,7 @@ public class LogManager {
 
     //删除不必要日志记录（检查点之前的）
 
-//    public void DeleteLog() throws IOException {
+//    public void DeleteLog() {
 //        try {
 //            logIOAccess.seek(0);
 //            // 写文件的位置标记,从文件开头开始,后续读取文件内容从该标记开始

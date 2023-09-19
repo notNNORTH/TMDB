@@ -64,7 +64,7 @@ class Simulator {
                 try {
                     isEmpty = update();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
 
                 cur.incrementAndGet();

@@ -1,14 +1,14 @@
 package au.edu.rmit.bdm.Torch.queryEngine.query;
 
+import au.edu.rmit.bdm.Torch.base.Index;
 import au.edu.rmit.bdm.Torch.base.PathQueryIndex;
 import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.db.NameEdgeIdLookup;
 import au.edu.rmit.bdm.Torch.base.model.TorEdge;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.mapMatching.algorithm.Mapper;
 import au.edu.rmit.bdm.Torch.queryEngine.model.LightEdge;
-import au.edu.rmit.bdm.Torch.base.Index;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

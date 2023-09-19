@@ -1,7 +1,7 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class TorDijkstra {
      *
      * @see ShortestPathCache.ShortestPathEntry
      */
-     public void run(TowerVertex src) {
+     void run(TowerVertex src) {
 
         Map<String, Double> dist = new HashMap<>();
         Set<String> visited = new HashSet<>();

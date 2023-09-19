@@ -1,7 +1,7 @@
 package au.edu.rmit.bdm.Torch.queryEngine.query;
 
-import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.Index;
+import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.WindowQueryIndex;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;

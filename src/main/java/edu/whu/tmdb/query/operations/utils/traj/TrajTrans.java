@@ -23,11 +23,11 @@ public class TrajTrans {
         return temps;
     }
 
-    public static List<Coordinate> getTraj(String s){
+    public static List<TrajEntry> getTraj(String s){
         String[] rightSplit= s.split("\\|");
-        List<Coordinate> Traj=new ArrayList<>();
+        List<TrajEntry> Traj=new ArrayList<>();
         for (int k = 0; k < rightSplit.length; k+=2) {
-            Coordinate coordinate = new Coordinate(Double.parseDouble(rightSplit[k]), Double.parseDouble(rightSplit[k + 1]));
+            TrajEntry coordinate = new Coordinate(Double.parseDouble(rightSplit[k+1]), Double.parseDouble(rightSplit[k]));
             Traj.add(coordinate);
         }
         return Traj;

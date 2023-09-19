@@ -1,8 +1,8 @@
 package au.edu.rmit.bdm.Torch.base.model;
 
-import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
 import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
+import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TorVertex;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 
@@ -41,12 +41,12 @@ public class TorEdge{
     /**
      * for database
      */
-    private String latitudes;
+    public String latitudes;
 
     /**
      * for database
      */
-    private String longtitudes;
+    public String longtitudes;
 
     public int getPosition() {
         return position;

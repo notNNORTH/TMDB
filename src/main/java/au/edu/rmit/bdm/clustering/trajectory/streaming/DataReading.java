@@ -21,7 +21,7 @@ public class DataReading extends Thread {
 	/*
 	 * convert the raw data from oracle to a simple version
 	 */
-	public static void convertToEdges(String path, String output, String newEdgeFile, String newCarFile) throws IOException {
+	public static void convertToEdges(String path, String output, String newEdgeFile, String newCarFile) {
 		int edgeCounter=1;
 		int carCounter=1;
 		edgeMapping = new HashMap<>();

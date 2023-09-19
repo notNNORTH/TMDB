@@ -12,9 +12,16 @@ import java.sql.*;
 
 public class DBManager {
 
+    private static volatile DBManager db;
     private static Logger logger = LoggerFactory.getLogger(DBManager.class);
     private Connection conn;
     private FileSetting setting;
+
+
+    public static void init(FileSetting setting){
+//        db=new DBManager(helper,setting);
+        db=new DBManager(setting);
+    }
 
     public DBManager(FileSetting setting) {
         this.setting = setting;
@@ -26,16 +33,13 @@ public class DBManager {
         connect();
     }
 
+    public static DBManager getDB(){
+        return db;
+    }
+
     public void run(){
         this.buildFromFile(setting.TRAJECTORY_EDGE_TABLE, setting.TRAJECTORY_EDGE_REPRESENTATION_PATH_PARTIAL, true);
         this.buildFromFile(setting.TRAJECTORY_VERTEX_TABLE, setting.TRAJECTORY_VERTEX_REPRESENTATION_PATH_PARTIAL, true);
-    }
-
-    public static void main(String[] args) throws IOException {
-        FileSetting setting = new FileSetting("Torch_nantong");
-        DBManager db = new DBManager(setting);
-        db.buildFromFile(setting.TRAJECTORY_EDGE_TABLE, setting.TRAJECTORY_EDGE_REPRESENTATION_PATH_PARTIAL, true);
-        db.buildFromFile(setting.TRAJECTORY_VERTEX_TABLE, setting.TRAJECTORY_VERTEX_REPRESENTATION_PATH_PARTIAL, true);
     }
 
     public void buildTable(String tableName, boolean override){
@@ -47,9 +51,9 @@ public class DBManager {
             try {
                 Statement stmt = conn.createStatement();
                 stmt.executeUpdate(sql);
-            } catch (SQLException e) {
+            } catch (Throwable e) {
                 logger.error(e.getMessage());
-                logger.error("cannot delete table");
+                logger.error("cannot delete table "+tableName);
                 System.exit(-1);
             }
         }
@@ -61,9 +65,9 @@ public class DBManager {
 
         // create a new table
         try {
-            Statement stmt = conn.createStatement();
+          Statement stmt = conn.createStatement();
             stmt.executeUpdate(sql);
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             logger.error(e.getMessage());
             logger.error("cannot create table");
             System.exit(-1);
@@ -176,6 +180,7 @@ public class DBManager {
         else
             attr = "id";
 
+
         String sql = "SELECT content from " + table + " WHERE "+attr+ " = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             //pstmt.setString(1, attr);
@@ -188,7 +193,12 @@ public class DBManager {
             String ret = rs.getString(1);
             rs.close();
             return ret;
-        } catch (SQLException e) {
+//        try{
+//            String selection = attr+" = ?";
+//            String[] selectionArgs = {val};
+//            String ret = helper.query(table, selection, selectionArgs);
+//            return ret;
+        } catch (Throwable e) {
             throw new IllegalStateException(e.getMessage());
 
         }

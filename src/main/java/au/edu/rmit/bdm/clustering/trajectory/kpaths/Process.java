@@ -2,6 +2,18 @@ package au.edu.rmit.bdm.clustering.trajectory.kpaths;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
 import au.edu.rmit.bdm.clustering.trajectory.TrajectoryMtree;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.query.Transaction;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.query.operations.utils.SelectResult;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +25,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 /*
  * static kpath is used for clustering all the taxi trips, so we can find the k-paths for designing bus routes, this is not a real time problem, so we can 
@@ -41,8 +55,12 @@ public class Process extends Thread {
 	boolean dataOut;
 	boolean iterationStops;
 	boolean readingdata;
+
+	//edge_partial
 	String datafile;
 	int traNumber;
+
+	//id_edge_raw
 	String edgefile;
 	String graphfile;
 	int slidingwindow=10;//a window to control the inverted index, 
@@ -78,6 +96,8 @@ public class Process extends Thread {
 	TrajectoryMtree mindex = new TrajectoryMtree();
 	boolean mtreebuild = false;
 	boolean graphPathExtraction = false;// a sign used to set whether we use the optimization
+
+	FileSetting setting;
 	
 	public Process(String datapath) {
 		trajectoryNumber=0;
@@ -90,11 +110,7 @@ public class Process extends Thread {
 		edgefile = args[3];
 		graphfile = args[4];
 
-		try {
-			init();
-		}catch (IOException e){
-			logger.error("IO exception in clustering module. {}", e.getMessage());
-		}
+		init();
 	}
 
 	public Process(){
@@ -102,6 +118,7 @@ public class Process extends Thread {
 	}
 
 	public Process(FileSetting setting, int trajNumber){
+		this.setting=setting;
 		datafile = setting.TRAJECTORY_EDGE_REPRESENTATION_PATH_PARTIAL;
 		trajectoryNumber = trajNumber;
 
@@ -111,11 +128,7 @@ public class Process extends Thread {
 		search2ClusterLookup = new HashMap<>();
 		cluster2SearchLookup = new HashMap<>();
 
-		try {
-			init();
-		}catch (IOException e){
-			logger.error("IO exception in clustering module. {}", e.getMessage());
-		}
+		init();
 	}
 	
 	// stop the iteration when the clusters do not change compared with last time
@@ -130,66 +143,77 @@ public class Process extends Thread {
 		return true;
 	}
 
-	public void loadData(String path, int number, String edgePath) throws IOException{
+	//todo 这里改edge partial
+	//edge_partial number id_edge_raw
+	public void loadData(String path, int number, String edgePath)  {
 		int idx=0;
 		int gap = number/k;
 		Random rand = new Random();
 		int counter = 0;
 		readRoadNetwork(edgePath);
-		try {
-			Scanner in = new Scanner(new BufferedReader(new FileReader(path)));					
-			while (in.hasNextLine()) {// load the trajectory dataset, and we can efficiently find the trajectory by their id.
-				String str = in.nextLine();
-				String strr = str.trim();
-				String[] abc = strr.split("\t");
-				String[] vertexSeries = abc[1].split(",");
-				Integer id = Integer.parseInt(abc[0]);
-				cluster2SearchLookup.put(idx, id);
-				search2ClusterLookup.put(id, idx);
 
-				int[] vertexes = new int[vertexSeries.length];
-				for(int t=0; t < vertexSeries.length; t++) {
-					vertexes[t] = Integer.valueOf(vertexSeries[t]);
-					int edgeID = vertexes[t];
-					if(edgeIndex.containsKey(edgeID)) {
-						List<Integer> lists = edgeIndex.get(edgeID);
-						lists.add(idx);					//enlarge the lists
-						edgeIndex.put(edgeID, lists);
-					}else {
-						ArrayList<Integer> lists = new ArrayList<Integer>();
-						lists.add(idx);
-						edgeIndex.put(edgeID, lists);
-					}
-					if(edgeHistogram.containsKey(edgeID)) {
-						edgeHistogram.put(edgeID, edgeHistogram.get(edgeID)+1);
-					}else {
-						edgeHistogram.put(edgeID, 1);
-					}
-				}
-				Arrays.sort(vertexes);// this sort the array
-				if(mtreebuild) {//build the mtree
-					mindex.buildMtree(vertexes, idx);//create the M-tree
-					System.out.println(idx);
-					if(idx==counter && centoridData.size()<k) {// initialize the centroid
-						centoridData.add(vertexes);
-						System.out.print(vertexes.length+", ");
-						counter += rand.nextInt(gap);
-					//	counter += 100;
-						ClusterPath cl = new ClusterPath(vertexes, 0);
-						CENTERS.add(cl);
-					}
-					idx++;
-				}else {
-					traLength.put(idx, vertexSeries.length);
-					datamap.put(idx++, vertexes);
-				}
-				if(idx>number)
-					break;
-			}
-			in.close();
+		String edgePartial = getFileNameWithoutExtension(path);
+		PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(edgePartial));
+		plainSelect.addSelectItems(new AllColumns());
+		EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+		plainSelect.setWhere(where);
+		SelectResult result = Transaction.getInstance().query(new Select().withSelectBody(plainSelect));
+
+		for (Tuple tuple :
+				result.getTpl().tuplelist) {
+			String[] abc = (String[])tuple.tuple;
+			String[] vertexSeries = abc[2].split(",");
+			Integer id = Integer.parseInt(abc[1]);
+			cluster2SearchLookup.put(idx, id);
+			search2ClusterLookup.put(id, idx);
 		}
-		catch (FileNotFoundException e) {
-			e.printStackTrace();
+
+		for (Tuple tuple :
+				result.getTpl().tuplelist) {
+			String[] abc = (String[])tuple.tuple;
+			String[] vertexSeries = abc[1].split(",");
+			Integer id = Integer.parseInt(abc[0]);
+			cluster2SearchLookup.put(idx, id);
+			search2ClusterLookup.put(id, idx);
+
+			int[] vertexes = new int[vertexSeries.length];
+			for(int t=0; t < vertexSeries.length; t++) {
+				vertexes[t] = Integer.valueOf(vertexSeries[t]);
+				int edgeID = vertexes[t];
+				if(edgeIndex.containsKey(edgeID)) {
+					List<Integer> lists = edgeIndex.get(edgeID);
+					lists.add(idx);					//enlarge the lists
+					edgeIndex.put(edgeID, lists);
+				}else {
+					ArrayList<Integer> lists = new ArrayList<Integer>();
+					lists.add(idx);
+					edgeIndex.put(edgeID, lists);
+				}
+				if(edgeHistogram.containsKey(edgeID)) {
+					edgeHistogram.put(edgeID, edgeHistogram.get(edgeID)+1);
+				}else {
+					edgeHistogram.put(edgeID, 1);
+				}
+			}
+			Arrays.sort(vertexes);// this sort the array
+			if(mtreebuild) {//build the mtree
+				mindex.buildMtree(vertexes, idx);//create the M-tree
+				System.out.println(idx);
+				if(idx==counter && centoridData.size()<k) {// initialize the centroid
+					centoridData.add(vertexes);
+					System.out.print(vertexes.length+", ");
+					counter += rand.nextInt(gap);
+				//	counter += 100;
+					ClusterPath cl = new ClusterPath(vertexes, 0);
+					CENTERS.add(cl);
+				}
+				idx++;
+			}else {
+				traLength.put(idx, vertexSeries.length);
+				datamap.put(idx++, vertexes);
+			}
+			if(idx>number)
+				break;
 		}
 		System.out.println("the trajectory dataset is loaded");
 	//	System.out.println("the M-tree is built");
@@ -201,35 +225,61 @@ public class Process extends Thread {
 			mindex.writeMtree(mapv_path);//write to the disk
 		}
 	}
-	
-	void readRoadNetwork(String edgePath) {
+
+	//todo 修改读id_edge_raw
+	void readRoadNetwork(String edgePath)  {
+		String idEdgeRaw = getFileNameWithoutExtension(edgePath);
+		PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(idEdgeRaw));
+		plainSelect.addSelectItems(new AllColumns());
+		EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+		plainSelect.setWhere(where);
+		SelectResult result = Transaction.getInstance().query(new Select().withSelectBody(plainSelect));
+
 		road_types = new HashMap<>();
 		edgeType = new HashMap<>();
 		int type=0;
-		try {
-			Scanner in = new Scanner(new BufferedReader(new FileReader(edgePath)));
-			while (in.hasNextLine()) {		// load the geo-information of all the edges in the graph
-				String str = in.nextLine();
-				String strr = str.trim();
-				String[] abc = strr.split(";");
-				edgeInfo.put(Integer.valueOf(abc[0]), abc[1]+","+abc[2]);
-				if(abc.length>7) {
-					 int roadType = 0;
-					 if(!road_types.containsKey(abc[6])) {
-						 road_types.put(abc[6], type);//we build the edge histogram
-						 roadType = type++;
-					 }
-					 else{
-						 roadType = road_types.get(abc[6]);
-					 }
-					 edgeType.put(Integer.valueOf(abc[0]), roadType);
+		for (Tuple tuple :
+				result.getTpl().tuplelist) {
+			Object[] c = tuple.tuple;
+			edgeInfo.put(Integer.valueOf((String) c[1]), c[2]+","+c[3]);
+			if(c.length>7) {
+				int roadType = 0;
+				if(!road_types.containsKey(c[7])) {
+					road_types.put((String) c[7], type);//we build the edge histogram
+					roadType = type++;
 				}
+				else{
+					roadType = road_types.get((String)c[7]);
+				}
+				edgeType.put(Integer.valueOf((String) c[1]), roadType);
 			}
-			in.close();
 		}
-		catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+//		try {
+//
+//
+//			Scanner in = new Scanner(new BufferedReader(new FileReader(edgePath)));
+//			while (in.hasNextLine()) {		// load the geo-information of all the edges in the graph
+//				String str = in.nextLine();
+//				String strr = str.trim();
+//				String[] abc = strr.split(";");
+//				edgeInfo.put(Integer.valueOf(abc[0]), abc[1]+","+abc[2]);
+//				if(abc.length>7) {
+//					 int roadType = 0;
+//					 if(!road_types.containsKey(abc[6])) {
+//						 road_types.put(abc[6], type);//we build the edge histogram
+//						 roadType = type++;
+//					 }
+//					 else{
+//						 roadType = road_types.get(abc[6]);
+//					 }
+//					 edgeType.put(Integer.valueOf(abc[0]), roadType);
+//				}
+//			}
+//			in.close();
+//		}
+//		catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		}
 		System.out.println("the edge information is loaded");		
 	}
 	
@@ -549,7 +599,7 @@ public class Process extends Thread {
 	}
 
 	
-	public void init() throws IOException {
+	public void init()  {
 		CENTERS = new ArrayList<ClusterPath>();	
 		interMinimumCentoridDis = new double[k];
 		innerCentoridDis = new double[k][];

@@ -1,11 +1,11 @@
 package au.edu.rmit.bdm.Torch.base.spatialIndex;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.TopKQueryIndex;
 import au.edu.rmit.bdm.Torch.base.WindowQueryIndex;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
 import com.github.davidmoten.rtree.*;
 import com.github.davidmoten.rtree.geometry.Geometries;
@@ -160,11 +160,11 @@ public abstract class RTreeWrapper implements WindowQueryIndex, TopKQueryIndex {
     }
 
     private double calDistanceBtwRect(Rectangle q, Rectangle r) {
-        float[] qlon = new float[]{(float) q.x1(), (float) q.x2()};
-        float[] qlat = new float[]{(float) q.y1(), (float) q.y2()};
+        float[] qlon = new float[]{(float)q.x1(), (float)q.x2()};
+        float[] qlat = new float[]{(float) q.y1(), (float)q.y2()};
 
-        float[] rlon = new float[]{(float) r.x1(), (float) r.x2()};
-        float[] rlat = new float[]{(float) r.y1(), (float) r.y2()};
+        float[] rlon = new float[]{(float)r.x1(), (float)r.x2()};
+        float[] rlat = new float[]{(float)r.y1(), (float)r.y2()};
 
         double minDistance = Double.MAX_VALUE;
         for (float lon1 : qlon) {

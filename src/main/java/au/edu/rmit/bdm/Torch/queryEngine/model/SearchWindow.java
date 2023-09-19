@@ -19,7 +19,7 @@ public class SearchWindow implements Geometry{
 
         this.middle = middle;
 
-        upperLat = GeoUtil.increaseLat(middle.getLat(), squareRadius);
+        upperLat =GeoUtil.increaseLat(middle.getLat(), squareRadius);
         lowerLat = GeoUtil.increaseLat(middle.getLat(), -squareRadius);
         leftLng = GeoUtil.increaseLng(middle.getLat(),middle.getLng(), -squareRadius);
         rightLng = GeoUtil.increaseLng(middle.getLat(), middle.getLng(), squareRadius);

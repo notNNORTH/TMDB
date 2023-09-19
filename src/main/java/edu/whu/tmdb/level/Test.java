@@ -15,7 +15,7 @@ public class Test {
 //    }
 //
 //    // add 测试
-//    public static void test2() throws IOException {
+//    public static void test2() {
 //        MemManager memManager = new MemManager();
 //        Random random = new Random();
 //        int i = 0;
@@ -31,7 +31,7 @@ public class Test {
 //    }
 //
 //    // MemTable写入SSTable
-//    public static void test3() throws IOException {
+//    public static void test3() {
 //        MemManager memManager = new MemManager();
 //        ObjectTableItem o = new ObjectTableItem();
 //        memManager.add(o);
@@ -132,7 +132,7 @@ public class Test {
 //    }
 //
 //    // SSTable读写测试
-//    public static void test9() throws IOException {
+//    public static void test9() {
 //        SSTable sst = new SSTable("SSTable1", 1);
 //        for(int i=1; i<50000; i++){
 //            sst.data.put("k" + i, "v" + i);
@@ -205,7 +205,7 @@ public class Test {
 //
 //    // 读取耗时测试
 //    // 结论： 使用RandomAccessFile实现随机位置的读取快得多
-//    public static void test11() throws IOException {
+//    public static void test11() {
 //        long time1 = System.currentTimeMillis();
 //        for(int i=0; i<10000; i++){
 //            byte[] n = Constant.readBytesFromFile("SSTable1", i * 5 , 10);
@@ -226,7 +226,7 @@ public class Test {
 //    }
 //
 //    // compaction 选择SSTable 算法测试
-//    public static void test12() throws IOException {
+//    public static void test12() {
 //        // test1 : compaction in level 0
 //        LevelManager levelManager = new LevelManager(1);
 //        levelManager.levelInfo = new HashMap<>();
@@ -308,7 +308,7 @@ public class Test {
 //    }
 //
 //    // compaction测试
-//    public static void test15() throws IOException {
+//    public static void test15() {
 //        SSTable sst1 = new SSTable("SSTable1", 1);
 //        for(int i=0; i<1000; i++){
 //            sst1.data.put("k" + 2 * i, "v1");
@@ -395,7 +395,7 @@ public class Test {
 //    }
 //
 //    // 测试search
-//    public static void test17() throws IOException {
+//    public static void test17() {
 ////        MemManager memManager = new MemManager();
 ////        for(int i=0; i<1000; i++){
 ////            Tuple t = new Tuple();
@@ -418,7 +418,7 @@ public class Test {
 //    }
 //
 //    // 测试系统表的读写
-//    public static void test19() throws IOException {
+//    public static void test19() {
 //        MemManager memManager1 = new MemManager();
 //        memManager1.add(new BiPointerTableItem(1,2,3,4));
 //        memManager1.add(new BiPointerTableItem(100,200,300,400));
@@ -481,7 +481,7 @@ public class Test {
 //    }
 //
 //    // 测试update
-//    public static void test21() throws IOException {
+//    public static void test21() {
 //
 //        SSTable s = new SSTable("test",1);
 //        s.data.put("0", "e");
@@ -493,7 +493,7 @@ public class Test {
 //    }
 //
 //    // 测试轨迹序列化与反序列化
-//    public static void test22() throws IOException {
+//    public static void test22() {
 //
 //        ArrayList<TrajectoryPoint> trajectory = new ArrayList<>();
 //        trajectory.add(new TrajectoryPoint(23.55532231, 420.1563456465));
@@ -505,7 +505,7 @@ public class Test {
 //
 //
 //    // 有缓存下的search测试
-//    public static void test23() throws IOException {
+//    public static void test23() {
 //        MemManager memManager = new MemManager();
 //        for(int i=0; i<1000; i++){
 //            Tuple t = new Tuple();
@@ -536,7 +536,7 @@ public class Test {
 //
 //    }
 //
-//    public static void test24() throws IOException {
+//    public static void test24() {
 //
 //    }
 

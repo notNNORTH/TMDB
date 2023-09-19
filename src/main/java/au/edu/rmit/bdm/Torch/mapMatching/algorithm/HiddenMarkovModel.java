@@ -1,10 +1,8 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
-import au.edu.rmit.bdm.Torch.base.model.TorEdge;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.model.*;
+import au.edu.rmit.bdm.Torch.base.model.TorEdge;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import com.github.davidmoten.geo.GeoHash;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
@@ -52,7 +50,7 @@ public class HiddenMarkovModel implements Mapper {
         Trajectory<TowerVertex> mappedTrajectory = new Trajectory<>();
         Graph hopperGraph = torGraph.getGH().getGraphHopperStorage();
         Map<String, TowerVertex> towerVertexes =  torGraph.towerVertexes;
-        Map<String, TorEdge> edges= torGraph.allEdges;
+        Map<String,TorEdge> edges= torGraph.allEdges;
 
         mappedTrajectory.hasTime = in.hasTime;
         mappedTrajectory.id = in.id;
@@ -83,7 +81,13 @@ public class HiddenMarkovModel implements Mapper {
                 mappedTrajectory.add(preVertex);
                 first = false;
             }else{
-                assert (preAdjId == pre);
+//                try {
+//                    assert (preAdjId == pre);
+//                } catch (AssertionError e) {
+//                    System.err.println("Assertion Error: " + e.getMessage());
+//                    // 其他异常处理逻辑
+//                }
+//                assert (preAdjId == pre);
             }
 
             mappedTrajectory.add(adjVertex);

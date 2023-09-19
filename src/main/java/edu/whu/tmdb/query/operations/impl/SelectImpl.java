@@ -1,6 +1,7 @@
 package edu.whu.tmdb.query.operations.impl;
 
 import edu.whu.tmdb.memory.MemManager;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -14,12 +15,8 @@ import net.sf.jsqlparser.statement.select.*;
 import net.sf.jsqlparser.statement.values.ValuesStatement;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -44,7 +41,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     private MemConnect memConnect;
 
-    public SelectImpl() throws IOException {
+    public SelectImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
@@ -64,7 +61,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             return setOperation(setOperationList);
         }
         //如果selectBody只是一个plainSelct
-        else if(selectBody.getClass().getSimpleName().equals("PlainSelect")){
+        else{
             res=plainSelect(selectBody);
         }
         return res;
@@ -89,6 +86,9 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             Where where=new Where();
             selectResult=where.where(plainSelect,selectResult);
         }
+        if(plainSelect.getLimit()!=null){
+            selectResult=limit(Integer.parseInt(plainSelect.getLimit().getRowCount().toString()),selectResult);
+        }
         if(plainSelect.getGroupBy()!=null){
             GroupBy groupBy=new GroupBy();
             HashMap<Object,ArrayList<Tuple>> hashMap = groupBy.groupBy(plainSelect, selectResult);
@@ -98,6 +98,15 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             selectResult = elicit(plainSelect, selectResult);
         }
         //最终返回selectResult
+        return selectResult;
+    }
+
+    private SelectResult limit(int limit,SelectResult selectResult) {
+        TupleList tpl = selectResult.getTpl();
+        List<Tuple> tuplelist = tpl.tuplelist;
+        List<Tuple> collect = tuplelist.stream().limit(limit).collect(Collectors.toList());
+        tpl.tuplelist=collect;
+        tpl.tuplenum=limit;
         return selectResult;
     }
 
@@ -927,7 +936,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem){
         ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
-        System.out.println(MemConnect.getClasst().classTable.size());
+//        System.out.println(MemConnect.getClasst().classTable.size());
         for(ClassTableItem item : MemConnect.getClasst().classTable){
             //如果classTableItem中的className对上了fromItem就加入结果中
             if(item.classname.equals(((Table)fromItem).getName())){

@@ -97,6 +97,8 @@ public class SimilarityFunction<T extends TrajEntry> {
         return dpInts[T1.size() - 1][T2.size() - 1] * 1.0;
     }
 
+
+
     public double EditDistanceWithRealPenalty(List<T> T1, List<T> T2, T g) {
 
         if (T1 == null || T1.size() == 0) {

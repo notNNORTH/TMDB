@@ -2,18 +2,17 @@ package au.edu.rmit.bdm.Torch.queryEngine;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
 import au.edu.rmit.bdm.Torch.base.Torch;
-import au.edu.rmit.bdm.Torch.queryEngine.model.TimeInterval;
-import au.edu.rmit.bdm.Torch.queryEngine.query.Query;
-import au.edu.rmit.bdm.Torch.queryEngine.query.QueryPool;
-import au.edu.rmit.bdm.Torch.queryEngine.query.QueryProperties;
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
-import au.edu.rmit.bdm.Torch.queryEngine.query.QueryResult;
+import au.edu.rmit.bdm.Torch.queryEngine.model.TimeInterval;
 import au.edu.rmit.bdm.Torch.queryEngine.query.*;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -21,12 +20,14 @@ import java.util.Map;
  * Engine class contains high level APIs to query on trajectory data-set
  */
 public class Engine {
+
     private QueryPool pool;
     private static final Logger logger = LoggerFactory.getLogger(Engine.class);
 
-    private Engine(QueryProperties props){
+    private Engine(QueryProperties props)  {
         pool = new QueryPool(props);
     }
+
 
     /**
      * API for finding top-k most similar trajectories with the given query.<p>
@@ -173,7 +174,7 @@ public class Engine {
     public void setTimeInterval(TimeInterval interval, boolean contains){
         pool.setTimeInterval(interval, contains);
     }
-    public QueryResult resolve(int[] idArr){
+    public QueryResult resolve(int[] idArr)  {
         return pool.resolve(idArr);
     }
 
@@ -276,7 +277,7 @@ public class Engine {
          * Method to instantiate Engine object.
          * @return object of type Engine
          */
-        public Engine build(){
+        public Engine build()  {
             return new Engine(new QueryProperties(properties));
         }
 

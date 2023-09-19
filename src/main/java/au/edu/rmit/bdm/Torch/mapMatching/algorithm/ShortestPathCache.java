@@ -1,10 +1,10 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
 
-import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
+import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TorVertex;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

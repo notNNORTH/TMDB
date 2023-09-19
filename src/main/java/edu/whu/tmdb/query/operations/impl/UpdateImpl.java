@@ -29,7 +29,7 @@ public class UpdateImpl implements Update {
     private MemConnect memConnect;
     private ArrayList<Integer> changedTupleIndex=new ArrayList<>();
 
-    public UpdateImpl() throws IOException {
+    public UpdateImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 

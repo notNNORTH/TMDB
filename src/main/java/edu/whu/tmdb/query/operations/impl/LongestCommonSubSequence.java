@@ -2,6 +2,7 @@ package edu.whu.tmdb.query.operations.impl;
 
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,12 +12,12 @@ import java.util.List;
 
 
 public class LongestCommonSubSequence {
-    static Comparator<Coordinate> comparator = (p1, p2) -> {
-        double dist = Geo.distance(p1, p2);
+    static Comparator<TrajEntry> comparator = (p1, p2) -> {
+        double dist = Geo.distance((Coordinate) p1, (Coordinate) p2);
         if (dist <= 50) return 0;
         return 1;
     };
-    public List<Coordinate> getCommonSubsequence(List<Coordinate> firstTrajectory, List<Coordinate> secondTrajectory, int theta) {
+    public List<Coordinate> getCommonSubsequence(List<TrajEntry> firstTrajectory, List<TrajEntry> secondTrajectory, int theta) {
         int m = firstTrajectory.size();
         int n = secondTrajectory.size();
         int[][] dp = new int[firstTrajectory.size() + 1][secondTrajectory.size() + 1];
@@ -39,7 +40,7 @@ public class LongestCommonSubSequence {
 //        System.out.println(comparator.compare(firstTrajectory.get(10),secondTrajectory.get(9))==0);
         while (i > 0 && j > 0 && c >0 ) {
             if (comparator.compare(firstTrajectory.get(i - 1),secondTrajectory.get(j - 1))==0) {
-                result.add(firstTrajectory.get(i - 1));
+                result.add((Coordinate) firstTrajectory.get(i - 1));
                 c--;
                 i--;
                 j--;

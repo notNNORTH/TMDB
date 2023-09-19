@@ -1,10 +1,10 @@
 package au.edu.rmit.bdm.Torch.queryEngine.query;
 
 import au.edu.rmit.bdm.Torch.base.Torch;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.TimeInterval;
 import au.edu.rmit.bdm.Torch.queryEngine.visualization.Formater;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

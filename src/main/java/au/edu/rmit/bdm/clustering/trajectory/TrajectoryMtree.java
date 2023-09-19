@@ -1,13 +1,12 @@
 package au.edu.rmit.bdm.clustering.trajectory;
 
 import au.edu.rmit.bdm.clustering.mtree.*;
-import au.edu.rmit.bdm.clustering.mtree.*;
 import au.edu.rmit.bdm.clustering.mtree.tests.Data;
 import au.edu.rmit.bdm.clustering.mtree.utils.Pair;
 import au.edu.rmit.bdm.clustering.mtree.utils.Utils;
 
 import java.util.Set;
-public class TrajectoryMtree extends MTree<Data> {
+public class TrajectoryMtree extends MTree<Data>  {
 	private static final PromotionFunction<Data> nonRandomPromotion1 = new PromotionFunction<Data>() {
 		@Override
 		public Pair<Data> process(Set<Data> dataSet, DistanceFunction<? super Data> distanceFunction) {
@@ -19,7 +18,7 @@ public class TrajectoryMtree extends MTree<Data> {
 	 * initilize our trajectory functions, we can specify the capacity and distance function
 	 */
 	public TrajectoryMtree() {//DEFAULT_MIN_NODE_CAPACITY
-		super(20, DistanceFunctions.EBD,
+		super(20, DistanceFunctions.EBD, 
 			new ComposedSplitFunction<Data>(
 				nonRandomPromotion1,
 				new PartitionFunctions.BalancedPartition<Data>()

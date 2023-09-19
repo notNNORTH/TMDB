@@ -2,6 +2,7 @@ package edu.whu.tmdb.query;
 
 
 
+import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import edu.whu.tmdb.query.operations.impl.*;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -28,9 +29,12 @@ import edu.whu.tmdb.level.LevelManager;
 import edu.whu.tmdb.memory.MemManager;
 import edu.whu.tmdb.memory.Tuple;
 import edu.whu.tmdb.memory.TupleList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Transaction {
 
+    private static Logger logger = LoggerFactory.getLogger(Transaction.class);
     public MemManager mem;
     public LevelManager levelManager;
     public LogManager log;
@@ -41,14 +45,23 @@ public class Transaction {
     private static volatile Transaction instance = null;
 
     // 3. 提供一个全局访问点
-    public static Transaction getInstance() throws TMDBException, JSQLParserException, IOException {
+    public static Transaction getInstance(){
         // 双重检查锁定模式
-        if (instance == null) { // 第一次检查
-            synchronized (Transaction.class) {
-                if (instance == null) { // 第二次检查
-                    instance = new Transaction();
+        try {
+            if (instance == null) { // 第一次检查
+                synchronized (Transaction.class) {
+                    if (instance == null) { // 第二次检查
+                        instance = new Transaction();
+                    }
                 }
             }
+            return instance;
+        }catch (TMDBException e){
+            logger.warn(e.getMessage());
+        }catch (JSQLParserException e){
+            logger.warn(e.getMessage());
+        }catch (IOException e){
+            logger.error(e.getMessage());
         }
         return instance;
     }
@@ -65,18 +78,18 @@ public class Transaction {
     }
 
 
-    public void clear() throws IOException {
+    public void clear() {
 //        File classtab=new File("/data/data/edu.whu.tmdb/transaction/classtable");
 //        classtab.delete();
         File objtab=new File("/data/data/edu.whu.tmdb/transaction/objecttable");
         objtab.delete();
     }
 
-    public void SaveAll( ) throws IOException {
+    public void SaveAll( ) {
         memConnect.SaveAll();
     }
 
-    public void reload() throws IOException {
+    public void reload() {
         memConnect.reload();
     }
 
@@ -115,7 +128,10 @@ public class Transaction {
         return query;
     }
 
-
+    public SelectResult query(Statement s) {
+        SelectResult query = this.query("", -1, s);
+        return query;
+    }
     public SelectResult query(String k, int op, Statement stmt) {
         //Action action = new Action();
 //        action.generate(s);
@@ -176,11 +192,11 @@ public class Transaction {
 
             }
         } catch (JSQLParserException e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         } catch (TMDBException e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error(e.getMessage(),e);
         }
         int[] ints = new int[tuples.size()];
         for (int i = 0; i < tuples.size(); i++) {
@@ -190,20 +206,20 @@ public class Transaction {
         return selectResult;
     }
 
-    public void test() throws IOException, TMDBException, JSQLParserException {
+    public void testMapMatching() {
         TorchConnect torchConnect = new TorchConnect(memConnect,"Torch_Porto_test");
 //        torchConnect.insert("data/res/raw/porto_raw_trajectory.txt");
 //        this.SaveAll();
         torchConnect.mapMatching();
     }
 
-    public void test2() {
+    public void testEngine() throws IOException {
         TorchConnect torchConnect = new TorchConnect(memConnect,"Torch_Porto_test");
         torchConnect.initEngine();
         torchConnect.test ();
     }
 
-    public void test3() throws IOException, TMDBException, JSQLParserException {
+    public void insertIntoTrajTable() {
         TorchConnect torchConnect = new TorchConnect(memConnect,"Torch_Porto_test");
         torchConnect.insert("data/res/raw/porto_raw_trajectory.txt");
     }

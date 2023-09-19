@@ -1,7 +1,5 @@
 package au.edu.rmit.bdm.Torch.base.invertedIndex;
 
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.FileSetting;
 import au.edu.rmit.bdm.Torch.base.model.*;
 

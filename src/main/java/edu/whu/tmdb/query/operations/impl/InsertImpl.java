@@ -2,6 +2,7 @@ package edu.whu.tmdb.query.operations.impl;
 
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import edu.whu.tmdb.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -31,7 +32,7 @@ public class InsertImpl implements Insert {
 
     ArrayList<Integer> indexs=new ArrayList<>();
 
-    public InsertImpl() throws IOException {
+    public InsertImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
@@ -142,7 +143,7 @@ public class InsertImpl implements Insert {
         //如果list非空就需要进一步判断
         if(!tJoinDeputy.isEmpty()) {
             //调用TrajTrans.getTraj方法将当前元祖的轨迹部分转化为List<Coordinate> traj1进行后续操作
-            List<Coordinate> traj1 = TrajTrans.getTraj((String) tuple.tuple[2]);
+            List<TrajEntry> traj1 = TrajTrans.getTraj((String) tuple.tuple[2]);
             //对代理类idlist进行遍历
             for (int i = 0; i < tJoinDeputy.size(); i++) {
                 //得到当前代理类的id
@@ -156,7 +157,7 @@ public class InsertImpl implements Insert {
                     //拿到另一个源类的当前tuple
                     Tuple tuple1 = table.tuplelist.get(j);
                     //通过TrajTrans.getTraj方法将当前元祖的轨迹部分转化为List<Coordinate> traj2进行后续操作
-                    List<Coordinate> traj2 = TrajTrans.getTraj((String) tuple1.tuple[2]);
+                    List<TrajEntry> traj2 = TrajTrans.getTraj((String) tuple1.tuple[2]);
                     //通过longestCommonSubSequence.getCommonSubsequence获取当前两个traj的公共子序列
                     List<Coordinate> commonSubsequence = longestCommonSubSequence.getCommonSubsequence(traj1, traj2, 3);
                     //如果子序列长度大于阈值，则需要在代理类中插入新的tuple

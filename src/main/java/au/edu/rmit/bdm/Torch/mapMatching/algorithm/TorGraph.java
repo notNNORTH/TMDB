@@ -1,13 +1,13 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
-import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
 import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
 import au.edu.rmit.bdm.Torch.base.helper.MemoryUsage;
 import au.edu.rmit.bdm.Torch.base.model.TorEdge;
 import au.edu.rmit.bdm.Torch.mapMatching.MMProperties;
 import au.edu.rmit.bdm.Torch.mapMatching.MapMatching;
+import au.edu.rmit.bdm.Torch.mapMatching.model.PillarVertex;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TorVertex;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import com.github.davidmoten.geo.GeoHash;
@@ -20,6 +20,19 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.PointList;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.query.Transaction;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.query.operations.utils.SelectResult;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +43,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 /**
  * A torGraph stores all information required for trajectory projection.
@@ -51,6 +66,8 @@ public class TorGraph {
     private static Logger logger = LoggerFactory.getLogger(TorGraph.class);
 
     public boolean isBuilt = false;
+
+    public boolean isSaved =false;
     public FlagEncoder vehicle;
     private FileSetting setting;
 
@@ -165,7 +182,7 @@ public class TorGraph {
         return this;
     }
 
-    public  TorGraph buildFromDiskData(){
+    public  TorGraph buildFromDiskData()  {
         if (hopper == null)
             throw new IllegalStateException("please invoke " +
                     "'TorGraph initGH(String targetPath, String OSMPath,FlagEncoder vehicle)' first");
@@ -173,62 +190,97 @@ public class TorGraph {
             logger.warn("trying to build graph twice.");
             return this;
         }
-
+        Transaction transaction=Transaction.getInstance();
         idVertexLookup = new HashMap<>();
-
         //read id vertex lookup table
-        try(FileReader fr = new FileReader(setting.ID_VERTEX_LOOKUP);
-            BufferedReader reader = new BufferedReader(fr)) {
+        //todo id_vertex在这里读取
+        String id_vertex = getFileNameWithoutExtension(setting.ID_VERTEX_LOOKUP);
+        PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(id_vertex));
+        plainSelect.addSelectItems(new AllColumns());
+        EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+        plainSelect.setWhere(where);
+        SelectResult id_vertex_result = transaction.query(new Select().withSelectBody(plainSelect));
+        for (Tuple tuple : id_vertex_result.getTpl().tuplelist) {
+            int id = Integer.parseInt((String) tuple.tuple[1]);
+            double lat = Double.parseDouble((String) tuple.tuple[2]);
+            double lng = Double.parseDouble((String) tuple.tuple[3]);
 
-            String line;
-            String[] tokens;
-            Integer id;
-            Double lat;
-            Double lng;
-            while((line = reader.readLine()) != null){
-                tokens = line.split(";");
-                id = Integer.parseInt(tokens[0]);
-                lat = Double.parseDouble(tokens[1]);
-                lng = Double.parseDouble(tokens[2]);
-
-                TowerVertex temp = new TowerVertex(lat, lng, id);
-                towerVertexes.put(temp.hash, temp);
-                idVertexLookup.put(id, temp);
-            }
-
-        }catch (IOException e){
-            throw new IllegalStateException("id vertex lookup table is missing!");
+            TowerVertex temp = new TowerVertex(lat, lng, id);
+            towerVertexes.put(temp.hash, temp);
+            idVertexLookup.put(id, temp);
         }
 
+//        try(FileReader fr = new FileReader(setting.ID_VERTEX_LOOKUP);
+//            BufferedReader reader = new BufferedReader(fr)) {
+//
+//            String line;
+//            String[] tokens;
+//            Integer id;
+//            Double lat;
+//            Double lng;
+//            while((line = reader.readLine()) != null){
+//                tokens = line.split(";");
+//                id = Integer.parseInt(tokens[0]);
+//                lat = Double.parseDouble(tokens[1]);
+//                lng = Double.parseDouble(tokens[2]);
+//
+//                TowerVertex temp = new TowerVertex(lat, lng, id);
+//                towerVertexes.put(temp.hash, temp);
+//                idVertexLookup.put(id, temp);
+//            }
+//
+//        }catch (IOException e){
+//            throw new IllegalStateException("id vertex lookup table is missing!");
+//        }
+
+        //todo id_edge表读的读取在这里改
         //read id edge lookup table
-        try(FileReader fr = new FileReader(setting.ID_EDGE_LOOKUP);
-            BufferedReader reader = new BufferedReader(fr)){
-
-            String line;
-            String[] tokens;
-            Integer edgeId;
-            Integer vertexId1;
-            Integer vertexId2;
-            double len;
-            TowerVertex t1, t2;
-
-
-            while((line = reader.readLine()) != null && line.length() != 0){
-                try {
-                    tokens = line.split(";");
-                    edgeId = Integer.parseInt(tokens[0]);
-                    vertexId1 = Integer.parseInt(tokens[1]);
-                    vertexId2 = Integer.parseInt(tokens[2]);
-                    len = Double.parseDouble(tokens[3]);
-                    t1 = idVertexLookup.get(vertexId1);
-                    t2 = idVertexLookup.get(vertexId2);
-                    allEdges.put(t1.hash+ t2.hash, new TorEdge(edgeId, t1, t2, len));
-                }catch (Exception e){}
-            }
-
-        }catch (IOException e){
-            throw new IllegalStateException("id edge lookup table is missing!");
+        String id_edge = getFileNameWithoutExtension(setting.ID_EDGE_LOOKUP);
+        plainSelect = new PlainSelect().withFromItem(new Table(id_edge));
+        plainSelect.addSelectItems(new AllColumns());
+        where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+        plainSelect.setWhere(where);
+        SelectResult id_edge_result = transaction.query(new Select().withSelectBody(plainSelect));
+        for (Tuple tuple:
+            id_edge_result.getTpl().tuplelist) {
+            int edgeId = Integer.parseInt((String)tuple.tuple[1]);
+            int vertexId1 = Integer.parseInt((String)tuple.tuple[2]);
+            int vertexId2 = Integer.parseInt((String)tuple.tuple[3]);
+            double len = Double.parseDouble((String)tuple.tuple[4]);
+            TowerVertex t1 = idVertexLookup.get(vertexId1);
+            TowerVertex t2 = idVertexLookup.get(vertexId2);
+            allEdges.put(t1.hash+ t2.hash, new TorEdge(edgeId, t1, t2, len));
         }
+
+
+//        try(FileReader fr = new FileReader(setting.ID_EDGE_LOOKUP);
+//            BufferedReader reader = new BufferedReader(fr)){
+//
+//            String line;
+//            String[] tokens;
+//            Integer edgeId;
+//            Integer vertexId1;
+//            Integer vertexId2;
+//            double len;
+//            TowerVertex t1, t2;
+//
+//
+//            while((line = reader.readLine()) != null && line.length() != 0){
+//                try {
+//                    tokens = line.split(";");
+//                    edgeId = Integer.parseInt(tokens[0]);
+//                    vertexId1 = Integer.parseInt(tokens[1]);
+//                    vertexId2 = Integer.parseInt(tokens[2]);
+//                    len = Double.parseDouble(tokens[3]);
+//                    t1 = idVertexLookup.get(vertexId1);
+//                    t2 = idVertexLookup.get(vertexId2);
+//                    allEdges.put(t1.hash+ t2.hash, new TorEdge(edgeId, t1, t2, len));
+//                }catch (Exception e){}
+//            }
+//
+//        }catch (IOException e){
+//            throw new IllegalStateException("id edge lookup table is missing!");
+//        }
 
         isBuilt = true;
         return this;

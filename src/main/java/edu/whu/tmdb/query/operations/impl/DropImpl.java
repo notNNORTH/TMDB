@@ -19,7 +19,7 @@ public class DropImpl implements Drop {
     private MemConnect memConnect;
 
 
-    public DropImpl() throws IOException {
+    public DropImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 

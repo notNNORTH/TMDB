@@ -1,9 +1,7 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
-import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.base.model.*;
+import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 
 import java.util.List;
 
@@ -20,7 +18,7 @@ public interface Mapper {
      * @return MappedTrajectory Trajectory defined by a list of vertices
      * @throws Exception If raw trajectory cannot be projected properly, Exception will be thrown.
      */
-    Trajectory<TowerVertex> match(Trajectory<? extends TrajEntry> in) throws Exception;
+    Trajectory<TowerVertex>  match(Trajectory<? extends TrajEntry> in) throws Exception;
 
     /**
      * The API is used for converting a list of raw trajectories to map-matched trajectories.

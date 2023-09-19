@@ -42,7 +42,7 @@ create tjoindeputyclass tjoin as select * from mobile_phone_traj intersect selec
 
 select * from traj1, traj2, traj3;
 create selectdeputy deputy as select name as n, age as a, salary as s from company, test;
-create selectdeputy deputy as select name as n, age as a, salary as s from company;
+create selectdeputy deputy as select * from company limit 1;
 
 
 

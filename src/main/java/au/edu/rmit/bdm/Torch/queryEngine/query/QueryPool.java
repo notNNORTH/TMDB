@@ -1,11 +1,15 @@
 package au.edu.rmit.bdm.Torch.queryEngine.query;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
+import au.edu.rmit.bdm.Torch.base.Index;
 import au.edu.rmit.bdm.Torch.base.Torch;
+import au.edu.rmit.bdm.Torch.base.db.DBManager;
 import au.edu.rmit.bdm.Torch.base.db.TrajVertexRepresentationPool;
 import au.edu.rmit.bdm.Torch.base.invertedIndex.EdgeInvertedIndex;
 import au.edu.rmit.bdm.Torch.base.invertedIndex.VertexInvertedIndex;
+import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
+import au.edu.rmit.bdm.Torch.base.spatialIndex.LEVI;
 import au.edu.rmit.bdm.Torch.base.spatialIndex.VertexGridIndex;
 import au.edu.rmit.bdm.Torch.mapMatching.algorithm.Mapper;
 import au.edu.rmit.bdm.Torch.mapMatching.algorithm.Mappers;
@@ -13,9 +17,8 @@ import au.edu.rmit.bdm.Torch.mapMatching.algorithm.TorGraph;
 import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import au.edu.rmit.bdm.Torch.queryEngine.model.TimeInterval;
 import au.edu.rmit.bdm.Torch.queryEngine.similarity.SimilarityFunction;
-import au.edu.rmit.bdm.Torch.base.Index;
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.spatialIndex.LEVI;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import net.sf.jsqlparser.JSQLParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,18 +48,19 @@ public class QueryPool extends HashMap<String, Query> {
      * initilize supported indexes for the 4 types of queries.
      * @param props
      */
-    public QueryPool(QueryProperties props) {
+    public QueryPool(QueryProperties props)  {
         //set client preference
         this.props = props;
         setting = new FileSetting(props.baseDir);
         setting.update(props.uriPrefix);
         edgeInvertedIndex = new EdgeInvertedIndex(setting);
         //initialize queries and map-matching algorithm
+        DBManager.init(setting);
         init();
 
     }
 
-    private void init() {
+    private void init()  {
 
         buildMapper();
         resolver = new TrajectoryResolver(props.resolveAll, props.isNantong, setting);
@@ -72,7 +76,7 @@ public class QueryPool extends HashMap<String, Query> {
     }
 
 
-    private void buildMapper() {
+    private void buildMapper()  {
         if (mapper != null)
             return;
 
@@ -107,7 +111,7 @@ public class QueryPool extends HashMap<String, Query> {
         return new PathQuery(edgeInvertedIndex, mapper, resolver);
     }
 
-    private Query initTopKQuery() {
+    private Query initTopKQuery()  {
 
         // edge based top K
         if (props.preferedIndex.equals(Torch.Index.EDGE_INVERTED_INDEX)) {
@@ -116,12 +120,13 @@ public class QueryPool extends HashMap<String, Query> {
                     new TopKQuery(edgeInvertedIndex, mapper, resolver);
         }
 
+
         // point based topK with GVI
         initLEVI();
         return new TopKQuery(LEVI, mapper, resolver);
     }
 
-    private Query initRangeQuery() {
+    private Query initRangeQuery()  {
         initEdgeInvertedIndex();
         if (LEVI == null) initLEVI();
         return new WindowQuery(LEVI, resolver);
@@ -136,7 +141,7 @@ public class QueryPool extends HashMap<String, Query> {
     }
 
 
-    private void initLEVI() {
+    private void initLEVI()  {
 
         if (LEVI!=null) return;
 
@@ -224,7 +229,7 @@ public class QueryPool extends HashMap<String, Query> {
         return measureType;
     }
 
-    public QueryResult resolve(int[] idArr) {
+    public QueryResult resolve(int[] idArr)  {
         List<Trajectory<TrajEntry>> resolved = resolver.resolveResult(idArr);
         return new QueryResult(resolved);
     }

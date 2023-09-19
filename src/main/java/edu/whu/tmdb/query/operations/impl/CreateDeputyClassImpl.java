@@ -31,7 +31,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 public class CreateDeputyClassImpl implements CreateDeputyClass {
     private MemConnect memConnect;
 
-    public CreateDeputyClassImpl() throws IOException {
+    public CreateDeputyClassImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 
@@ -63,7 +63,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
 
 
-    private List<String> getColumns(Select select) throws IOException {
+    private List<String> getColumns(Select select) {
         SelectImpl select1=new SelectImpl();
         ArrayList<SelectItem> selectItemList=(ArrayList<SelectItem>)((PlainSelect)select.getSelectBody()).getSelectItems();
         HashMap<SelectItem,ArrayList<Column>> selectItemToColumn=select1.getSelectItemColumn(selectItemList);

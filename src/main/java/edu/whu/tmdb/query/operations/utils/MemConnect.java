@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSON;
 import edu.whu.tmdb.memory.MemManager;
 import edu.whu.tmdb.memory.Tuple;
@@ -19,9 +20,12 @@ import edu.whu.tmdb.memory.SystemTable.ObjectTable;
 import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
 import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MemConnect {
     //进行内存操作的一些一些方法和数据
+    private static Logger logger = LoggerFactory.getLogger(MemConnect.class);
     private MemManager mem;
     public static ObjectTable topt;
     private static ClassTable classt;
@@ -150,15 +154,19 @@ public class MemConnect {
         return false;
     }
 
-    public void SaveAll() throws IOException {
+    public void SaveAll() {
         mem.saveAll();
     }
 
-    public void reload() throws IOException {
-        mem.loadClassTable();
-        mem.loadDeputyTable();
-        mem.loadBiPointerTable();
-        mem.loadSwitchingTable();
+    public void reload() {
+        try {
+            mem.loadClassTable();
+            mem.loadDeputyTable();
+            mem.loadBiPointerTable();
+            mem.loadSwitchingTable();
+        }catch (IOException e){
+            logger.error(e.getMessage());
+        }
     }
 
     public static class OandB {

@@ -26,7 +26,7 @@ public class DeleteImpl implements Delete {
     private MemConnect memConnect;
     private ArrayList<Integer> deleteId=new ArrayList<>();
 
-    public DeleteImpl() throws IOException {
+    public DeleteImpl() {
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }
 

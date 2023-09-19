@@ -1,7 +1,5 @@
 package au.edu.rmit.bdm.Torch.mapMatching.algorithm;
 
-import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
 import au.edu.rmit.bdm.Torch.base.model.*;
 import au.edu.rmit.bdm.Torch.base.model.TorEdge;

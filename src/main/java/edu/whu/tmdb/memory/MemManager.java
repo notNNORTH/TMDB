@@ -5,16 +5,13 @@ package edu.whu.tmdb.memory;
 
 
 
+import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSONObject;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.util.FileOperation;
 import org.apache.lucene.util.RamUsageEstimator;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 
 import edu.whu.tmdb.Log.LogManager;
@@ -32,9 +29,12 @@ import edu.whu.tmdb.memory.SystemTable.ObjectTable;
 import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
 import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
 import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MemManager {
 
+    private static Logger logger = LoggerFactory.getLogger(TorSaver.class);
     // 系统表
     public static ObjectTable objectTable = new ObjectTable();
     public static ClassTable classTable = new ClassTable();
@@ -60,14 +60,18 @@ public class MemManager {
     private static volatile MemManager instance = null;
 
     // 3. 提供一个全局访问点
-    public static MemManager getInstance() throws IOException {
-        // 双重检查锁定模式
-        if (instance == null) { // 第一次检查
-            synchronized (MemManager.class) {
-                if (instance == null) { // 第二次检查
-                    instance = new MemManager();
+    public static MemManager getInstance() {
+        try {
+            // 双重检查锁定模式
+            if (instance == null) { // 第一次检查
+                synchronized (MemManager.class) {
+                    if (instance == null) { // 第二次检查
+                        instance = new MemManager();
+                    }
                 }
             }
+        }catch (IOException e){
+            logger.error(e.getMessage());
         }
         return instance;
     }
@@ -105,15 +109,19 @@ public class MemManager {
     }
 
     // 持久化保存所有数据
-    public void saveAll() throws IOException {
-        saveSwitchingTable();
-        saveDeputyTable();
-        saveClassTable();
-        saveBiPointerTable();
-        saveObjectTable();
-        if(this.tupleList.tuplelist.size() != 0)
-            saveMemTableToFile();
-        this.levelManager.saveMetaToFile();
+    public void saveAll() {
+        try {
+            saveSwitchingTable();
+            saveDeputyTable();
+            saveClassTable();
+            saveBiPointerTable();
+            saveObjectTable();
+            if (this.tupleList.tuplelist.size() != 0)
+                saveMemTableToFile();
+            this.levelManager.saveMetaToFile();
+        }catch (IOException e){
+            logger.error(e.getMessage());
+        }
     }
 
 
@@ -267,7 +275,7 @@ public class MemManager {
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
-        for(BiPointerTableItem item : this.biPointerTable.biPointerTable){
+        for(BiPointerTableItem item : biPointerTable.biPointerTable){
             // 存classid
             writeAccess.write(Constant.INT_TO_BYTES(item.classid));
             // 存objectid
@@ -291,7 +299,7 @@ public class MemManager {
         while(cur < l){
             // 读取4个int构造BiPointerTableItem
             BiPointerTableItem item = new BiPointerTableItem(raf.readInt(), raf.readInt(), raf.readInt(), raf.readInt());
-            this.biPointerTable.biPointerTable.add(item);
+            biPointerTable.biPointerTable.add(item);
             cur += Integer.BYTES * 4;
         }
     }
@@ -542,10 +550,10 @@ public class MemManager {
         RandomAccessFile raf = new RandomAccessFile(f, "rw");
 
         // 用int记录maxTupleId
-        raf.writeInt(this.objectTable.maxTupleId);
+        raf.writeInt(objectTable.maxTupleId);
 
         // 依次存每个ObjectTableItem
-        for(ObjectTableItem item: this.objectTable.objectTable){
+        for(ObjectTableItem item: objectTable.objectTable){
             // 存classid
             raf.writeInt(item.classid);
             // 存tupleid

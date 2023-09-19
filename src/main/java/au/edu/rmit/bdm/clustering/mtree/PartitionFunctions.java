@@ -42,7 +42,7 @@ public final class PartitionFunctions {
 		 *     Return result
 		 * </cur>
 		 * 
-		 * @see PartitionFunction#process( Pair, Set, DistanceFunction)
+		 * @see au.edu.rmit.bdm.clustering.mtree.PartitionFunction#process( Pair, Set, au.edu.rmit.bdm.clustering.mtree.DistanceFunction)
 		 */
 		@Override
 		public Pair<Set<DATA>> process(

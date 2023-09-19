@@ -1,15 +1,27 @@
 package au.edu.rmit.bdm.Torch.queryEngine.query;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.Torch;
 import au.edu.rmit.bdm.Torch.base.db.TrajEdgeRepresentationPool;
 import au.edu.rmit.bdm.Torch.base.db.TrajVertexRepresentationPool;
 import au.edu.rmit.bdm.Torch.base.helper.GeoUtil;
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.TimeInterval;
 import au.edu.rmit.bdm.Torch.queryEngine.model.TorchDate;
+import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.query.Transaction;
+import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.query.operations.utils.SelectResult;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +29,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+
+import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class TrajectoryResolver {
 
@@ -38,10 +52,11 @@ public class TrajectoryResolver {
         this.resolveAll = resolveAll;
     }
 
-    TrajectoryResolver(boolean resolveAll, boolean isNantong, FileSetting setting){
+    TrajectoryResolver(boolean resolveAll, boolean isNantong, FileSetting setting)  {
         this.resolveAll = resolveAll;
         this.setting = setting;
         this.isNantong = isNantong;
+
         if (!isNantong) {
             trajectoryPool = new TrajEdgeRepresentationPool(false, setting);
             rawEdgeLookup = new HashMap<>();
@@ -56,21 +71,36 @@ public class TrajectoryResolver {
 
     }
 
-    private void loadVertexLookup() {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(setting.ID_VERTEX_LOOKUP));
-            String line;
-            while ((line = reader.readLine()) !=null){
-                String[] splits = line.split(";");
-                vertexLookup.put(Integer.parseInt(splits[0]), new Coordinate(Double.parseDouble(splits[1]), Double.parseDouble(splits[2])));
-            }
 
-        } catch (IOException e) {
-            logger.debug("cannot find/read file: " + setting.ID_VERTEX_LOOKUP );
+    //todo 这个位置修改读id_vertex
+    private void loadVertexLookup()  {
+        String idVertex = getFileNameWithoutExtension(setting.ID_VERTEX_LOOKUP);
+        PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(idVertex));
+        plainSelect.addSelectItems(new AllColumns());
+        EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+        plainSelect.setWhere(where);
+        SelectResult result = Transaction.getInstance().query(new Select().withSelectBody(plainSelect));
+
+        for (Tuple tuple:
+                result.getTpl().tuplelist) {
+            String[] splits = (String[]) tuple.tuple;
+            vertexLookup.put(Integer.parseInt(splits[1]), new Coordinate(Double.parseDouble(splits[2]), Double.parseDouble(splits[3])));
         }
+
+//        try {
+//            BufferedReader reader = new BufferedReader(new FileReader(setting.ID_VERTEX_LOOKUP));
+//            String line;
+//            while ((line = reader.readLine()) !=null){
+//                String[] splits = line.split(";");
+//                vertexLookup.put(Integer.parseInt(splits[0]), new Coordinate(Double.parseDouble(splits[1]), Double.parseDouble(splits[2])));
+//            }
+//
+//        } catch (IOException e) {
+//            logger.debug("cannot find/read file: " + setting.ID_VERTEX_LOOKUP );
+//        }
     }
 
-    QueryResult resolve (String queryType, List<String> trajIds, List<TrajEntry> rawQuery, Trajectory<TrajEntry> _mappedQuery) {
+    QueryResult resolve (String queryType, List<String> trajIds, List<TrajEntry> rawQuery, Trajectory<TrajEntry> _mappedQuery)  {
 
         List<TrajEntry> mappedQuery = _mappedQuery;
         if (!queryType.equals(Torch.QueryType.RangeQ))
@@ -139,7 +169,7 @@ public class TrajectoryResolver {
         return l;
     }
 
-    public List<Trajectory<TrajEntry>> resolveResult(int[] ids) {
+    public List<Trajectory<TrajEntry>> resolveResult(int[] ids)  {
         List<String> trajIds = new ArrayList<>(ids.length);
         for (int i : ids) trajIds.add(String.valueOf(i));
         return resolveRet(trajIds);
@@ -147,7 +177,7 @@ public class TrajectoryResolver {
 
 
 
-    private List<Trajectory<TrajEntry>> resolveRet(Collection<String> trajIds) {
+    private List<Trajectory<TrajEntry>> resolveRet(Collection<String> trajIds)  {
 
         List<Trajectory<TrajEntry>> ret = null;
 
@@ -221,56 +251,87 @@ public class TrajectoryResolver {
         return ret;
     }
 
-    private void loadRawEdgeLookupTable() {
+    private void loadRawEdgeLookupTable()  {
 
         logger.info("load raw edge lookup table");
 
-        try(FileReader fr = new FileReader(setting.ID_EDGE_RAW);
-            BufferedReader reader = new BufferedReader(fr)){
-            String line;
-            String[] tokens;
-            int id;
-            String lats;
-            String lngs;
-            while((line = reader.readLine())!=null){
-                tokens = line.split(";");
-                id = Integer.parseInt(tokens[0]);
-                lats = tokens[1];
-                lngs = tokens[2];
+        String idEdgeRaw = getFileNameWithoutExtension(setting.ID_EDGE_RAW);
+        PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(idEdgeRaw));
+        plainSelect.addSelectItems(new AllColumns());
+        EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+        plainSelect.setWhere(where);
+        SelectResult result = Transaction.getInstance().query(new Select().withSelectBody(plainSelect));
 
-                rawEdgeLookup.put(id, new String[]{lats, lngs});
-            }
+        for (Tuple tuple :
+                result.getTpl().tuplelist) {
+            String[] tokens = (String[]) tuple.tuple;
+            int id = Integer.parseInt(tokens[0]);
+            String lats = tokens[1];
+            String lngs = tokens[2];
 
-        }catch (IOException e){
-            throw new RuntimeException("some critical data is missing, system on exit...");
+            rawEdgeLookup.put(id, new String[]{lats, lngs});
         }
+
+//        try(FileReader fr = new FileReader(setting.ID_EDGE_RAW);
+//            BufferedReader reader = new BufferedReader(fr)){
+//            String line;
+//            String[] tokens;
+//            int id;
+//            String lats;
+//            String lngs;
+//            while((line = reader.readLine())!=null){
+//                tokens = line.split(";");
+//                id = Integer.parseInt(tokens[0]);
+//                lats = tokens[1];
+//                lngs = tokens[2];
+//
+//                rawEdgeLookup.put(id, new String[]{lats, lngs});
+//            }
+//
+//        }catch (IOException e){
+//            throw new RuntimeException("some critical data is missing, system on exit...");
+//        }
     }
 
-    private void loadTimeSpanLookupTable() {
+    //todo 这里改time partial的信息
+    private void loadTimeSpanLookupTable()  {
 
         logger.info("load time querySpan lookup table");
 
-        try(FileReader fr = new FileReader(setting.TRAJECTORY_START_END_TIME_PARTIAL);
-            BufferedReader reader = new BufferedReader(fr)){
-            String line;
-            String[] tokens;
-            String id;
-            String[] span;
-            String start;
-            String end;
-            while((line = reader.readLine())!=null){
-                tokens = line.split(Torch.SEPARATOR_2);
-                id= tokens[0];
-                span = tokens[1].split(" \\| ");
-                start = span[0];
-                end = span[1];
+        String time = getFileNameWithoutExtension(setting.TRAJECTORY_START_END_TIME_PARTIAL);
+        PlainSelect plainSelect = new PlainSelect().withFromItem(new Table(time));
+        plainSelect.addSelectItems(new AllColumns());
+        EqualsTo where = new EqualsTo(new Column().withColumnName("traj_name"), new StringValue(setting.TorchBase));
+        plainSelect.setWhere(where);
+        SelectResult result = Transaction.getInstance().query(new Select().withSelectBody(plainSelect));
 
-                timeSpanLookup.put(id, buildInterval(id, start, end));
-            }
-
-        }catch (IOException e){
-            throw new RuntimeException("some critical data is missing, system on exit...");
+        for (Tuple tuple :
+                result.getTpl().tuplelist) {
+            String[] c = (String[]) tuple.tuple;
+            timeSpanLookup.put(c[1], buildInterval(c[1], c[2], c[3]));
         }
+
+//        try(FileReader fr = new FileReader(setting.TRAJECTORY_START_END_TIME_PARTIAL);
+//            BufferedReader reader = new BufferedReader(fr)){
+//            String line;
+//            String[] tokens;
+//            String id;
+//            String[] span;
+//            String start;
+//            String end;
+//            while((line = reader.readLine())!=null){
+//                tokens = line.split(Torch.SEPARATOR_2);
+//                id= tokens[0];
+//                span = tokens[1].split(" \\| ");
+//                start = span[0];
+//                end = span[1];
+//
+//                timeSpanLookup.put(id, buildInterval(id, start, end));
+//            }
+//
+//        }catch (IOException e){
+//            throw new RuntimeException("some critical data is missing, system on exit...");
+//        }
 
     }
 

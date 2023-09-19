@@ -20,7 +20,6 @@ public class MemoryUsage {
 
     public static void printCurrentMemUsage(String location){
         if (!debug) return;
-
         long curUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
         long _memUsed = curUsedMem-memoryUsage;     //metric byte
         double memUsed = _memUsed/ 1024. / 1024.;       //metric mega byte

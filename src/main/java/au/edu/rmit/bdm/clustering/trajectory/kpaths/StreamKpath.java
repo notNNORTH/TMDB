@@ -167,7 +167,7 @@ public class StreamKpath extends Yinyang{
 				System.out.println("the new dataset size is "+dataset_new.size());
 				double nowTime = (System.nanoTime()-startTime)/1000000.0;// we can be faster by 5* speed as too limited data
 				if(cartime>nowTime/1000.0)
-					Thread.sleep((long) (cartime*1000-nowTime));//read the files by lines, and sleep until the time matches		
+					sleep((long) (cartime*1000-nowTime));//read the files by lines, and sleep until the time matches
 				System.out.println(iterationStops);
 				if(!dataEnough) {//to accumulate enough data for clustering					
 					if(cartime>=slidingwindow-1) {

@@ -20,30 +20,43 @@ import java.io.IOException;
 import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class Main {
-    public static void main(String[] args) throws TMDBException, JSQLParserException, IOException {
+    public static void main(String[] args) throws IOException {
+//        execute("CREATE CLASS id_vertex (name char,age int, salary int);");
+//        execute("select * from id_vertex limit 1;");
+//        execute("select * from trajectory_vertex limit 1;");
 //        execute("CREATE CLASS company (name char,age int, salary int);");
-//        execute("select * from traj;");
+//        execute("INSERT INTO company VALUES (aa,20,1000);");
+//        execute("INSERT INTO company VALUES (ab,30,1000);");
+//        execute("INSERT INTO company VALUES (ac,40,1000);");
+//        execute("create selectdeputy deputy as select * from company limit 1;");
 //        execute("select * from traj"+
 //                " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");
 //        execute(args[0]);
 //        transaction.test();
 //        transaction.test2();
-//        testTorch();
-        testTorch2();
+//        insertIntoTrajTable();
+        testMapMatching();
+//        testEngine();
+//        testTorch3();
     }
 
-    public static void testTorch() throws TMDBException, JSQLParserException, IOException {
+    public static void insertIntoTrajTable(){
         Transaction transaction = Transaction.getInstance();
-        transaction.test3();
+        transaction.insertIntoTrajTable();
         transaction.SaveAll();
     }
 
-    public static void testTorch2() throws TMDBException, JSQLParserException, IOException{
+    public static void testEngine() throws IOException {
         Transaction transaction = Transaction.getInstance();
-        transaction.test();
+        transaction.testEngine();
     }
 
-    public static SelectResult execute(String s) throws TMDBException, JSQLParserException, IOException {
+    public static void testMapMatching() {
+        Transaction transaction = Transaction.getInstance();
+        transaction.testMapMatching();
+    }
+
+    public static SelectResult execute(String s)  {
         Transaction transaction = Transaction.getInstance();
         Statement stmt = null;
         SelectResult selectResult = new SelectResult();

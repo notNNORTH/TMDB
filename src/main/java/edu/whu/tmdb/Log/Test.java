@@ -9,7 +9,7 @@ import edu.whu.tmdb.memory.Tuple;
 
 public class Test {
 
-//    public static void test1() throws IOException {
+//    public static void test1() {
 ////        LogTableItem[] redo_log;
 ////        LogManager logManager=new LogManager();
 ////        logManager.WriteLog("a", (byte) 0,"va");
@@ -149,7 +149,7 @@ public class Test {
     }
      **/
 
-    //public static void main(String[ ] args) throws IOException {
+    //public static void main(String[ ] args) {
 
    // }
 

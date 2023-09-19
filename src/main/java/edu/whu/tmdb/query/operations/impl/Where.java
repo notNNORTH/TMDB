@@ -6,6 +6,7 @@ import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
 import edu.whu.tmdb.memory.MemManager;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -63,7 +64,7 @@ public class Where {
         return res;
     }
 
-    private SelectResult function(Function expression, SelectResult selectResult) throws TMDBException {
+    private SelectResult function(Function expression, SelectResult selectResult)  {
         String name = expression.getName();
         switch(name.toLowerCase()){
             case "st_within": return range(expression,selectResult);
@@ -75,7 +76,7 @@ public class Where {
 
     }
 
-    private SelectResult topK(Function expression, SelectResult selectResult) {
+    private SelectResult topK(Function expression, SelectResult selectResult)  {
         List<Expression> expressions = expression.getParameters().getExpressions();
 
         List<Expression> list = ((Function) expressions.get(0)).getParameters().getExpressions();
@@ -142,7 +143,7 @@ public class Where {
         }
     }
 
-    private SelectResult range(Function expression, SelectResult selectResult) throws TMDBException {
+    private SelectResult range(Function expression, SelectResult selectResult) {
         List<Expression> expressions = expression.getParameters().getExpressions();
         Function searchWindow = (Function) expressions.get(0);
         List<Expression> swPara = searchWindow.getParameters().getExpressions();

@@ -1,9 +1,9 @@
 package au.edu.rmit.bdm.Torch.base.invertedIndex;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
-import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.base.Index;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
+import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import me.lemire.integercompression.IntCompressor;
 import me.lemire.integercompression.differential.IntegratedIntCompressor;
 import org.slf4j.Logger;
@@ -138,13 +138,16 @@ public abstract class InvertedIndex implements Index {
      public List<Pair> getPairs(int vertexId){
 
         CompressedPairs compressedPairs = compressedIndex.get(vertexId);
-        int[] trajIds = sortedIntCodec.uncompress(compressedPairs.trajIds);
-        int[] posis = unsortedIntCodec.uncompress(compressedPairs.posis);
-        List<Pair> pairs = new LinkedList<>();
-        for (int i = 0; i < trajIds.length; i++){
-            pairs.add(new Pair(trajIds[i], posis[i]));
+        if(compressedPairs!=null) {
+            int[] trajIds = sortedIntCodec.uncompress(compressedPairs.trajIds);
+            int[] posis = unsortedIntCodec.uncompress(compressedPairs.posis);
+            List<Pair> pairs = new LinkedList<>();
+            for (int i = 0; i < trajIds.length; i++) {
+                pairs.add(new Pair(trajIds[i], posis[i]));
+            }
+            return pairs;
         }
-        return pairs;
+        return null;
     }
 
     public List<String> getKeys(int vertexId){

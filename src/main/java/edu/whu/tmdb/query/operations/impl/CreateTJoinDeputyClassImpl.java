@@ -1,6 +1,7 @@
 package edu.whu.tmdb.query.operations.impl;
 
 import edu.whu.tmdb.memory.MemManager;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass;
@@ -23,7 +24,7 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
 
 
 
-    public CreateTJoinDeputyClassImpl() throws IOException {
+    public CreateTJoinDeputyClassImpl() {
         super();
         this.memConnect=MemConnect.getInstance(MemManager.getInstance());
     }

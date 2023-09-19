@@ -109,7 +109,7 @@ public class LogWriter {
     }
 
     //给定参数key、op、value，将日志持久化到磁盘
-    public void Write(String k,Byte op,String v) throws IOException {
+    public void Write(String k,Byte op,String v) {
         LogTableItem LogItem = new LogTableItem(currentId,op,k,v);     //把语句传入logItem，这个时候都是未完成
         LogItem.offset=currentOffset;
         currentId++;

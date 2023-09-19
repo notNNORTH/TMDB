@@ -246,7 +246,7 @@ public class MTree<DATA> {
 	}
 	
 	
-	public class KMeansAssignment extends Yinyang {
+	public class KMeansAssignment extends Yinyang{
 		ArrayList<Set<IndexItem>> candiList;
 		private PriorityQueue<ItemWithDistances<Node>> pendingQueue = new PriorityQueue<ItemWithDistances<Node>>();
 		public KMeansAssignment(String datapath) {
