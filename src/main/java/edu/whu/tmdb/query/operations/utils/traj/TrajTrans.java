@@ -7,8 +7,8 @@ import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
 
 
 public class TrajTrans {

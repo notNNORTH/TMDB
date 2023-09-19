@@ -1,4 +1,4 @@
-package edu.whu.tmdb.memory;
+package edu.whu.tmdb.storage.memory;
 
 
 import java.io.Serializable;

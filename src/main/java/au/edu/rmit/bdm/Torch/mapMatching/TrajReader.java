@@ -3,7 +3,7 @@ package au.edu.rmit.bdm.Torch.mapMatching;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.TrajNode;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
-import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.storage.memory.Tuple;
 import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.SelectResult;

@@ -9,17 +9,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSON;
-import edu.whu.tmdb.memory.MemManager;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.SystemTable.BiPointerTable;
-import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
-import edu.whu.tmdb.memory.SystemTable.ClassTable;
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
-import edu.whu.tmdb.memory.SystemTable.DeputyTable;
-import edu.whu.tmdb.memory.SystemTable.ObjectTable;
-import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
-import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.storage.memory.MemManager;
+import edu.whu.tmdb.storage.memory.SystemTable.*;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.utils.K;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +69,7 @@ public class MemConnect {
         rwLock.readLock().lock(); // 获取读锁
         Tuple t = null;
         try {
-            Object searchResult = this.mem.search("t" + id);
+            Object searchResult = this.mem.search(new K("t" + id));
             if (searchResult == null)
                 t= null;
             if (searchResult instanceof Tuple)

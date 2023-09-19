@@ -1,6 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -8,7 +8,7 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ClassTableItem;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.Create;
 import edu.whu.tmdb.query.operations.utils.MemConnect;

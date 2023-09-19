@@ -1,7 +1,12 @@
-package edu.whu.tmdb.level;
+package edu.whu.tmdb.storage.level;
+
+
+import edu.whu.tmdb.storage.utils.Constant;
+import edu.whu.tmdb.storage.utils.K;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class BloomFilter {
 
@@ -21,18 +26,27 @@ public class BloomFilter {
         return byteCount;
     }
 
+    public int getItemCount() {
+        return itemCount;
+    }
+
+
     // constructor 1 通过bit数组位数初始化
     public BloomFilter(int itemCount) {
+        // 限制最多允许1亿条数据
+        if(itemCount > 10000000)
+            itemCount = 10000000;
         this.itemCount = itemCount;
         this.bitCount = 20 * itemCount;
         this.byteCount = bitCount / 8 + 1;
         this.byteArray = new byte[byteCount];
+        return;
     }
 
     // constructor 2 通过文件名读文件进行初始化
     // 前4字节记录itemCount，剩余部分记录byteArray
-    public BloomFilter(String fileName, long offset, int length){
-        byte[] buffer = Constant.readBytesFromFile(fileName, offset, length);
+    public BloomFilter(RandomAccessFile raf, long offset, int length){
+        byte[] buffer = Constant.readBytesFromFile(raf, offset, length);
         // 前4字节记录itemCount
         this.itemCount = Constant.BYTES_TO_INT(buffer, 0 , 4);
         this.bitCount = 20 * itemCount;
@@ -47,7 +61,7 @@ public class BloomFilter {
      * 写入数据
      * @param key
      */
-    public void add(String key) {
+    public void add(K key) {
         int first = hashcode_1(key) % bitCount;
         int second = hashcode_2(key) % bitCount;
         int third = hashcode_3(key) % bitCount;
@@ -73,7 +87,7 @@ public class BloomFilter {
      * @param key
      * @return
      */
-    public boolean check(String key) {
+    public boolean check(K key) {
         int first = hashcode_1(key) % bitCount;
         int second = hashcode_2(key) % bitCount;
         int third = hashcode_3(key) % bitCount;
@@ -109,26 +123,28 @@ public class BloomFilter {
      * @param key
      * @return
      */
-    private int hashcode_1(String key) {
+    private int hashcode_1(K key) {
         int hash = 0;
         int i;
-        for (i = 0; i < key.length(); ++i) {
-            hash = 33 * hash + key.charAt(i);
+        byte[] bytes = key.serialize();
+        for (i = 0; i < bytes.length; ++i) {
+            hash = 33 * hash + bytes[i];
         }
         return Math.abs(hash);
     }
 
 
     /**
-     * hash 算法2
-     * @param data
+     * hash 算法2  Long原生hash
+     * @param key
      * @return
      */
-    private int hashcode_2(String data) {
+    private int hashcode_2(K key) {
         final int p = 16777619;
         int hash = (int) 2166136261L;
-        for (int i = 0; i < data.length(); i++) {
-            hash = (hash ^ data.charAt(i)) * p;
+        byte[] bytes = key.serialize();
+        for (int i = 0; i < bytes.length; i++) {
+            hash = (hash ^ bytes[i]) * p;
         }
         hash += hash << 13;
         hash ^= hash >> 7;
@@ -144,10 +160,11 @@ public class BloomFilter {
      * @param key
      * @return
      */
-    private int hashcode_3(String key) {
+    private int hashcode_3(K key) {
         int hash, i;
-        for (hash = 0, i = 0; i < key.length(); ++i) {
-            hash += key.charAt(i);
+        byte[] bytes = key.serialize();
+        for (hash = 0, i = 0; i < bytes.length; ++i) {
+            hash += bytes[i];
             hash += (hash << 10);
             hash ^= (hash >> 6);
         }

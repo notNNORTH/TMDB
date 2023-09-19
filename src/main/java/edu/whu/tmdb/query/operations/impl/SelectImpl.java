@@ -1,6 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.TupleList;
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
+import edu.whu.tmdb.storage.memory.SystemTable.ClassTableItem;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.Formula;
 import edu.whu.tmdb.query.operations.utils.MemConnect;

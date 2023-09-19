@@ -1,8 +1,13 @@
-package edu.whu.tmdb.level;
+package edu.whu.tmdb.storage.level;
 
+
+import edu.whu.tmdb.storage.utils.Constant;
+import edu.whu.tmdb.storage.utils.K;
+import edu.whu.tmdb.storage.utils.V;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -11,12 +16,9 @@ import java.util.Queue;
 
 /**
  * 一颗B树的简单实现。
- *
- * @param <K> - 键类型
- * @param <V> - 值类型
  */
 @SuppressWarnings("all")
-public class BTree<K, V> {
+public class BTree {
     //private static Log logger = LogFactory.getLog(BTree.class);
 
     /**
@@ -24,15 +26,12 @@ public class BTree<K, V> {
      * <p/>
      * B树的节点中存储的是键值对。
      * 通过键访问值。
-     *
-     * @param <K> - 键类型
-     * @param <V> - 值类型
      */
-    private static class Entry<K, V> {
+    private static class Entry {
         private K key;
-        private V value;
+        private long value;
 
-        public Entry(K k, V v) {
+        public Entry(K k, long v) {
             this.key = k;
             this.value = v;
         }
@@ -41,11 +40,11 @@ public class BTree<K, V> {
             return key;
         }
 
-        public V getValue() {
+        public long getValue() {
             return value;
         }
 
-        public void setValue(V value) {
+        public void setValue(long value) {
             this.value = value;
         }
 
@@ -65,14 +64,14 @@ public class BTree<K, V> {
     private static class SearchResult<V> {
         private boolean exist;
         private int index;
-        private V value;
+        private long value;
 
         public SearchResult(boolean exist, int index) {
             this.exist = exist;
             this.index = index;
         }
 
-        public SearchResult(boolean exist, int index, V value) {
+        public SearchResult(boolean exist, int index, long value) {
             this(exist, index);
             this.value = value;
         }
@@ -85,7 +84,7 @@ public class BTree<K, V> {
             return index;
         }
 
-        public V getValue() {
+        public long getValue() {
             return value;
         }
     }
@@ -94,15 +93,15 @@ public class BTree<K, V> {
      * B树中的节点。
      * <p>
      */
-    private static class BTreeNode<K, V> {
+    private static class BTreeNode {
         /**
          * 节点的项，按键非降序存放
          */
-        private List<Entry<K, V>> entrys;
+        private List<Entry> entrys;
         /**
          * 内节点的子节点
          */
-        private List<BTreeNode<K, V>> children;
+        private List<BTreeNode> children;
         /**
          * 是否为叶子节点
          */
@@ -116,8 +115,8 @@ public class BTree<K, V> {
         private long offset;
 
         private BTreeNode() {
-            entrys = new ArrayList<Entry<K, V>>();
-            children = new ArrayList<BTreeNode<K, V>>();
+            entrys = new ArrayList<Entry>();
+            children = new ArrayList<BTreeNode>();
             leaf = false;
         }
 
@@ -131,26 +130,26 @@ public class BTree<K, V> {
         // type       int, 0表示非叶子节点，1表示叶子节点
         // k-v        首先用一个int表示有多少个键值对，k长度在Constant文件中有限制，v为long
         // children   type=1时不存在。首先用一个int表示有多少个子节点，每个子节点用一个long记录偏移
-        public BTreeNode(String fileName, long offset){
-            entrys = new ArrayList<Entry<K, V>>();
-            children = new ArrayList<BTreeNode<K, V>>();
+        public BTreeNode(RandomAccessFile raf, long offset){
+            entrys = new ArrayList<Entry>();
+            children = new ArrayList<BTreeNode>();
 
             // 首先读4字节判断节点的type
-            int type = Constant.BYTES_TO_INT(Constant.readBytesFromFile(fileName, offset, 4), 0, 4);
+            int type = Constant.BYTES_TO_INT(Constant.readBytesFromFile(raf, offset, 4), 0, 4);
             offset += 4;
 
             // 叶子节点
             if(type == 1){
                 leaf = true;
                 // 读4字节即一个int，得到有多少个entry
-                int entryCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(fileName, offset, 4), 0, 4);
+                int entryCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(raf, offset, 4), 0, 4);
                 offset += 4;
                 // 每个Entry即每个k-v占用的字节数
                 int singleEntryLength = Constant.MAX_KEY_LENGTH + Long.BYTES;
                 // 总占用字节数
                 int totalLength = entryCount * singleEntryLength;
                 // 读取entryCount个Entry
-                byte[] buffer = Constant.readBytesFromFile(fileName, offset, totalLength);
+                byte[] buffer = Constant.readBytesFromFile(raf, offset, totalLength);
                 offset += totalLength;
                 // 构造entryCount个Entry
                 for(int i=0; i<entryCount; i++){
@@ -158,13 +157,13 @@ public class BTree<K, V> {
                     // K
                     b = new byte[Constant.MAX_KEY_LENGTH];
                     System.arraycopy(buffer, singleEntryLength * i, b, 0, Constant.MAX_KEY_LENGTH);
-                    K k = (K) Constant.BYTES_TO_KEY(b);
+                    K k = new K(b);
                     // V
                     b = new byte[Long.BYTES];
                     System.arraycopy(buffer, singleEntryLength * i + Constant.MAX_KEY_LENGTH, b, 0, Long.BYTES);
                     long v = Constant.BYTES_TO_LONG(b);
                     // 添加entry
-                    entrys.add((Entry<K, V>) new Entry<String, Long>((String) k, v));
+                    entrys.add((Entry) new Entry(k, v));
                 }
                 return;
             }
@@ -176,19 +175,19 @@ public class BTree<K, V> {
                 // 1. 计算子节点所在的偏移
                 long entryStartOffset = offset; // 记录Entry开始的offset
                 // 读4字节即一个int，得到有多少个entry
-                int entryCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(fileName, entryStartOffset, 4), 0, 4);
+                int entryCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(raf, entryStartOffset, 4), 0, 4);
                 // 每个Entry即每个k-v占用的字节数
                 int singleEntryLength = Constant.MAX_KEY_LENGTH + Long.BYTES;
                 // Entry总占用字节数
                 int totalEntryLength = entryCount * singleEntryLength;
                 long childrenStartOffset = offset + 4 + totalEntryLength; // 记录children开始的offset
                 // 读4字节即一个int，得到有多少个child
-                int childrenCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(fileName, childrenStartOffset, 4), 0, 4);
+                int childrenCount = Constant.BYTES_TO_INT(Constant.readBytesFromFile(raf, childrenStartOffset, 4), 0, 4);
                 // 每个child占用一个long 8字节，共占用
                 int totalChildrenLength = childrenCount * Long.BYTES;
 
                 // 2.读取childrenCount个child
-                byte[] buffer = Constant.readBytesFromFile(fileName, childrenStartOffset + 4, totalChildrenLength);
+                byte[] buffer = Constant.readBytesFromFile(raf, childrenStartOffset + 4, totalChildrenLength);
                 // 递归构造childrenCount个child
                 for(int i=0; i<childrenCount; i++){
                     // 读取long为孩子节点的地址
@@ -196,24 +195,24 @@ public class BTree<K, V> {
                     System.arraycopy(buffer, Long.BYTES * i, b, 0, Long.BYTES);
                     long address = Constant.BYTES_TO_LONG(b);
                     // 递归
-                    children.add(new BTreeNode<>(fileName, address));
+                    children.add(new BTreeNode(raf, address));
                 }
 
                 // 读取entryCount个Entry
-                buffer = Constant.readBytesFromFile(fileName, entryStartOffset + 4, totalEntryLength);
+                buffer = Constant.readBytesFromFile(raf, entryStartOffset + 4, totalEntryLength);
                 // 构造entryCount个Entry
                 for(int i=0; i<entryCount; i++){
                     byte[] b;
                     // K
                     b = new byte[Constant.MAX_KEY_LENGTH];
                     System.arraycopy(buffer, singleEntryLength * i, b, 0, Constant.MAX_KEY_LENGTH);
-                    String k = Constant.BYTES_TO_KEY(b);
+                    K k = new K(b);
                     // V
                     b = new byte[Long.BYTES];
                     System.arraycopy(buffer, singleEntryLength * i + Constant.MAX_KEY_LENGTH, b, 0, Long.BYTES);
                     long v = Constant.BYTES_TO_LONG(b);
                     // 添加entry
-                    entrys.add((Entry<K, V>) new Entry<String, Long>(k, v));
+                    entrys.add(new Entry(k, v));
                 }
                 return;
             }
@@ -223,7 +222,7 @@ public class BTree<K, V> {
         // 可以参考二叉搜索树的策略。
         // key为目标key
         // record记录该层结点的返回值，如果子节点中没有找到更符合条件（即更大）的key时，返回该record
-        private V leftSearch(K key, Entry<K, V> record){
+        private long leftSearch(K key, Entry record){
 
             // 遍历当前结点的entry，找到比他小的最大值
             int n = this.entrys.size();
@@ -293,13 +292,13 @@ public class BTree<K, V> {
          * @param key - 给定的键值
          * @return - 查找结果
          */
-        public SearchResult<V> searchKey(K key) {
+        public SearchResult searchKey(K key) {
             int low = 0;
             int high = entrys.size() - 1;
             int mid = 0;
             while (low <= high) {
                 mid = (low + high) / 2; // 先这么写吧，BTree实现中，l+h不可能溢出
-                Entry<K, V> entry = entrys.get(mid);
+                Entry entry = entrys.get(mid);
                 if (compare(entry.getKey(), key) == 0) // entrys.get(mid).getKey() == key
                     break;
                 else if (compare(entry.getKey(), key) > 0) // entrys.get(mid).getKey() > key
@@ -309,7 +308,7 @@ public class BTree<K, V> {
             }
             boolean result = false;
             int index = 0;
-            V value = null;
+            long value = 0;
             if (low <= high) // 说明查找成功
             {
                 result = true;
@@ -329,7 +328,7 @@ public class BTree<K, V> {
          *
          * @param entry - 给定的项
          */
-        public void addEntry(Entry<K, V> entry) {
+        public void addEntry(Entry entry) {
             entrys.add(entry);
         }
 
@@ -340,7 +339,7 @@ public class BTree<K, V> {
          *
          * @param index - 给定的索引
          */
-        public Entry<K, V> removeEntry(int index) {
+        public Entry removeEntry(int index) {
             return entrys.remove(index);
         }
 
@@ -352,7 +351,7 @@ public class BTree<K, V> {
          * @param index - 给定的索引
          * @return 节点中给定索引的项
          */
-        public Entry<K, V> entryAt(int index) {
+        public Entry entryAt(int index) {
             return entrys.get(index);
         }
 
@@ -363,15 +362,15 @@ public class BTree<K, V> {
          * @param entry - 给定的项
          * @return null，如果节点之前不存在给定的键，否则返回给定键之前关联的值
          */
-        public V putEntry(Entry<K, V> entry) {
+        public long putEntry(Entry entry) {
             SearchResult<V> result = searchKey(entry.getKey());
             if (result.isExist()) {
-                V oldValue = entrys.get(result.getIndex()).getValue();
+                long oldValue = entrys.get(result.getIndex()).getValue();
                 entrys.get(result.getIndex()).setValue(entry.getValue());
                 return oldValue;
             } else {
                 insertEntry(entry, result.getIndex());
-                return null;
+                return 0;
             }
         }
 
@@ -386,7 +385,7 @@ public class BTree<K, V> {
          * @param entry - 给定的键值
          * @return true，如果插入成功，false，如果插入失败
          */
-        public boolean insertEntry(Entry<K, V> entry) {
+        public boolean insertEntry(Entry entry) {
             SearchResult<V> result = searchKey(entry.getKey());
             if (result.isExist())
                 return false;
@@ -403,12 +402,12 @@ public class BTree<K, V> {
          * @param entry - 给定的键值
          * @param index - 给定的索引
          */
-        public void insertEntry(Entry<K, V> entry, int index) {
+        public void insertEntry(Entry entry, int index) {
             /*
              * 通过新建一个ArrayList来实现插入真的很恶心，先这样吧
              * 要是有类似C中的reallocate就好了。
              */
-            List<Entry<K, V>> newEntrys = new ArrayList<Entry<K, V>>();
+            List<Entry> newEntrys = new ArrayList<Entry>();
             int i = 0;
             // index = 0或者index = keys.size()都没有问题
             for (; i < index; ++i)
@@ -428,7 +427,7 @@ public class BTree<K, V> {
          * @param index - 给定的索引
          * @return 给定索引对应的子节点
          */
-        public BTreeNode<K, V> childAt(int index) {
+        public BTreeNode childAt(int index) {
             if (isLeaf())
                 throw new UnsupportedOperationException("Leaf node doesn't have children.");
             return children.get(index);
@@ -439,7 +438,7 @@ public class BTree<K, V> {
          *
          * @param child - 给定的子节点
          */
-        public void addChild(BTreeNode<K, V> child) {
+        public void addChild(BTreeNode child) {
             children.add(child);
         }
 
@@ -461,8 +460,8 @@ public class BTree<K, V> {
          * @param child - 给定的子节点
          * @param index - 子节点带插入的位置
          */
-        public void insertChild(BTreeNode<K, V> child, int index) {
-            List<BTreeNode<K, V>> newChildren = new ArrayList<BTreeNode<K, V>>();
+        public void insertChild(BTreeNode child, int index) {
+            List<BTreeNode> newChildren = new ArrayList<BTreeNode>();
             int i = 0;
             for (; i < index; ++i)
                 newChildren.add(children.get(i));
@@ -498,7 +497,7 @@ public class BTree<K, V> {
                 // 依次写入各Entry
                 for(Entry entry : entrys){
                     // 写key
-                    outputStream.write(Constant.KEY_TO_BYTES(entry.key.toString()));
+                    outputStream.write(entry.key.serialize());
                     // 写value，其实是个记录offset的long
                     outputStream.write(Constant.LONG_TO_BYTES((long)entry.value));
                 }
@@ -526,7 +525,7 @@ public class BTree<K, V> {
                 // 依次写入各Entry
                 for(Entry entry : entrys){
                     // 写key
-                    outputStream.write(Constant.KEY_TO_BYTES(entry.key.toString()));
+                    outputStream.write(entry.key.serialize());
                     // 写value，其实是个记录offset的long
                     outputStream.write(Constant.LONG_TO_BYTES((long)entry.value));
                 }
@@ -548,7 +547,7 @@ public class BTree<K, V> {
     /**
      * B树的根节点
      */
-    private BTreeNode<K, V> root;
+    private BTreeNode root;
     /**
      * 根据B树的定义，B树的每个非根节点的关键字数n满足(t - 1) <= n <= (2t - 1)
      */
@@ -570,7 +569,7 @@ public class BTree<K, V> {
      * 构造一颗B树，键值采用采用自然排序方式
      */
     public BTree() {
-        root = new BTreeNode<K, V>();
+        root = new BTreeNode();
         root.setLeaf(true);
     }
 
@@ -582,8 +581,8 @@ public class BTree<K, V> {
     }
 
     // 构造函数，从文件fileName的offset偏移处读取root根节点，并解析构造B-Tree
-    public BTree(String fileName, long offset){
-        root = new BTreeNode<K, V>(fileName, offset);
+    public BTree(RandomAccessFile raf, long offset){
+        root = new BTreeNode(raf, offset);
     }
 
     /**
@@ -592,7 +591,7 @@ public class BTree<K, V> {
      * @param kComparator - 键值的比较函数对象
      */
     public BTree(Comparator<K> kComparator) {
-        root = new BTreeNode<K, V>(kComparator);
+        root = new BTreeNode(kComparator);
         root.setLeaf(true);
         this.kComparator = kComparator;
     }
@@ -615,7 +614,7 @@ public class BTree<K, V> {
      * @param key - 给定的键值
      * @return 键关联的值，如果存在，否则null
      */
-    public V search(K key) {
+    public long search(K key) {
         return search(root, key);
     }
 
@@ -627,13 +626,13 @@ public class BTree<K, V> {
      * @param key  - 给定的键值
      * @return 键关联的值，如果存在，否则null
      */
-    private V search(BTreeNode<K, V> node, K key) {
+    private long search(BTreeNode node, K key) {
         SearchResult<V> result = node.searchKey(key);
         if (result.isExist())
             return result.getValue();
         else {
             if (node.isLeaf())
-                return null;
+                return 0;
             else
                 return search(node.childAt(result.getIndex()), key);
         }
@@ -648,16 +647,16 @@ public class BTree<K, V> {
      * @param childNode  - 满子节点
      * @param index      - 满子节点在父节点中的索引
      */
-    private void splitNode(BTreeNode<K, V> parentNode, BTreeNode<K, V> childNode, int index) {
+    private void splitNode(BTreeNode parentNode, BTreeNode childNode, int index) {
         assert childNode.size() == maxKeySize;
 
-        BTreeNode<K, V> siblingNode = new BTreeNode<K, V>(kComparator);
+        BTreeNode siblingNode = new BTreeNode(kComparator);
         siblingNode.setLeaf(childNode.isLeaf());
         // 将满子节点中索引为[t, 2t - 2]的(t - 1)个项插入新的节点中
         for (int i = 0; i < minKeySize; ++i)
             siblingNode.addEntry(childNode.entryAt(t + i));
         // 提取满子节点中的中间项，其索引为(t - 1)
-        Entry<K, V> entry = childNode.entryAt(t - 1);
+        Entry entry = childNode.entryAt(t - 1);
         // 删除满子节点中索引为[t - 1, 2t - 2]的t个项
         for (int i = maxKeySize - 1; i >= t - 1; --i)
             childNode.removeEntry(i);
@@ -683,7 +682,7 @@ public class BTree<K, V> {
      * @param entry - 给定的项
      * @return true，如果B树中不存在给定的项，否则false
      */
-    private boolean insertNotFull(BTreeNode<K, V> node, Entry<K, V> entry) {
+    private boolean insertNotFull(BTreeNode node, Entry entry) {
         assert node.size() < maxKeySize;
 
         if (node.isLeaf()) // 如果是叶子节点，直接插入
@@ -696,7 +695,7 @@ public class BTree<K, V> {
             // 如果存在，则直接返回失败
             if (result.isExist())
                 return false;
-            BTreeNode<K, V> childNode = node.childAt(result.getIndex());
+            BTreeNode childNode = node.childAt(result.getIndex());
             if (childNode.size() == 2 * t - 1) // 如果子节点是满节点
             {
                 // 则先分裂
@@ -718,16 +717,16 @@ public class BTree<K, V> {
      * @param value                     - 值
      * @return true，如果B树中不存在给定的项，否则false
      */
-    public boolean insert(K key, V value) {
+    public boolean insert(K key, long value) {
         if (root.size() == maxKeySize) // 如果根节点满了，则B树长高
         {
-            BTreeNode<K, V> newRoot = new BTreeNode<K, V>(kComparator);
+            BTreeNode newRoot = new BTreeNode(kComparator);
             newRoot.setLeaf(false);
             newRoot.addChild(root);
             splitNode(newRoot, root, 0);
             root = newRoot;
         }
-        return insertNotFull(root, new Entry<K, V>(key, value));
+        return insertNotFull(root, new Entry(key, value));
     }
 
     /**
@@ -738,7 +737,7 @@ public class BTree<K, V> {
      * @param entry - 给定的项
      * @return true，如果B树中不存在给定的项，否则false
      */
-    private V putNotFull(BTreeNode<K, V> node, Entry<K, V> entry) {
+    private long putNotFull(BTreeNode node, Entry entry) {
         assert node.size() < maxKeySize;
 
         if (node.isLeaf()) // 如果是叶子节点，直接插入
@@ -751,7 +750,7 @@ public class BTree<K, V> {
             // 如果存在，则更新
             if (result.isExist())
                 return node.putEntry(entry);
-            BTreeNode<K, V> childNode = node.childAt(result.getIndex());
+            BTreeNode childNode = node.childAt(result.getIndex());
             if (childNode.size() == 2 * t - 1) // 如果子节点是满节点
             {
                 // 则先分裂
@@ -774,16 +773,16 @@ public class BTree<K, V> {
      * @param value - 值
      * @return 如果B树中存在给定的键，则返回之前的值，否则null
      */
-    public V put(K key, V value) {
+    public long put(K key, long value) {
         if (root.size() == maxKeySize) // 如果根节点满了，则B树长高
         {
-            BTreeNode<K, V> newRoot = new BTreeNode<K, V>(kComparator);
+            BTreeNode newRoot = new BTreeNode(kComparator);
             newRoot.setLeaf(false);
             newRoot.addChild(root);
             splitNode(newRoot, root, 0);
             root = newRoot;
         }
-        return putNotFull(root, new Entry<K, V>(key, value));
+        return putNotFull(root, new Entry(key, value));
     }
 
     /**
@@ -792,7 +791,7 @@ public class BTree<K, V> {
      * @param key - 给定的键
      * @return 如果B树中存在给定键关联的项，则返回删除的项，否则null
      */
-    public Entry<K, V> delete(K key) {
+    public Entry delete(K key) {
         return delete(root, key);
     }
 
@@ -805,7 +804,7 @@ public class BTree<K, V> {
      * @param key  - 给定的键
      * @return 如果B树中存在给定键关联的项，则返回删除的项，否则null
      */
-    private Entry<K, V> delete(BTreeNode<K, V> node, K key) {
+    private Entry delete(BTreeNode node, K key) {
         // 该过程需要保证，对非根节点执行删除操作时，其关键字个数至少为t。
         assert node.size() >= t || node == root;
 
@@ -820,7 +819,7 @@ public class BTree<K, V> {
                 return node.removeEntry(result.getIndex());
             else {
                 // 2.a 如果节点node中前于key的子节点包含至少t个项
-                BTreeNode<K, V> leftChildNode = node.childAt(result.getIndex());
+                BTreeNode leftChildNode = node.childAt(result.getIndex());
                 if (leftChildNode.size() >= t) {
                     // 使用leftChildNode中的最后一个项代替node中需要删除的项
                     node.removeEntry(result.getIndex());
@@ -829,7 +828,7 @@ public class BTree<K, V> {
                     return delete(leftChildNode, leftChildNode.entryAt(leftChildNode.size() - 1).getKey());
                 } else {
                     // 2.b 如果节点node中后于key的子节点包含至少t个关键字
-                    BTreeNode<K, V> rightChildNode = node.childAt(result.getIndex() + 1);
+                    BTreeNode rightChildNode = node.childAt(result.getIndex() + 1);
                     if (rightChildNode.size() >= t) {
                         // 使用rightChildNode中的第一个项代替node中需要删除的项
                         node.removeEntry(result.getIndex());
@@ -838,7 +837,7 @@ public class BTree<K, V> {
                         return delete(rightChildNode, rightChildNode.entryAt(0).getKey());
                     } else // 2.c 前于key和后于key的子节点都只包含t-1个项
                     {
-                        Entry<K, V> deletedEntry = node.removeEntry(result.getIndex());
+                        Entry deletedEntry = node.removeEntry(result.getIndex());
                         node.removeChild(result.getIndex() + 1);
                         // 将node中与key关联的项和rightChildNode中的项合并进leftChildNode
                         leftChildNode.addEntry(deletedEntry);
@@ -863,13 +862,13 @@ public class BTree<K, V> {
                 //logger.info("The key: " + key + " isn't in this BTree.");
                 return null;
             }
-            BTreeNode<K, V> childNode = node.childAt(result.getIndex());
+            BTreeNode childNode = node.childAt(result.getIndex());
             if (childNode.size() >= t) // // 如果子节点有不少于t个项，则递归删除
                 return delete(childNode, key);
             else // 3
             {
                 // 先查找右边的兄弟节点
-                BTreeNode<K, V> siblingNode = null;
+                BTreeNode siblingNode = null;
                 int siblingIndex = -1;
                 if (result.getIndex() < node.size()) // 存在右兄弟节点
                 {
@@ -919,7 +918,7 @@ public class BTree<K, V> {
                 {
                     if (result.getIndex() < node.size()) // 存在右兄弟，直接在后面追加
                     {
-                        BTreeNode<K, V> rightSiblingNode = node.childAt(result.getIndex() + 1);
+                        BTreeNode rightSiblingNode = node.childAt(result.getIndex() + 1);
                         childNode.addEntry(node.entryAt(result.getIndex()));
                         node.removeEntry(result.getIndex());
                         node.removeChild(result.getIndex() + 1);
@@ -931,7 +930,7 @@ public class BTree<K, V> {
                         }
                     } else // 存在左节点，在前面插入
                     {
-                        BTreeNode<K, V> leftSiblingNode = node.childAt(result.getIndex() - 1);
+                        BTreeNode leftSiblingNode = node.childAt(result.getIndex() - 1);
                         childNode.insertEntry(node.entryAt(result.getIndex() - 1), 0);
                         node.removeEntry(result.getIndex() - 1);
                         node.removeChild(result.getIndex() - 1);
@@ -955,10 +954,10 @@ public class BTree<K, V> {
      * 一个简单的层次遍历B树实现，用于输出B树。
      */
     public void output() {
-        Queue<BTreeNode<K, V>> queue = new LinkedList<BTreeNode<K, V>>();
+        Queue<BTreeNode> queue = new LinkedList<BTreeNode>();
         queue.offer(root);
         while (!queue.isEmpty()) {
-            BTreeNode<K, V> node = queue.poll();
+            BTreeNode node = queue.poll();
             for (int i = 0; i < node.size(); ++i)
                 System.out.print(node.entryAt(i) + " ");
             System.out.println();
@@ -996,10 +995,10 @@ public class BTree<K, V> {
     }
 
     // 查询比key小的最大key对应的value
-    public V leftSearch(K key){
+    public long leftSearch(K key){
         // 如果key比最大key还大，直接返回null
         if(compare(key, getMaxKey()) > 0)
-            return null;
+            return 0;
         return root.leftSearch(key, null);
     }
 

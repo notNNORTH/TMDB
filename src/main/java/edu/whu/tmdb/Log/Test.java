@@ -1,11 +1,8 @@
 package edu.whu.tmdb.Log;
 
 
-import java.io.IOException;
-import java.util.List;
-
-import edu.whu.tmdb.memory.MemManager;
-import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.storage.memory.MemManager;
+import edu.whu.tmdb.storage.memory.Tuple;
 
 public class Test {
 

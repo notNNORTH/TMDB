@@ -1,4 +1,4 @@
-package edu.whu.tmdb.memory.SystemTable;
+package edu.whu.tmdb.storage.memory.SystemTable;
 
 import java.io.Serializable;
 import java.util.ArrayList;

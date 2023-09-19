@@ -1,16 +1,16 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.statement.Statement;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
-import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
-import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
-import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.SwitchingTableItem;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.Drop;
 import edu.whu.tmdb.query.operations.utils.MemConnect;

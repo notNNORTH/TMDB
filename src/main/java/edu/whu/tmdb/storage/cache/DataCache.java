@@ -1,11 +1,13 @@
-package edu.whu.tmdb.cache;
+package edu.whu.tmdb.storage.cache;
+
+
+import edu.whu.tmdb.storage.utils.K;
+import edu.whu.tmdb.storage.utils.V;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.TreeMap;
 
 // 以 k-v pair为粒度的缓存
 // 采用LRU替换策略
@@ -15,14 +17,14 @@ public class DataCache {
     private final int MAX_CACHED_DATA_SIZE = 100000;
 
     // 哈希表记录k-v
-    public Map<String, String> cachedData = new HashMap<>(MAX_CACHED_DATA_SIZE);
+    public TreeMap<K, V> cachedData = new TreeMap();
 
     // 链表记录插入key的顺序，从而实现LRU
-    private LinkedList<String> lruList = new LinkedList<>();
+    private LinkedList<K> lruList = new LinkedList<>();
 
 
-    public String get(String key){
-        String ret = this.cachedData.getOrDefault(key, null);
+    public V get(K key){
+        V ret = this.cachedData.getOrDefault(key, null);
 
         // 如果key在缓存中，则将key置顶
         if(ret != null){
@@ -32,11 +34,11 @@ public class DataCache {
         return ret;
     }
 
-    public void put(String key, String value){
+    public void put(K key, V value){
 
         // 如果容量已满，则需要移除最久未使用的
         if(this.cachedData.size() > this.MAX_CACHED_DATA_SIZE){
-            String oldKey = this.lruList.pop();
+            K oldKey = this.lruList.pop();
             this.cachedData.remove(oldKey);
         }
 

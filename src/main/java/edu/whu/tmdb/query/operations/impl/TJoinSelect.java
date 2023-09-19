@@ -5,12 +5,12 @@ import java.util.List;
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.query.operations.utils.traj.TrajTrans;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
 
 public class TJoinSelect extends SelectImpl{
 

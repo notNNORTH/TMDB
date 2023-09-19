@@ -1,14 +1,19 @@
-package edu.whu.tmdb.level;
+package edu.whu.tmdb.storage.level;
 
 //import org.json.JSONObject;
 
+import edu.whu.tmdb.storage.level.BTree;
+import edu.whu.tmdb.storage.utils.Constant;
+import edu.whu.tmdb.storage.utils.K;
+import edu.whu.tmdb.storage.utils.V;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
-        import java.io.FileNotFoundException;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -19,20 +24,20 @@ public class SSTable {
 
     // k-v
     // 使用SortedMap，自动按照key升序排序
-    public TreeMap<String, String> data = new TreeMap<>();
+    public TreeMap<K, V> data = new TreeMap<>();
 
     // SSTable的文件名
     public String fileName;
 
     // 最大key与最小key
-    String maxKey = "";
-    String minKey = "";
+    public K maxKey = new K();
+    K minKey = new K();
 
     // BloomFilter
     public BloomFilter bloomFilter;
 
     // B树，记录每个data block的最大key的offset
-    BTree<String, Long> bTree;
+    BTree bTree;
 
     // SSTable的写通道
     // 为避免频繁new flush close outputStream而浪费大量时间，将其设置成类属性一次打开一次关闭
@@ -40,13 +45,16 @@ public class SSTable {
 
     // SSTable的读通道
     // 由于读SSTable时不需要从头开始，多为根据指定offset跳着读，因此使用RandomAccessFile更快
-    private RandomAccessFile raf;
+    public RandomAccessFile raf;
 
-    public String getMaxKey() {
+    // search时确定扫描上界
+    public long zoneMapOffset;
+
+    public K getMaxKey() {
         return maxKey;
     }
 
-    public String getMinKey() {
+    public K getMinKey() {
         return minKey;
     }
 
@@ -58,6 +66,7 @@ public class SSTable {
     public SSTable(String fileName, int mode){
         if(mode == 1){
             this.fileName = fileName;
+            this.bTree = new BTree(3);
             // 初始化写通道
             try{
                 File f = new File(Constant.DATABASE_DIR + this.fileName);
@@ -90,10 +99,12 @@ public class SSTable {
             long[] info = readFooter();
             long zoneMapOffset = info[0];
             long zoneMapLength = info[1];
+            this.zoneMapOffset = zoneMapOffset;
             long bloomFilterOffset = info[2];
             long bloomFilterLength = info[3];
             long bTreeRootOffset = info[4];
             long indexBlockLength = info[5];
+
             // 读zone map
             readZoneMap(zoneMapOffset, zoneMapLength);
             // 初始化BloomFilter
@@ -140,7 +151,7 @@ public class SSTable {
     }
 
     // 读Footer，返回的数据解析为6个long，分别对应zone map、bloom filter、index block的偏移和长度
-    private long[] readFooter(){
+    public long[] readFooter(){
         long[] ret = new long[6];
         File f = new File(Constant.DATABASE_DIR + this.fileName);
         long offset = f.length() - 6 * Long.BYTES;  // 开始读的偏移
@@ -156,25 +167,25 @@ public class SSTable {
 
     // 读zone map
     // zone map的格式：16字节先存minKey，16字节存maxKey
-    private void readZoneMap(long offset, long length){
+    public void readZoneMap(long offset, long length){
         byte[] buffer = readFromFile(offset, (int) length);
         byte[] b1 = new byte[Constant.MAX_KEY_LENGTH];
         byte[] b2 = new byte[Constant.MAX_KEY_LENGTH];
         System.arraycopy(buffer, 0, b1, 0, Constant.MAX_KEY_LENGTH);
         System.arraycopy(buffer, Constant.MAX_KEY_LENGTH, b2, 0, Constant.MAX_KEY_LENGTH);
-        this.minKey = Constant.BYTES_TO_KEY(b1);
-        this.maxKey = Constant.BYTES_TO_KEY(b2);
+        this.minKey = new K(b1);
+        this.maxKey = new K(b2);
     }
 
     // 读BloomFilter, 前4字节记录Bloom Filter的itemCount
     private void readBloomFilter(long offset, long length){
         // 通过BloomFilter的构造函数初始化
-        this.bloomFilter = new BloomFilter(this.fileName, offset, (int) length);
+        this.bloomFilter = new BloomFilter(this.raf, offset, (int) length);
     }
 
     // 读index block，并将各BTNode重新建成树
-    private void readIndexBlock(long offset, long length){
-        this.bTree = new BTree<>(this.fileName, offset);
+    public void readIndexBlock(long offset, long length){
+        this.bTree = new BTree(this.raf, offset);
     }
 
     // 将FileDate对象中的数据写到新SSTable中
@@ -190,43 +201,65 @@ public class SSTable {
         // 准备工作：初始化Bloom Filter，因为需要知道k-v的数量，因此放到此处初始化
         int itemCount = this.data.size();
         this.bloomFilter = new BloomFilter(itemCount);
-        this.bTree = new BTree<>(3);
+        this.bTree = new BTree(3);
 
         // 1. 分data block写入
         long dataBlockStartOffset = 0; // 此data block的开始偏移（记录B树结点时有用）
         long totalOffset = 0; // 总偏移
+        K lastKey = new K(); // 记录上一个key
         // 遍历所有k-v
-        for(Entry<String, String> entry : this.data.entrySet()){
-            String key = entry.getKey();
-            byte[] key_b = Constant.KEY_TO_BYTES(key);
-            String value = entry.getValue();
-            byte[] value_b = value.getBytes();
+        for(Entry<K, V> entry : this.data.entrySet()){
+            K key = entry.getKey();
+            byte[] key_b = key.serialize();
+            V value = entry.getValue();
+            byte[] value_b = value.serialize();
+
+            // 更新Bloom Filter
+            this.bloomFilter.add(key);
+
+            // 此kv占用总字节数
+            long len = Integer.BYTES + key_b.length + value_b.length;
+
+            // 如果加上此kv则data block写满，则开启新data block，将旧data block的最大key和起始偏移记录到B树中
+            if(totalOffset - dataBlockStartOffset + len > Constant.MAX_DATA_BLOCK_SIZE){
+                this.bTree.insert(lastKey, dataBlockStartOffset);
+                // 此data block剩余部分使用0填满
+                int vacant = (int) (Constant.MAX_DATA_BLOCK_SIZE + dataBlockStartOffset - totalOffset);
+                byte[] buffer0 = new byte[vacant];
+                appendToFile(buffer0);
+                totalOffset += vacant;
+                dataBlockStartOffset = totalOffset;
+            }
+
             // 写入 length + key + value;
             appendToFile(Constant.INT_TO_BYTES(key_b.length + value_b.length));
             appendToFile(key_b);
             appendToFile(value_b);
-            totalOffset += Integer.BYTES + key_b.length + value_b.length;
-            // 如果data block写满，则开启新data block，将旧data block的最大key和起始偏移记录到B树中
-            if(totalOffset - dataBlockStartOffset > Constant.MAX_DATA_BLOCK_SIZE){
-                this.bTree.insert(key, dataBlockStartOffset);
-                dataBlockStartOffset = totalOffset;
-            }
-            // 更新Bloom Filter
-            this.bloomFilter.add(key);
+            totalOffset += len;
+
+            lastKey = key;
+
         }
         //  遍历结束时，未满的data block信息也写入B-Tree
         if(dataBlockStartOffset != totalOffset){
             this.bTree.insert(this.data.lastKey(), dataBlockStartOffset);
+            // 此data block剩余部分使用0填满
+            int vacant = (int) (Constant.MAX_DATA_BLOCK_SIZE + dataBlockStartOffset - totalOffset);
+            byte[] buffer0 = new byte[vacant];
+            appendToFile(buffer0);
+            totalOffset += vacant;
+            dataBlockStartOffset = totalOffset;
         }
 
         // 3. 写zone map
         long zoneMapStartOffset = totalOffset; // zone map的开始偏移
         long zoneMapLength = Constant.MAX_KEY_LENGTH * 2; // zone map的长度
+        this.zoneMapOffset = zoneMapStartOffset;
         this.minKey = this.data.firstKey();
         this.maxKey = this.data.lastKey();
         byte[] buffer = new byte[(int) zoneMapLength];
-        System.arraycopy(Constant.KEY_TO_BYTES(this.minKey), 0, buffer, 0, Constant.MAX_KEY_LENGTH);
-        System.arraycopy(Constant.KEY_TO_BYTES(this.maxKey), 0, buffer, Constant.MAX_KEY_LENGTH, Constant.MAX_KEY_LENGTH);
+        System.arraycopy(this.minKey.serialize(), 0, buffer, 0, Constant.MAX_KEY_LENGTH);
+        System.arraycopy(this.maxKey.serialize(), 0, buffer, Constant.MAX_KEY_LENGTH, Constant.MAX_KEY_LENGTH);
         appendToFile(buffer);
 
         // 4. 写Bloom filter
@@ -265,20 +298,15 @@ public class SSTable {
     // 在单个SSTable中查
     // 根据zone map查询如果不在范围中则返回null
     // 根据bloom filter查或者遍历查询没找到则返回""
-    public String search(String key) throws IOException {
-
-        // 初始化读通道
-        if(this.raf == null){
-            File f = new File(Constant.DATABASE_DIR + this.fileName);
-            this.raf = new RandomAccessFile(f, "r");
-        }
+    public V search(K key) throws IOException {
 
         // 如果meta data不完整，则需要从文件中读取
-        if(this.maxKey == ""){
+        if(this.maxKey.equals(new K())){
             // 读Footer
             long[] info = readFooter();
             long zoneMapOffset = info[0];
             long zoneMapLength = info[1];
+            this.zoneMapOffset = zoneMapOffset;
             long bloomFilterOffset = info[2];
             long bloomFilterLength = info[3];
             long bTreeRootOffset = info[4];
@@ -296,12 +324,12 @@ public class SSTable {
 
 
         // 1. 检查zone map
-        if(key.compareTo(this.minKey) < 0 && key.compareTo(this.maxKey) > 0)
+        if(key.compareTo(this.minKey) < 0 || key.compareTo(this.maxKey) > 0)
             return null;
 
         // 2. 检查bloom filter
         if(!this.bloomFilter.check(key))
-            return "";
+            return new V();
 
         // 如果1 2 均通过，说明key极有可能存在该SSTable中
         // 3. 定位到该key可能存在的data block
@@ -309,30 +337,117 @@ public class SSTable {
         if(offset == null)
             offset = 0l;
 
-        // 4. 遍历data block
-        byte[] targetKeyBuffer = Constant.KEY_TO_BYTES(key);
-        int currentOffset = 0; // 记录当前指针位置，指示何时遍历data block结束
-        long maxOffset = readFooter()[0] - offset; // 允许遍历的范围
-        // 允许遍历的范围不超过一个data block的大小
-        if(maxOffset > Constant.MAX_DATA_BLOCK_SIZE)
-            maxOffset = Constant.MAX_DATA_BLOCK_SIZE;
-        int length;
-        byte[] keyBuffer = new byte[Constant.MAX_KEY_LENGTH];
-        byte[] valueBuffer;
+        // 4. 读该data block
+        byte[] dataBlock = new byte[(int) Constant.MAX_DATA_BLOCK_SIZE];
         this.raf.seek(offset);
-        while(currentOffset <= maxOffset){
-            length = this.raf.readInt();
-            currentOffset += (Integer.BYTES + length);
-            valueBuffer = new byte[length - Constant.MAX_KEY_LENGTH];
-            this.raf.read(keyBuffer);
-            this.raf.read(valueBuffer);
-            String k = new String(keyBuffer);
-//            System.out.println(k);
-            if(Arrays.equals(targetKeyBuffer, keyBuffer))
-                return new String(valueBuffer);
+        this.raf.read(dataBlock);
+
+        // 5. 遍历data block
+        byte[] targetKeyBuffer = key.serialize();
+        int currentOffset = 0; // 记录当前在data block中的位置
+        int length; // 一条kv记录的长度
+        while(currentOffset + Integer.BYTES < Constant.MAX_DATA_BLOCK_SIZE){
+            length = Constant.BYTES_TO_INT(dataBlock, currentOffset, Integer.BYTES);
+            currentOffset += Integer.BYTES;
+            if(length == 0)
+                // length = 0说明读取的内容是补0的data block的空余部分
+                break;
+
+            // 判断k是否匹配，如果匹配则返回
+            if(Constant.compareArray(dataBlock, currentOffset, targetKeyBuffer, 0, Constant.MAX_KEY_LENGTH)){
+                byte[] vBuffer = new byte[length - Constant.MAX_KEY_LENGTH];
+                System.arraycopy(dataBlock, currentOffset + Constant.MAX_KEY_LENGTH, vBuffer, 0, vBuffer.length);
+                return new V(vBuffer);
+            }
+            currentOffset += length;
         }
 
-        return "";
+        return new V();
+    }
+
+
+    // 在SSTable中进行rangeQuery
+    public Map<K, V> rangeQuery(K startKey, K endKey) throws IOException {
+
+        // 如果meta data不完整，则需要从文件中读取
+        if(this.maxKey.equals(new K())){
+            // 读Footer
+            long[] info = readFooter();
+            long zoneMapOffset = info[0];
+            long zoneMapLength = info[1];
+            this.zoneMapOffset = zoneMapOffset;
+            long bTreeRootOffset = info[4];
+            long indexBlockLength = info[5];
+
+            // 读zone map
+            readZoneMap(zoneMapOffset, zoneMapLength);
+
+            // 初始化index block
+            readIndexBlock(bTreeRootOffset, indexBlockLength);
+        }
+
+        Map<K, V> result = new TreeMap<>();
+
+        // 1. 检查zone map
+        if(startKey.compareTo(this.maxKey) > 0 || endKey.compareTo(this.minKey) <= 0)
+            return result;
+
+        // 2. 通过index block 定位到startkey所在的data block
+        Long startOffset = this.bTree.leftSearch(startKey);
+        if(startOffset == null)
+            startOffset = 0l;
+
+        // 3. 确定扫描的上界
+        Long endOffset = this.bTree.leftSearch(endKey);
+        if(endOffset == null)
+            endOffset = 0l;
+        endOffset += Constant.MAX_DATA_BLOCK_SIZE;
+
+
+        // 4. 开始扫描
+        this.raf.seek(startOffset); // 首先定位到开始偏移
+        byte[] dataBlock = new byte[Constant.MAX_DATA_BLOCK_SIZE];
+        int dataBlockCount = (int) ((endOffset - startOffset) / Constant.MAX_DATA_BLOCK_SIZE); // 需要读取的data block数量
+        byte[] keyBuffer = new byte[Constant.MAX_KEY_LENGTH];
+        byte[] valueBuffer;
+        for(int i=0; i<dataBlockCount; i++){
+            raf.read(dataBlock); // 以data block为单位进行读取
+
+            int currentOffset = 0; // 指示当前data block的扫描进度
+            while(currentOffset + Integer.BYTES < Constant.MAX_DATA_BLOCK_SIZE){
+                int length = Constant.BYTES_TO_INT(dataBlock, currentOffset, Integer.BYTES); // 读kv总长度
+                currentOffset += Integer.BYTES;
+                if(length == 0)
+                    // length = 0说明读取的内容是补0的data block的空余部分，进入下一个data block
+                    continue;
+
+
+                // 加载key
+                System.arraycopy(dataBlock, currentOffset, keyBuffer, 0, Constant.MAX_KEY_LENGTH);
+                K k = new K(keyBuffer);
+
+                // 如果小于startKey，扫描下一个键值对
+                if(k.compareTo(startKey) < 0){
+                    currentOffset += length;
+                    continue;
+                }
+
+                // 如果大于endKey，结束
+                if(endKey.compareTo(k) < 0)
+                    break;
+
+                // 否则，加入返回结果集
+                valueBuffer = new byte[length - Constant.MAX_KEY_LENGTH];
+                System.arraycopy(dataBlock, currentOffset + Constant.MAX_KEY_LENGTH, valueBuffer, 0, valueBuffer.length);
+                V v = new V(valueBuffer);
+                result.put(k, v);
+
+                currentOffset += length;
+            }
+        }
+
+
+        return result;
     }
 
 }

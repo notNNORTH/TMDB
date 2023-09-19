@@ -2,10 +2,11 @@ package au.edu.rmit.bdm.clustering.trajectory.kpaths;
 
 import au.edu.rmit.bdm.Torch.base.FileSetting;
 import au.edu.rmit.bdm.clustering.trajectory.TrajectoryMtree;
-import edu.whu.tmdb.memory.Tuple;
+
 import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
+import edu.whu.tmdb.storage.memory.Tuple;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;

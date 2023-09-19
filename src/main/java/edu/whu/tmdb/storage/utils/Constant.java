@@ -1,4 +1,4 @@
-package edu.whu.tmdb.level;
+package edu.whu.tmdb.storage.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -11,8 +11,17 @@ import java.nio.ByteBuffer;
 // 定义一些常量和静态方法
 public class Constant {
 
+    // key 作为String允许占用的最大长度
+    public static final int MAX_KEY_LENGTH = 8;
+
+    // memTable最大大小为4MB=4*1024*1024B，超过就会触发compact到外存
+    public static final long MAX_MEM_SIZE = 4L * 1024 * 1024;
+
     // LSM-Tree文件目录
     public static final String DATABASE_DIR = "data/level/";
+
+    // 系统表文件目录
+    public static final String SYSTEM_TABLE_DIR = "data/sys/";
 
     // 最大level数
     public static final int MAX_LEVEL = 6;
@@ -21,7 +30,7 @@ public class Constant {
     public static final int MAX_LEVEL0_FILE_COUNT = 4;
 
     // data block大小限制 4KB
-    public static final long MAX_DATA_BLOCK_SIZE = 4 * 1024;
+    public static final int MAX_DATA_BLOCK_SIZE = 4 * 1024;
 
     // 允许各level的总大小 8MB 10MB 100MB 1000MB
     public static final long MAX_LEVEL0_SIZE = 8L * 1024 * 1024;
@@ -33,67 +42,6 @@ public class Constant {
     public static final long MAX_LEVEL6_SIZE = 1000000L * 1024 * 1024;
     public static final long[] MAX_LEVEL_SIZE = {MAX_LEVEL0_SIZE, MAX_LEVEL1_SIZE, MAX_LEVEL2_SIZE, MAX_LEVEL3_SIZE, MAX_LEVEL4_SIZE, MAX_LEVEL5_SIZE, MAX_LEVEL6_SIZE};
 
-    // key 作为String允许占用的最大长度
-    public static final int MAX_KEY_LENGTH = 16;
-
-//    /**
-//     * BTree的阶<br>
-//     * BTree中关键字个数为[ceil(m/2)-1,m-1]    <br>
-//     * BTree中子树个数为[ceil(m/2),m]
-//     */
-//    public static final int BTREE_ORDER = 200;
-//
-//    /**
-//     * 非根节点中最小的关键字个数
-//     */
-//    public static final int MIN_KEY_SIZE = (int) (Math.ceil(BTREE_ORDER / 2.0) - 1);
-//
-//    /**
-//     * 非根节点中最大的关键字个数
-//     */
-//    public static final int MAX_KEY_SIZE = BTREE_ORDER - 1;
-//
-//    /**
-//     * 每个结点中最小的孩子个数
-//     */
-//    public static final int MIN_CHILDREN_SIZE = (int) (Math.ceil(BTREE_ORDER / 2.0));
-//
-//    /**
-//     * 每个结点中最大的孩子个数
-//     */
-//    public static final int MAX_CHILDREN_SIZE = BTREE_ORDER ;
-//
-
-    // 编码key字符串为byte[]
-    public static final byte[] KEY_TO_BYTES(String key){
-        byte[] ret = new byte[Constant.MAX_KEY_LENGTH];
-        byte[] temp = key.getBytes();
-        if(temp.length <= Constant.MAX_KEY_LENGTH){
-            for(int i=0;i<temp.length;i++){
-                ret[i]=temp[i];
-            }
-            for(int i=temp.length;i<Constant.MAX_KEY_LENGTH;i++){
-                // 不足的地方补全0
-                ret[i]=(byte)32;
-            }
-        }
-        return ret;
-    }
-
-    // 解码byte[]为key
-    public static final String BYTES_TO_KEY(byte[] b){
-        String s;
-        int k=0;
-        for(int i=0;i<Constant.MAX_KEY_LENGTH;i++){
-            if(b[i]!=32){
-                k++;
-            }else{
-                break;
-            }
-        }
-        s=new String(b,0,k);
-        return s;
-    }
 
     // 编码int为byte
     public static byte[] INT_TO_BYTES(int value){
@@ -133,10 +81,25 @@ public class Constant {
     }
 
 
+    // 解码byte[]为key
+    public static final String BYTES_TO_KEY(byte[] b){
+        String s;
+        int k=0;
+        for(int i=0;i<Constant.MAX_KEY_LENGTH;i++){
+            if(b[i]!=32){
+                k++;
+            }else{
+                break;
+            }
+        }
+        s=new String(b,0,k);
+        return s;
+    }
+
     // 判断区间[a, b]  [c, d]是否有重叠
     // 如果b<c或者d<a则没有重叠
-    public static boolean hasOverlap(String a, String b, String c, String d){
-        if(b.compareTo(c)<= 0 || d.compareTo(a)<=0)
+    public static boolean hasOverlap(long a, long b, long c, long d){
+        if(b <= c || d <= a)
             return false;
         else
             return true;
@@ -160,15 +123,13 @@ public class Constant {
     }
 
     // 从文件fileName的offset偏移处读取长度为length的字节流
-    public static byte[] readBytesFromFile(String fileName, long offset, int length) {
+    public static byte[] readBytesFromFile(RandomAccessFile raf, long offset, int length) {
         byte[] ret = new byte[length];
         try {
-            // 打开文件
-            RandomAccessFile raf = new RandomAccessFile(DATABASE_DIR + fileName, "r");
             // 移动到指定偏移并读取相应长度
             raf.seek(offset);
             raf.read(ret);
-            raf.close();
+            //raf.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -176,6 +137,23 @@ public class Constant {
         }
         return ret;
     }
+
+
+    // 比较array1从array1Start开始，长度为length的数组，是否等于，array2从array2Start开始，长度为length的数组
+    public static boolean compareArray(byte[] array1, int array1Start, byte[] array2, int array2Start, int length) {
+        if (array1Start < 0 || array2Start < 0 || (array1Start + length) > array1.length || (array2Start + length) > array2.length) {
+            return false;
+        }
+
+        for (int i = 0; i < length; i++) {
+            if (array1[array1Start + i] != array2[array2Start + i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 
 
 

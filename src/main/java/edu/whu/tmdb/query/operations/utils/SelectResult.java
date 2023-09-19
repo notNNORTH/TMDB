@@ -1,6 +1,7 @@
 package edu.whu.tmdb.query.operations.utils;
 
-import edu.whu.tmdb.memory.TupleList;
+
+import edu.whu.tmdb.storage.memory.TupleList;
 
 public class SelectResult {
     TupleList tpl; //存实际的元祖

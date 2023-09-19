@@ -25,10 +25,10 @@ import edu.whu.tmdb.query.operations.Select;
 import edu.whu.tmdb.query.operations.Update;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
-import edu.whu.tmdb.level.LevelManager;
-import edu.whu.tmdb.memory.MemManager;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.storage.level.LevelManager;
+import edu.whu.tmdb.storage.memory.MemManager;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

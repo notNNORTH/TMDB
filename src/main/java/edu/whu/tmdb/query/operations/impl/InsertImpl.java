@@ -3,7 +3,7 @@ package edu.whu.tmdb.query.operations.impl;
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
-import edu.whu.tmdb.memory.MemManager;
+import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 
@@ -19,13 +19,13 @@ import edu.whu.tmdb.query.operations.Insert;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.query.operations.utils.traj.TrajTrans;
-import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
-import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
-import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
-import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
-import edu.whu.tmdb.memory.Tuple;
-import edu.whu.tmdb.memory.TupleList;
+import edu.whu.tmdb.storage.memory.SystemTable.BiPointerTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ClassTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.ObjectTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.SwitchingTableItem;
+import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
 
 public class InsertImpl implements Insert {
     private MemConnect memConnect;

@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.utils;
 
+import edu.whu.tmdb.storage.memory.Tuple;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -13,7 +14,7 @@ import net.sf.jsqlparser.schema.Column;
 
 import java.util.ArrayList;
 
-import edu.whu.tmdb.memory.Tuple;
+
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 
 public class Formula {

@@ -12,7 +12,7 @@ import au.edu.rmit.bdm.Torch.mapMatching.model.TowerVertex;
 import com.github.davidmoten.geo.GeoHash;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.storage.memory.Tuple;
 import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
@@ -33,7 +33,6 @@ import net.sf.jsqlparser.statement.select.*;
 import net.sf.jsqlparser.statement.values.ValuesStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.awt.XSettings;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

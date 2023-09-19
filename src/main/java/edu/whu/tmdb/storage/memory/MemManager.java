@@ -1,40 +1,35 @@
-package edu.whu.tmdb.memory;
+package edu.whu.tmdb.storage.memory;
 
-//import static edu.whu.tmdb.Level.Test.*;
-
-
-
-
-import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSONObject;
-import edu.whu.tmdb.query.operations.utils.MemConnect;
+
+import edu.whu.tmdb.Log.LogManager;
+import edu.whu.tmdb.storage.cache.CacheManager;
+import edu.whu.tmdb.storage.level.LevelManager;
+import edu.whu.tmdb.storage.level.SSTable;
+import edu.whu.tmdb.storage.memory.Flush;
+import edu.whu.tmdb.storage.memory.SystemTable.*;
+import edu.whu.tmdb.storage.utils.Constant;
+import edu.whu.tmdb.storage.utils.K;
+import edu.whu.tmdb.storage.utils.V;
 import edu.whu.tmdb.util.FileOperation;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
-import edu.whu.tmdb.Log.LogManager;
-import edu.whu.tmdb.cache.CacheManager;
-import edu.whu.tmdb.level.Constant;
-import edu.whu.tmdb.level.LevelManager;
-import edu.whu.tmdb.level.SSTable;
-import edu.whu.tmdb.memory.SystemTable.BiPointerTable;
-import edu.whu.tmdb.memory.SystemTable.BiPointerTableItem;
-import edu.whu.tmdb.memory.SystemTable.ClassTable;
-import edu.whu.tmdb.memory.SystemTable.ClassTableItem;
-import edu.whu.tmdb.memory.SystemTable.DeputyTable;
-import edu.whu.tmdb.memory.SystemTable.DeputyTableItem;
-import edu.whu.tmdb.memory.SystemTable.ObjectTable;
-import edu.whu.tmdb.memory.SystemTable.ObjectTableItem;
-import edu.whu.tmdb.memory.SystemTable.SwitchingTable;
-import edu.whu.tmdb.memory.SystemTable.SwitchingTableItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MemManager {
 
-    private static Logger logger = LoggerFactory.getLogger(TorSaver.class);
+
+    // 数据表
+    public TreeMap<K, V> memTable = new TreeMap<>();
+
+    // 当前数据表占用内存大小
+    private int currentMemSize = 0;
+
+
     // 系统表
     public static ObjectTable objectTable = new ObjectTable();
     public static ClassTable classTable = new ClassTable();
@@ -42,11 +37,8 @@ public class MemManager {
     public static BiPointerTable biPointerTable = new BiPointerTable();
     public static SwitchingTable switchingTable = new SwitchingTable();
 
-    // 数据表
-    public TupleList tupleList = new TupleList();
-
-    // 当前数据表占用内存大小
-    private int currentMemSize = 0;
+    // 日志管理
+    public LogManager logManager = new LogManager(this);
 
     // 缓存管理
     public CacheManager cacheManager = new CacheManager();
@@ -54,24 +46,19 @@ public class MemManager {
     // LSM-Tree层级管理
     public LevelManager levelManager = new LevelManager();
 
-    // 日志管理
-    public LogManager logManager = new LogManager(this);
+
     // 1. 私有静态变量，用于保存MemManager的单一实例
     private static volatile MemManager instance = null;
 
     // 3. 提供一个全局访问点
-    public static MemManager getInstance() {
-        try {
-            // 双重检查锁定模式
-            if (instance == null) { // 第一次检查
-                synchronized (MemManager.class) {
-                    if (instance == null) { // 第二次检查
-                        instance = new MemManager();
-                    }
+    public static MemManager getInstance(){
+        // 双重检查锁定模式
+        if (instance == null) { // 第一次检查
+            synchronized (MemManager.class) {
+                if (instance == null) { // 第二次检查
+                    instance = new MemManager();
                 }
             }
-        }catch (IOException e){
-            logger.error(e.getMessage());
         }
         return instance;
     }
@@ -79,21 +66,27 @@ public class MemManager {
     // 2. 私有构造函数，确保不能从类外部实例化
     // 构造函数
     // 从文件中读取历史数据，将系统表加载到内存中
-    public MemManager() throws IOException {
+    public MemManager(){
         // 防止通过反射创建多个实例
         if (instance != null) {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR);
+        File f = new File(Constant.SYSTEM_TABLE_DIR);
         if(!f.exists()){
             f.mkdirs();
             return;
         }
-        loadDeputyTable();
-        loadSwitchingTable();
-        loadClassTable();
-        loadBiPointerTable();
-        loadObjectTable();
+
+        try {
+            loadDeputyTable();
+            loadSwitchingTable();
+            loadClassTable();
+            loadBiPointerTable();
+            loadObjectTable();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
 
         levelManager.cacheManager = this.cacheManager;
         // 将level-0和level-1和level-2的SSTable的meta block存进缓存中
@@ -109,25 +102,25 @@ public class MemManager {
     }
 
     // 持久化保存所有数据
-    public void saveAll() {
-        try {
+    public void saveAll(){
+        try{
             saveSwitchingTable();
             saveDeputyTable();
             saveClassTable();
             saveBiPointerTable();
             saveObjectTable();
-            if (this.tupleList.tuplelist.size() != 0)
-                saveMemTableToFile();
-            this.levelManager.saveMetaToFile();
-        }catch (IOException e){
-            logger.error(e.getMessage());
+        }catch (Exception e){
+            e.printStackTrace();
         }
+
+        if(this.memTable.size() != 0)
+            saveMemTableToFile();
+        this.levelManager.saveMetaToFile();
     }
 
 
     // 往MemManager中添加对象
     public void add(Object o){
-
 
         if(o instanceof ObjectTableItem){
             this.objectTable.objectTable.add((ObjectTableItem) o);
@@ -141,85 +134,62 @@ public class MemManager {
             this.switchingTable.switchingTable.add((SwitchingTableItem) o);
         }else if(o instanceof Tuple){
             //先写日志
-            String k = "t" + ((Tuple) o).tupleId;
-            String v = JSONObject.toJSONString((Tuple) o);
-            logManager.WriteLog(k, (byte) 0,v);
+            K k = new K("t" + ((Tuple) o).tupleId);
+            V v = new V(JSONObject.toJSONString((Tuple) o));
+            logManager.WriteLog(k.key, (byte) 0,v.valueString);
+            this.memTable.put(k, v);
+            this.currentMemSize += k.key.length() + v.valueString.length();
 
-            this.tupleList.addTuple((Tuple) o);
-            this.currentMemSize += RamUsageEstimator.sizeOf(o);
-        }
+            // 加入缓存
+            this.cacheManager.dataCache.put(k, v);
 
-
-        // 如果内存数据大小超过限制则开始compaction
-        if(this.currentMemSize > edu.whu.tmdb.memory.Constant.MAX_MEM_SIZE){
-            try{
-                System.out.println("内存已满，开始写入外存--------");
-                long t1 = System.currentTimeMillis();
-                saveMemTableToFile();
-                long t2 = System.currentTimeMillis();
-                System.out.println("将写满的MemTable写到SSTable耗时" + (t2 - t1) + "ms");
-                clearMem();
-            }catch (Exception e){
-                e.printStackTrace();
+            // 如果内存数据大小超过限制则开始compaction
+            if(this.currentMemSize > Constant.MAX_MEM_SIZE){
+                try{
+                    saveMemTableToFile();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
-
         }
-
     }
 
     // 清空内存中的数据
-    private void clearMem(){
+    void clearMem(){
         this.currentMemSize = 0;
-        this.tupleList.tuplelist.clear();
+        this.memTable.clear();
     }
 
 
     // 将内存中的数据持久化保存
-    public void saveMemTableToFile() throws IOException {
+    public int saveMemTableToFile(){
+
+        if(this.memTable.size() == 0)
+            return -1;
+
         // 获取最新dataFileSuffix并+1
-        int dataFileSuffix = Integer.parseInt(levelManager.levelInfo.get("maxDataFileSuffix")) + 1;
-        levelManager.levelInfo.put("maxDataFileSuffix", "" + dataFileSuffix);
+        int dataFileSuffix = levelManager.addFileSuffix();
 
-        // 生成SSTable对象，将内存中的对象以k-v的形式转移到FileData中
-        SSTable sst= new SSTable("SSTable" + dataFileSuffix, 1);
+        // 开启flush
+        Flush flush = new Flush(dataFileSuffix, this);
+        flush.run();
 
-        for(Tuple t : this.tupleList.tuplelist){
-            String k = "t" + t.tupleId;
-            sst.data.put(k, JSONObject.toJSONString(t));
-        }
-
-        // 写SSTable
-        long SSTableTotalSize = sst.writeSSTable();
-
-        // 将该文件添加到对应level中
-        levelManager.level_0.add(dataFileSuffix);
-        // 添加到缓存中
-        this.cacheManager.metaCache.add(sst);
-        // levelInfo 的结构  dataFileSuffix : level-length-minKey-maxKey
-        levelManager.levelInfo.put("" + dataFileSuffix, "0" + "-" + SSTableTotalSize + "-" + sst.getMinKey() + "-" + sst.getMaxKey());
-        levelManager.autoCompaction();
-
-        // 内存清空
-        clearMem();
-        //设置检查点
-        logManager.setCheckpoint();
+        return dataFileSuffix;
     }
 
 
     // 查询指定key，返回value
-    public Object search(String key){
-        // 首先查MEMTable
-        if(key.startsWith("t"))
-            for(Tuple t : this.tupleList.tuplelist){
-                if(("" + t.tupleId).equals(key)){
-                    return t;
-                }
-            }
+    public V search(K key){
 
-        // 查cache
-        String cacheResult = this.cacheManager.dataCache.get(key);
-        if(cacheResult != null)
-            return cacheResult;
+//        // 先查cache
+//        V cacheResult = this.cacheManager.dataCache.get(key);
+//        if(cacheResult != null)
+//            return cacheResult;
+//
+//        // 查MEMTable
+//        V memResult = this.memTable.get(key);
+//        if(memResult != null)
+//            return memResult;
 
         // 从level-0 依次往底层查找直到找到
         try{
@@ -229,34 +199,31 @@ public class MemManager {
                     Integer suffix = arrayList.get(j);
                     // i ：level
                     // j : fileSuffix
-                    SSTable sst;
-                    if(i <=2)
-                        // level 0-2 直接从缓存中获取meta block
-                        sst = this.cacheManager.metaCache.get(suffix);
-                    else
-                        sst = new SSTable("SSTable" + suffix, 2);
+
+                    // 从缓存中获取SSTable，获取不到再去读磁盘
+                    SSTable sst = this.cacheManager.metaCache.get(suffix);
 
                     // 查询一个SSTable
-                    String str = sst.search(key);
+                    V diskResult = sst.search(key);
 
                     // search的结果为null表示key不在zone map的范围内，则跳过该SSTable，查询该层的下一个
-                    if(str == null)
+                    if(diskResult == null)
                         continue;
 
-                    // search的结果为""表示在此SSTable中没有找到对应key
-                    if(str.equals("")){
+                    // search的结果为new V()表示在此SSTable中没有找到对应key
+                    if(diskResult.equals(new V())){
                         if(i == 0)
-                            // level 0 由于存在overlap，即使查到""也要继续遍历该层所有SSTable
+                            // level 0 由于存在overlap，即使查到new V()也要继续遍历该层所有SSTable
                             continue;
                         else
-                            // 其他层不同SSTable之间不存在overlap，找到""，该层就可以直接跳过
+                            // 其他层不同SSTable之间不存在overlap，找到new V()，该层就可以直接跳过
                             break;
                     }
 
                     // 成功找到的情况
                     // 将此k-v加入缓存
-                    this.cacheManager.dataCache.put(key, str);
-                    return str;
+//                    this.cacheManager.dataCache.put(key, diskResult);
+                    return diskResult;
                 }
             }
         }catch (Exception e){
@@ -268,14 +235,67 @@ public class MemManager {
     }
 
 
+    // 范围查询，两个参数分别表示 开始key 和 结束key
+    public Map<K, V> rangeQuery(K startKey, K endKey){
+        Map<K, V> result = new TreeMap<>();
+
+        // 输入参数有问题，返回空
+        if(startKey == null || endKey == null || startKey.compareTo(endKey) >= 0)
+            return result;
+
+//        // 1. 查缓存
+//        Map<K, V> m1 = this.cacheManager.dataCache.cachedData.subMap(startKey, endKey);
+//        result.putAll(m1);
+
+//        // 2. 查内存表
+//        Map<K, V> m2 = this.memTable.subMap(startKey, endKey);
+//        for(Map.Entry<K, V> entry : m2.entrySet()){
+//            // 内存表中数据的优先程度不如缓存，缓存中一定是最新的，因此有重叠的部分保留缓存中的抛弃内存中的
+//            if(!result.containsKey(entry.getKey()))
+//                result.put(entry.getKey(), entry.getValue());
+//        }
+
+        // 3. 查SSTable
+        // 从level-0 依次往底层查找直到找到
+        try{
+            for(int i = 0; i<=Constant.MAX_LEVEL; i++){
+                ArrayList<Integer> arrayList = new ArrayList<>(levelManager.levels[i]);
+                for(int j=arrayList.size()-1; j>=0; j--){
+                    Integer suffix = arrayList.get(j);
+                    // i ：level
+                    // j : fileSuffix
+                    SSTable sst = this.cacheManager.metaCache.get(suffix);
+
+                    // 查询一个SSTable
+                    Map<K, V> m3 = sst.rangeQuery(startKey, endKey);
+
+                    // 由于遍历SSTable时是按照新到旧的顺序，因此此处采用如下的淘汰策略
+                    for(Map.Entry<K, V> entry : m3.entrySet()){
+                        if(!result.containsKey(entry.getKey()))
+                            result.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+//        // 更新缓存
+//        for(Map.Entry<K, V> entry : result.entrySet()){
+//            this.cacheManager.dataCache.put(entry.getKey(), entry.getValue());
+//        }
+
+        return result;
+    }
+
     // BiPointerTableItem 有四个int属性
     // classid  objectid deputyid  deputyobjectid
     public void saveBiPointerTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "bpt");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
-        for(BiPointerTableItem item : biPointerTable.biPointerTable){
+        for(BiPointerTableItem item : this.biPointerTable.biPointerTable){
             // 存classid
             writeAccess.write(Constant.INT_TO_BYTES(item.classid));
             // 存objectid
@@ -290,7 +310,7 @@ public class MemManager {
     }
 
     public void loadBiPointerTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "bpt");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "bpt");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -299,7 +319,7 @@ public class MemManager {
         while(cur < l){
             // 读取4个int构造BiPointerTableItem
             BiPointerTableItem item = new BiPointerTableItem(raf.readInt(), raf.readInt(), raf.readInt(), raf.readInt());
-            biPointerTable.biPointerTable.add(item);
+            this.biPointerTable.biPointerTable.add(item);
             cur += Integer.BYTES * 4;
         }
     }
@@ -316,7 +336,7 @@ public class MemManager {
     // String   classtype
     // String   alias
     public void saveClassTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "ct");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
@@ -355,7 +375,7 @@ public class MemManager {
     }
 
     public void loadClassTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ct");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "ct");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -417,7 +437,7 @@ public class MemManager {
     // int deputyid
     // String[] deputyrule
     public void saveDeputyTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "dt");
         if(!f.exists())
             f.createNewFile();
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
@@ -438,7 +458,7 @@ public class MemManager {
     }
 
     public void loadDeputyTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "dt");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "dt");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -473,7 +493,7 @@ public class MemManager {
     // String deputy
     // String rule
     public void saveSwitchingTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "st");
         FileOperation.createNewFile(f);
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
         for(SwitchingTableItem item: this.switchingTable.switchingTable){
@@ -498,7 +518,7 @@ public class MemManager {
     }
 
     public void loadSwitchingTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "st");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "st");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
@@ -545,15 +565,15 @@ public class MemManager {
     // int tupleid
     // int sstSuffix
     public void saveObjectTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "ot");
         FileOperation.createNewFile(f);
         RandomAccessFile raf = new RandomAccessFile(f, "rw");
 
         // 用int记录maxTupleId
-        raf.writeInt(objectTable.maxTupleId);
+        raf.writeInt(this.objectTable.maxTupleId);
 
         // 依次存每个ObjectTableItem
-        for(ObjectTableItem item: objectTable.objectTable){
+        for(ObjectTableItem item: this.objectTable.objectTable){
             // 存classid
             raf.writeInt(item.classid);
             // 存tupleid
@@ -565,7 +585,7 @@ public class MemManager {
     }
 
     public void loadObjectTable() throws IOException {
-        File f = new File(edu.whu.tmdb.memory.Constant.SYSTEM_TABLE_DIR + "ot");
+        File f = new File(Constant.SYSTEM_TABLE_DIR + "ot");
         if(!f.exists())
             return;
         RandomAccessFile raf = new RandomAccessFile(f, "r");

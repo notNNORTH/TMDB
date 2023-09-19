@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson2.JSON;
-import edu.whu.tmdb.memory.MemManager;
-import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.storage.memory.MemManager;
+import edu.whu.tmdb.storage.memory.Tuple;
 import edu.whu.tmdb.util.FileOperation;
 
 public class LogManager {
@@ -43,7 +43,7 @@ public class LogManager {
     //遍历hashMap的keySet
     public Iterator<Map.Entry<String, List<Integer>>> iterator;
 
-    public LogManager(MemManager memManager) throws FileNotFoundException {
+    public LogManager(MemManager memManager){
         this.memManager = memManager;
 
         File dir = new File(Constants.LOG_BASE_DIR);
@@ -55,8 +55,12 @@ public class LogManager {
         fileTree = new File(Constants.LOG_BASE_DIR + "log_btree");
         FileOperation.createNewFile(logFile);
         FileOperation.createNewFile(fileTree);
-        bTreeWriteAccess = new BufferedOutputStream(new FileOutputStream(fileTree));
-        logIOAccess = new RandomAccessFile(logFile, "rw");
+        try{
+            bTreeWriteAccess = new BufferedOutputStream(new FileOutputStream(fileTree));
+            logIOAccess = new RandomAccessFile(logFile, "rw");
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
         Map = new HashMap<String, List<Integer>>();
         checkpoint = -1;
         check_off = -1;

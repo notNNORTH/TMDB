@@ -10,7 +10,7 @@ package edu.whu.tmdb.query.operations.impl;/*
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
-import edu.whu.tmdb.memory.Tuple;
+import edu.whu.tmdb.storage.memory.Tuple;
 import net.sf.jsqlparser.statement.select.GroupByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 
