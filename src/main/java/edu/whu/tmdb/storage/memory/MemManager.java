@@ -41,10 +41,10 @@ public class MemManager {
     public LogManager logManager = new LogManager(this);
 
     // 缓存管理
-    public CacheManager cacheManager = new CacheManager();
+    public static CacheManager cacheManager = new CacheManager();
 
     // LSM-Tree层级管理
-    public LevelManager levelManager = new LevelManager();
+    public static LevelManager levelManager = new LevelManager();
 
 
     // 1. 私有静态变量，用于保存MemManager的单一实例
@@ -57,6 +57,7 @@ public class MemManager {
             synchronized (MemManager.class) {
                 if (instance == null) { // 第二次检查
                     instance = new MemManager();
+                    levelManager.cacheManager = cacheManager;
                 }
             }
         }
@@ -181,15 +182,15 @@ public class MemManager {
     // 查询指定key，返回value
     public V search(K key){
 
-//        // 先查cache
-//        V cacheResult = this.cacheManager.dataCache.get(key);
-//        if(cacheResult != null)
-//            return cacheResult;
-//
-//        // 查MEMTable
-//        V memResult = this.memTable.get(key);
-//        if(memResult != null)
-//            return memResult;
+        // 先查cache
+        V cacheResult = this.cacheManager.dataCache.get(key);
+        if(cacheResult != null)
+            return cacheResult;
+
+        // 查MEMTable
+        V memResult = this.memTable.get(key);
+        if(memResult != null)
+            return memResult;
 
         // 从level-0 依次往底层查找直到找到
         try{

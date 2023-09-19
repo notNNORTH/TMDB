@@ -1,5 +1,7 @@
 package edu.whu.tmdb.storage.utils;
 
+import scala.Char;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -12,11 +14,23 @@ public class K implements Serializable, Comparable{
     }
 
     public K(String key){
-        this.key = key;
+        int curLength = key.length();
+        // 长度不足的字符串自动补足
+        if(curLength < Constant.MAX_KEY_LENGTH){
+            int resLength = Constant.MAX_KEY_LENGTH - curLength;
+            byte[] res = new byte[Character.BYTES * resLength];
+            this.key = key + new String(res);
+        }
+        else
+            this.key = key;
     }
 
     public K(byte[] bytes){
-        this.key = new String(bytes);
+        if(bytes.length < Character.BYTES * Constant.MAX_KEY_LENGTH){
+            this.key = new String(bytes) + new String(new byte[Character.BYTES * Constant.MAX_KEY_LENGTH - bytes.length]);
+        }
+        else
+            this.key = new String(bytes);
     }
 
     public byte[] serialize(){

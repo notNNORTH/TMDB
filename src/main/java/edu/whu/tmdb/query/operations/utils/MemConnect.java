@@ -14,6 +14,7 @@ import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.storage.memory.SystemTable.*;
 import edu.whu.tmdb.storage.memory.Tuple;
 import edu.whu.tmdb.storage.utils.K;
+import edu.whu.tmdb.storage.utils.V;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +75,8 @@ public class MemConnect {
                 t= null;
             if (searchResult instanceof Tuple)
                 t = (Tuple) searchResult;
-            else if (searchResult instanceof String)
-                t= JSON.parseObject((String) searchResult, Tuple.class);
+            else if (searchResult instanceof V)
+                t= JSON.parseObject(((V) searchResult).valueString, Tuple.class);
             if (t.delete)
                 t= null;
         }finally {
