@@ -14,20 +14,18 @@ public class K implements Serializable, Comparable{
     }
 
     public K(String key){
-        int curLength = key.length();
-        // 长度不足的字符串自动补足
-        if(curLength < Constant.MAX_KEY_LENGTH){
-            int resLength = Constant.MAX_KEY_LENGTH - curLength;
-            byte[] res = new byte[Character.BYTES * resLength];
-            this.key = key + new String(res);
+        // key最大长度为Constant.MAX_KEY_LENGTH，不足的补0
+        if(key.length() < Constant.MAX_KEY_LENGTH){
+            this.key = key + new String(new byte[Constant.MAX_KEY_LENGTH - key.length()]);
         }
         else
             this.key = key;
     }
 
     public K(byte[] bytes){
-        if(bytes.length < Character.BYTES * Constant.MAX_KEY_LENGTH){
-            this.key = new String(bytes) + new String(new byte[Character.BYTES * Constant.MAX_KEY_LENGTH - bytes.length]);
+        // key最大长度为Constant.MAX_KEY_LENGTH，不足的补0
+        if(bytes.length < Constant.MAX_KEY_LENGTH){
+            this.key = new String(bytes) + new String(new byte[Constant.MAX_KEY_LENGTH - bytes.length]);
         }
         else
             this.key = new String(bytes);
@@ -42,7 +40,8 @@ public class K implements Serializable, Comparable{
         if(o == null)
             return 0;
         if(o instanceof K){
-            return this.key.compareTo(((K) o).key);
+            int i = this.key.compareTo(((K) o).key);
+            return i;
         }
         return 0;
     }
