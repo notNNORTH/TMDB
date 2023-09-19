@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 // 定义一些常量和静态方法
 public class Constant {
 
-    // key 作为String允许占用的最大长度
+    // key 作为String允许占用的最大长度8字节
     public static final int MAX_KEY_LENGTH = 8;
 
     // memTable最大大小为4MB=4*1024*1024B，超过就会触发compact到外存
@@ -81,7 +81,7 @@ public class Constant {
     }
 
 
-    // 解码byte[]为key
+    // 解码byte[]为key，长度不足的补0
     public static final String BYTES_TO_KEY(byte[] b){
         String s;
         int k=0;

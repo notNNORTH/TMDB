@@ -21,6 +21,7 @@ import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class Main {
     public static void main(String[] args) throws TMDBException, JSQLParserException, IOException {
+
         Transaction transaction = Transaction.getInstance();
         execute("CREATE CLASS company (name char,age int, salary int);");
         execute("insert into company values (a,1,1)");
