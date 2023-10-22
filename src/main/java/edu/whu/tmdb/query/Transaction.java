@@ -1,7 +1,5 @@
 package edu.whu.tmdb.query;
 
-
-
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import edu.whu.tmdb.query.operations.impl.*;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
@@ -38,13 +36,12 @@ public class Transaction {
     public MemManager mem;
     public LevelManager levelManager;
     public LogManager log;
-
     private MemConnect memConnect;
 
     // 1. 私有静态变量，用于保存MemConnect的单一实例
-    private static volatile Transaction instance = null;
+    private static volatile Transaction instance = null;        // volatile关键字使线程对 instance 的修改对其他线程立刻可见
 
-    // 3. 提供一个全局访问点
+    // 2. 提供一个全局访问点
     public static Transaction getInstance(){
         // 双重检查锁定模式
         try {
@@ -73,8 +70,7 @@ public class Transaction {
         }
         this.mem = MemManager.getInstance();
         this.levelManager = mem.levelManager;
-        this.memConnect=MemConnect.getInstance(mem);
-
+        this.memConnect = MemConnect.getInstance(mem);
     }
 
 
@@ -121,9 +117,10 @@ public class Transaction {
     }
 
     public SelectResult query(String s) throws JSQLParserException {
+        // 使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
-        //使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树。
         Statement stmt= CCJSqlParserUtil.parse(byteArrayInputStream);
+
         SelectResult query = this.query("", -1, stmt);
         return query;
     }
@@ -133,59 +130,54 @@ public class Transaction {
         return query;
     }
     public SelectResult query(String k, int op, Statement stmt) {
-        //Action action = new Action();
-//        action.generate(s);
-        ArrayList<Integer> tuples=new ArrayList<>();
+        ArrayList<Integer> tuples = new ArrayList<>();
         SelectResult selectResult = new SelectResult();
         try {
-            //获取生成语法树的类型，用于进一步判断
-            String sqlType=stmt.getClass().getSimpleName();
+            // 获取生成语法树的类型，用于进一步判断
+            String sqlType = stmt.getClass().getSimpleName();
 
             switch (sqlType) {
                 case "CreateTable":
 //                    log.WrteLog(s);
-                    Create create =new CreateImpl();
+                    Create create = new CreateImpl();
                     create.create(stmt);
                     break;
                 case "CreateDeputyClass":
-//                    switch
 //                    log.WriteLog(id,k,op,s);
-                    CreateDeputyClass createDeputyClass=new CreateDeputyClassImpl();
+                    CreateDeputyClass createDeputyClass = new CreateDeputyClassImpl();
                     createDeputyClass.createDeputyClass(stmt);
                     break;
                 case "CreateTJoinDeputyClass":
-//                    switch
-                    //                   log.WriteLog(id,k,op,s);
-                    CreateTJoinDeputyClassImpl createTJoinDeputyClass=new CreateTJoinDeputyClassImpl();
+                    // log.WriteLog(id,k,op,s);
+                    CreateTJoinDeputyClassImpl createTJoinDeputyClass = new CreateTJoinDeputyClassImpl();
                     createTJoinDeputyClass.createTJoinDeputyClass(stmt);
                     break;
                 case "Drop":
 //                    log.WriteLog(id,k,op,s);
-                    Drop drop=new DropImpl();
+                    Drop drop = new DropImpl();
                     drop.drop(stmt);
                     break;
                 case "Insert":
 //                    log.WriteLog(id,k,op,s);
-                    Insert insert=new InsertImpl();
-                    tuples=insert.insert(stmt);
+                    Insert insert = new InsertImpl();
+                    tuples = insert.insert(stmt);
                     break;
                 case "Delete":
  //                   log.WriteLog(id,k,op,s);
-                    Delete delete=new DeleteImpl();
-                    tuples= delete.delete(stmt);
+                    Delete delete = new DeleteImpl();
+                    tuples = delete.delete(stmt);
                     break;
                 case "Select":
-                    Select select=new SelectImpl();
-                    selectResult=select.select((net.sf.jsqlparser.statement.select.Select) stmt);
-                    for (Tuple t:
-                         selectResult.getTpl().tuplelist) {
+                    Select select = new SelectImpl();
+                    selectResult = select.select((net.sf.jsqlparser.statement.select.Select) stmt);
+                    for (Tuple t : selectResult.getTpl().tuplelist) {
                          tuples.add(t.getTupleId());
                     }
                     break;
                 case "Update":
  //                   log.WriteLog(id,k,op,s);
-                    Update update=new UpdateImpl();
-                    tuples=update.update(stmt);
+                    Update update = new UpdateImpl();
+                    tuples = update.update(stmt);
                     break;
                 default:
                     break;
@@ -202,7 +194,7 @@ public class Transaction {
         for (int i = 0; i < tuples.size(); i++) {
             ints[i]=tuples.get(i);
         }
-//        action.setKey(ints);
+
         return selectResult;
     }
 

@@ -15,10 +15,10 @@ import edu.whu.tmdb.query.operations.utils.MemConnect;
 
 public class CreateImpl implements Create {
     private MemConnect memConnect;
-    public CreateImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
-    }
 
+    public CreateImpl() {
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
+    }
 
     @Override
     public boolean create(Statement stmt) throws TMDBException {
@@ -26,7 +26,7 @@ public class CreateImpl implements Create {
     }
 
     public boolean execute(CreateTable stmt) throws TMDBException {
-        //获取新定义class具体元素
+        // 获取新定义class具体元素
         ArrayList<ColumnDefinition> columnDefinitionArrayList= (ArrayList<ColumnDefinition>) stmt.getColumnDefinitions();
         String classname = stmt.getTable().toString();
         int count = columnDefinitionArrayList.size();
@@ -34,7 +34,7 @@ public class CreateImpl implements Create {
         int classid = MemConnect.getClasst().maxid;
         for(ClassTableItem item : MemConnect.getClasst().classTable){
             if(item.classname.equals(classname)){
-                throw new TMDBException("table "+classname+"已经存在！");
+                throw new TMDBException("table " + classname + "已经存在！");
             }
         }
         for (int i = 0; i < count; i++) {

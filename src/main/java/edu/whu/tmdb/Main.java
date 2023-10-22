@@ -21,8 +21,10 @@ import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-//        execute("CREATE CLASS id_vertex (name char,age int, salary int);");
-//        execute("select * from id_vertex limit 1;");
+        // execute("CREATE CLASS id_vertex (name char,age int, salary int);");
+        // execute("INSERT INTO id_vertex VALUES ('test', 21, 10000);");
+        // execute("show tables;");
+        // execute("select * from id_vertex;");
 //        execute("select * from traj;");
 //        execute("select * from trajectory_vertex limit 1;");
 //        execute("CREATE CLASS company (name char,age int, salary int);");
@@ -36,7 +38,7 @@ public class Main {
 //        transaction.test();
 //        transaction.test2();
 //        insertIntoTrajTable();
-        testMapMatching();
+        // testMapMatching();
 //        testEngine();
 //        testTorch3();
     }
@@ -58,14 +60,15 @@ public class Main {
     }
 
     public static SelectResult execute(String s)  {
-        Transaction transaction = Transaction.getInstance();
+        Transaction transaction = Transaction.getInstance();    // 创建一个事务实例
         Statement stmt = null;
         SelectResult selectResult = new SelectResult();
         try {
+            //使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
-            //使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树。
-            stmt= CCJSqlParserUtil.parse(byteArrayInputStream);
-            selectResult=transaction.query("", -1, stmt);
+            stmt = CCJSqlParserUtil.parse(byteArrayInputStream);
+
+            selectResult = transaction.query("", -1, stmt);
         }catch (JSQLParserException e) {
             e.printStackTrace();
         }
