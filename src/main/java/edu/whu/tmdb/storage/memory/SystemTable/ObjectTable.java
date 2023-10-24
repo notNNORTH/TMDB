@@ -5,15 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectTable implements Serializable {
-    public  List<ObjectTableItem> objectTable =new ArrayList<>();
+    public  List<ObjectTableItem> objectTableList =new ArrayList<>();
     public int maxTupleId = 0;
     public void clear(){
-       objectTable.clear();
+        objectTableList.clear();
         maxTupleId = 0;
     }
 
     public int getClassIdByTupleId(int tupleId){
-        for(ObjectTableItem item : this.objectTable){
+        for(ObjectTableItem item : this.objectTableList){
             if(item.tupleid == tupleId)
                 return item.classid;
         }

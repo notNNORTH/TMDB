@@ -123,7 +123,7 @@ public class MemConnect {
 
 //   获取表在classTable中的id值
     public int getClassId(String fromItem) throws TMDBException {
-        for (ClassTableItem item : classt.classTable) {
+        for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(fromItem)) {
                 return item.classid;
             }

@@ -21,14 +21,11 @@ import java.util.TreeMap;
 
 
 public class MemManager {
-
-
     // 数据表
     public TreeMap<K, V> memTable = new TreeMap<>();
 
     // 当前数据表占用内存大小
     private int currentMemSize = 0;
-
 
     // 系统表
     public static ObjectTable objectTable = new ObjectTable();
@@ -65,13 +62,13 @@ public class MemManager {
     }
 
     // 2. 私有构造函数，确保不能从类外部实例化
-    // 构造函数
-    // 从文件中读取历史数据，将系统表加载到内存中
+    /**构造函数负责从文件中读取历史数据，并将系统表加载到内存中*/
     public MemManager(){
         // 防止通过反射创建多个实例
         if (instance != null) {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
+
         File f = new File(Constant.SYSTEM_TABLE_DIR);
         if(!f.exists()){
             f.mkdirs();
@@ -124,15 +121,15 @@ public class MemManager {
     public void add(Object o){
 
         if(o instanceof ObjectTableItem){
-            this.objectTable.objectTable.add((ObjectTableItem) o);
+            this.objectTable.objectTableList.add((ObjectTableItem) o);
         }else if(o instanceof BiPointerTableItem){
-            this.biPointerTable.biPointerTable.add((BiPointerTableItem) o);
+            this.biPointerTable.biPointerTableList.add((BiPointerTableItem) o);
         }else if(o instanceof ClassTableItem){
-            this.classTable.classTable.add((ClassTableItem) o);
+            this.classTable.classTableList.add((ClassTableItem) o);
         }else if(o instanceof DeputyTableItem){
-            this.deputyTable.deputyTable.add((DeputyTableItem) o);
+            this.deputyTable.deputyTableList.add((DeputyTableItem) o);
         }else if(o instanceof SwitchingTableItem){
-            this.switchingTable.switchingTable.add((SwitchingTableItem) o);
+            this.switchingTable.switchingTableList.add((SwitchingTableItem) o);
         }else if(o instanceof Tuple){
             //先写日志
             K k = new K("t" + ((Tuple) o).tupleId);
@@ -154,6 +151,7 @@ public class MemManager {
             }
         }
     }
+
 
     // 清空内存中的数据
     void clearMem(){
@@ -289,14 +287,16 @@ public class MemManager {
         return result;
     }
 
+
     // BiPointerTableItem 有四个int属性
     // classid  objectid deputyid  deputyobjectid
     public void saveBiPointerTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "bpt");
-        if(!f.exists())
+        if (!f.exists()) {
             f.createNewFile();
+        }
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
-        for(BiPointerTableItem item : this.biPointerTable.biPointerTable){
+        for(BiPointerTableItem item : this.biPointerTable.biPointerTableList){
             // 存classid
             writeAccess.write(Constant.INT_TO_BYTES(item.classid));
             // 存objectid
@@ -312,15 +312,16 @@ public class MemManager {
 
     public void loadBiPointerTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "bpt");
-        if(!f.exists())
+        if(!f.exists()){
             return;
+        }
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        long l = raf.length();
+        long fileSize = raf.length();
         long cur = 0L;
-        while(cur < l){
+        while(cur < fileSize){
             // 读取4个int构造BiPointerTableItem
             BiPointerTableItem item = new BiPointerTableItem(raf.readInt(), raf.readInt(), raf.readInt(), raf.readInt());
-            this.biPointerTable.biPointerTable.add(item);
+            this.biPointerTable.biPointerTableList.add(item);
             cur += Integer.BYTES * 4;
         }
     }
@@ -338,25 +339,24 @@ public class MemManager {
     // String   alias
     public void saveClassTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "ct");
-        if(!f.exists())
+        if (!f.exists()) {
             f.createNewFile();
+        }
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
 
         // 存maxClassId
         writeAccess.write(Constant.INT_TO_BYTES(this.classTable.maxid));
 
         // 存各个ClassTableItem
-        for(ClassTableItem item: this.classTable.classTable){
+        for(ClassTableItem item : this.classTable.classTableList){
             // 存classid
             writeAccess.write(Constant.INT_TO_BYTES(item.classid));
             // 存attrnum
             writeAccess.write(Constant.INT_TO_BYTES(item.attrnum));
             // 存attrid
             writeAccess.write(Constant.INT_TO_BYTES(item.attrid));
-            // 存classname，String类型需要先存一个4字节int作为长度
+            // 存classname，String类型需要先存一个4字节int作为长度，再存储数据
             writeAccess.write(Constant.INT_TO_BYTES(item.classname.length()));
-//            writeAccess.flush();
-//            System.out.println(f.length());
             writeAccess.write(item.classname.getBytes());
             // 存attrname，String类型需要先存一个4字节int作为长度
             writeAccess.write(Constant.INT_TO_BYTES(item.attrname.length()));
@@ -377,15 +377,16 @@ public class MemManager {
 
     public void loadClassTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "ct");
-        if(!f.exists())
+        if (!f.exists()) {
             return;
+        }
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        long l = raf.length();
+        long fileSize = raf.length();
         long cur = 0L;
         // 先读maxClassId
         this.classTable.maxid = raf.readInt();
         cur += Integer.BYTES;
-        while(cur < l){
+        while(cur < fileSize){
             // 读各个ClassTableItem
             ClassTableItem item = new ClassTableItem();
             // 读classid
@@ -429,7 +430,7 @@ public class MemManager {
             item.alias = new String(buffer);
             cur += (Integer.BYTES + len);
 
-            this.classTable.classTable.add(item);
+            this.classTable.classTableList.add(item);
         }
     }
 
@@ -439,16 +440,17 @@ public class MemManager {
     // String[] deputyrule
     public void saveDeputyTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "dt");
-        if(!f.exists())
+        if(!f.exists()) {
             f.createNewFile();
+        }
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
-        for(DeputyTableItem item: this.deputyTable.deputyTable){
+        for(DeputyTableItem item : this.deputyTable.deputyTableList){
             // 存originid
             writeAccess.write(Constant.INT_TO_BYTES(item.originid));
             // 存deputyid
             writeAccess.write(Constant.INT_TO_BYTES(item.deputyid));
             // 存deputyrule，String[]类型，先用int存有多少个String，每个String前也需要一个int存该String的长度
-            writeAccess.write(Constant.INT_TO_BYTES(item.deputyrule.length));
+            writeAccess.write(Constant.INT_TO_BYTES(item.deputyrule.length));   // deputyrule的数量
             for(String str : item.deputyrule){
                 writeAccess.write(Constant.INT_TO_BYTES(str.length()));
                 writeAccess.write(str.getBytes());
@@ -460,57 +462,62 @@ public class MemManager {
 
     public void loadDeputyTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "dt");
-        if(!f.exists())
-            return;
+        if(!f.exists()) { return; }
+
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        long l = raf.length();
+        long fileSize = raf.length();
         long cur = 0L;
-        while(cur < l){
+        while(cur < fileSize){
             DeputyTableItem item = new DeputyTableItem();
+
             // 读originid
             item.originid = raf.readInt();
             cur += Integer.BYTES;
+
             // 读deputyid
             item.deputyid = raf.readInt();
             cur += Integer.BYTES;
-            // 读deputyrule
-            int strCount = raf.readInt();
+
+            // 读deputyrule，参考存的逻辑，取出deputyrule的数量、每个deputyrule的长度和数据
+            int deputyruleAmount = raf.readInt();
             cur += Integer.BYTES;
-            item.deputyrule = new String[strCount];
-            for(int i=0; i<strCount; i++){
-                int strLength = raf.readInt();
+            item.deputyrule = new String[deputyruleAmount];
+            for (int i = 0; i < deputyruleAmount; i++) {
+                int strLength = raf.readInt();      // 读deputyrule的长度
                 cur += Integer.BYTES;
-                byte[] buffer = new byte[strLength];
+                byte[] buffer = new byte[strLength];// 读deputyrule的数据
                 raf.read(buffer);
                 cur += strLength;
                 item.deputyrule[i] = new String(buffer);
             }
-            this.deputyTable.deputyTable.add(item);
+            this.deputyTable.deputyTableList.add(item);
         }
     }
 
     // SwitchingTableItem的属性：
-    // String attr
-    // String deputy
-    // String rule
+    // int oriId
+    // int oriAttrid
+    // int deputyId
+    // int deputyAttrId
+    // String rule = ""
     public void saveSwitchingTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "st");
         FileOperation.createNewFile(f);
         BufferedOutputStream writeAccess = new BufferedOutputStream(new FileOutputStream(f));
-        for(SwitchingTableItem item: this.switchingTable.switchingTable){
+        for(SwitchingTableItem item: this.switchingTable.switchingTableList){
             // 存oriclassid
             writeAccess.write(Constant.INT_TO_BYTES(item.oriId));
-//            writeAccess.write(item.oriId);
+            // writeAccess.write(item.oriId);
             // 存oriattrid
             writeAccess.write(Constant.INT_TO_BYTES(item.oriAttrid));
-//            writeAccess.write(item.deputy.getBytes());
+            // writeAccess.write(item.deputy.getBytes());
             // 存deputyclassid
             writeAccess.write(Constant.INT_TO_BYTES(item.deputyId));
-//            writeAccess.write(item.attr.getBytes());
+            // writeAccess.write(item.attr.getBytes());
             // 存deputyattrid
             writeAccess.write(Constant.INT_TO_BYTES(item.deputyAttrId));
-//            writeAccess.write(item.deputy.getBytes());
-            // 存rule
+            // writeAccess.write(item.deputy.getBytes());
+            // 存rule，先存储长度，再存储数据
             writeAccess.write(Constant.INT_TO_BYTES(item.rule.length()));
             writeAccess.write(item.rule.getBytes());
         }
@@ -520,43 +527,40 @@ public class MemManager {
 
     public void loadSwitchingTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "st");
-        if(!f.exists())
+        if(!f.exists()) {
             return;
+        }
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        long l = raf.length();
+        long fileSize = raf.length();
         long cur = 0L;
-        while(cur < l){
+        while(cur < fileSize){
             SwitchingTableItem item = new SwitchingTableItem();
-            // 读attr
 
+            // 读取oriId
+            item.oriId = raf.readInt();
+            cur += Integer.BYTES;
 
-//            raf.read(buffer);
-//            item.attr = new String(buffer);
-//            cur += (Integer.BYTES + len);
-//            // 读deputy
-//            len = raf.readInt();
-//            buffer = new byte[len];
-//            raf.read(buffer);
-//            item.deputy = new String(buffer);
-//            cur += (Integer.BYTES + len);
-            item.oriId=raf.readInt();
-            cur+=Integer.BYTES;
-            item.oriAttrid=raf.readInt();
-            cur+=Integer.BYTES;
-            item.deputyId=raf.readInt();
-            cur+=Integer.BYTES;
-            item.deputyAttrId=raf.readInt();
-            cur+=Integer.BYTES;
+            // 读取oriAttrid
+            item.oriAttrid = raf.readInt();
+            cur += Integer.BYTES;
+
+            // 读取deputyId
+            item.deputyId = raf.readInt();
+            cur += Integer.BYTES;
+
+            // 读取deputyAttrId
+            item.deputyAttrId = raf.readInt();
+            cur += Integer.BYTES;
+
             // 读rule
-            int len = raf.readInt();
-            byte[] buffer = new byte[len];
-            len = raf.readInt();
-            buffer = new byte[len];
+            int ruleLength = raf.readInt();
+            cur += Integer.BYTES;
+            byte[] buffer = new byte[ruleLength];
             raf.read(buffer);
+            cur += ruleLength;
             item.rule = new String(buffer);
-            cur += (Integer.BYTES + len);
 
-            this.switchingTable.switchingTable.add(item);
+            this.switchingTable.switchingTableList.add(item);
         }
     }
 
@@ -574,7 +578,7 @@ public class MemManager {
         raf.writeInt(this.objectTable.maxTupleId);
 
         // 依次存每个ObjectTableItem
-        for(ObjectTableItem item: this.objectTable.objectTable){
+        for(ObjectTableItem item : this.objectTable.objectTableList){
             // 存classid
             raf.writeInt(item.classid);
             // 存tupleid
@@ -587,17 +591,18 @@ public class MemManager {
 
     public void loadObjectTable() throws IOException {
         File f = new File(Constant.SYSTEM_TABLE_DIR + "ot");
-        if(!f.exists())
+        if(!f.exists()){
             return;
+        }
         RandomAccessFile raf = new RandomAccessFile(f, "r");
-        long l = raf.length();
+        long fileSize = raf.length();
         long cur = 0L;
 
         // 读 maxTupleId
         objectTable.maxTupleId = raf.readInt();
         cur += Integer.BYTES;
 
-        while(cur < l){
+        while(cur < fileSize){
             ObjectTableItem item = new ObjectTableItem();
             // 读classid
             item.classid = raf.readInt();
@@ -609,7 +614,7 @@ public class MemManager {
             item.sstSuffix = raf.readInt();
             cur += Integer.BYTES;
 
-            objectTable.objectTable.add(item);
+            objectTable.objectTableList.add(item);
         }
     }
 

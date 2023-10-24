@@ -44,13 +44,13 @@ public class SwitchingTableItem implements Serializable {
         if(this.deputyAttrId!=oi.deputyAttrId){
             return false;
         }
-        if(this.rule!=oi.rule){
+        if(!Objects.equals(this.rule, oi.rule)){
             return false;
         }
-        if(this.oriAttr!=oi.oriAttr){
+        if(!Objects.equals(this.oriAttr, oi.oriAttr)){
             return false;
         }
-        if(this.deputyAttr!=oi.deputyAttr){
+        if(!Objects.equals(this.deputyAttr, oi.deputyAttr)){
             return false;
         }
         return true;

@@ -99,7 +99,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         int classid = MemConnect.getClasst().maxid;//代理类的id
         int count=selectResult.getAttrid().length;//代理类的长度
         for (int i = 0; i < selectResult.getAttrid().length; i++) {
-            MemConnect.getClasst().classTable.add(
+            MemConnect.getClasst().classTableList.add(
                     new ClassTableItem(deputyClassName,
                                         classid,
                                         count,
@@ -111,7 +111,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
             String className=selectResult.getClassName()[i];
             int oriId=memConnect.getClassId(className);
             int oriAttrId=getOriAttrId(oriId,selectResult.getAlias()[i]);
-            MemConnect.getSwitchingT().switchingTable.add(
+            MemConnect.getSwitchingT().switchingTableList.add(
                     new SwitchingTableItem(oriId,oriAttrId,selectResult.getAlias()[i],classid,i,selectResult.getAttrname()[i],deputyRule+"")
             );
         }
@@ -125,8 +125,8 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
      * @return
      */
     private int getOriAttrId(int oriId, String alias) {
-        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
             if(classTableItem.classid==oriId && classTableItem.attrname.equals(alias)){
                 return classTableItem.attrid;
             }
@@ -146,7 +146,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         for (String s :
                 collect) {
             int oriId=memConnect.getClassId(s);
-            MemConnect.getDeputyt().deputyTable.add(
+            MemConnect.getDeputyt().deputyTableList.add(
                     new DeputyTableItem(oriId,deputyId,new String[]{deputyType+""})
             );
         }
@@ -164,7 +164,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
                     origin) {
                 int classId=memConnect.getClassId(selectResult.getClassName()[o]);
                 int oriTupleId=tuple.tupleIds[o];
-                MemConnect.getBiPointerT().biPointerTable.add(
+                MemConnect.getBiPointerT().biPointerTableList.add(
                         new BiPointerTableItem(classId,oriTupleId,deputyId,deputyTupleId)
                 );
             }

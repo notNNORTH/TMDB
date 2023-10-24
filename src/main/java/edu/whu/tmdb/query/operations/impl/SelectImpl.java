@@ -937,7 +937,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem){
         ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
 //        System.out.println(MemConnect.getClasst().classTable.size());
-        for(ClassTableItem item : MemConnect.getClasst().classTable){
+        for(ClassTableItem item : MemConnect.getClasst().classTableList){
             //如果classTableItem中的className对上了fromItem就加入结果中
             if(item.classname.equals(((Table)fromItem).getName())){
                 //硬拷贝，不然后续操作会影响原始信息。
@@ -953,7 +953,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem, List<Column> columnList){
         // 从class表中提取将要获取的元素。
         ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
-        for(ClassTableItem item : memConnect.getClasst().classTable){
+        for(ClassTableItem item : memConnect.getClasst().classTableList){
             if(item.classname.equals(fromItem.toString())){
                 String attrName=item.attrname;
                 boolean flag=false;
@@ -972,7 +972,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     public int getClassId(String fromItem) throws TMDBException {
-        for(ClassTableItem item : memConnect.getClasst().classTable) {
+        for(ClassTableItem item : memConnect.getClasst().classTableList) {
             if (item.classname.equals(fromItem)) {
                 return item.classid;
             }
@@ -985,7 +985,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     public TupleList getTable(FromItem fromItem) throws TMDBException {
         int classid=this.getClassId(((Table) fromItem).getName());
         TupleList res=new TupleList();
-        for(ObjectTableItem item : MemConnect.getTopt().objectTable) {
+        for(ObjectTableItem item : MemConnect.getTopt().objectTableList) {
             if (item.classid == classid) {
                 Tuple tuple = memConnect.GetTuple(item.tupleid);
                 if(tuple!= null && tuple.delete==false){
@@ -999,7 +999,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     public TupleList getTable(int classid) throws TMDBException {
         TupleList res=new TupleList();
-        for(ObjectTableItem item : memConnect.getTopt().objectTable) {
+        for(ObjectTableItem item : memConnect.getTopt().objectTableList) {
             if (item.classid == classid) {
                 Tuple tuple = memConnect.GetTuple(item.tupleid);
                 if(tuple!= null && tuple.delete==false){

@@ -32,13 +32,13 @@ public class CreateImpl implements Create {
         int count = columnDefinitionArrayList.size();
         MemConnect.getClasst().maxid++;
         int classid = MemConnect.getClasst().maxid;
-        for(ClassTableItem item : MemConnect.getClasst().classTable){
+        for(ClassTableItem item : MemConnect.getClasst().classTableList){
             if(item.classname.equals(classname)){
                 throw new TMDBException("table " + classname + "已经存在！");
             }
         }
         for (int i = 0; i < count; i++) {
-            MemConnect.getClasst().classTable.add(new ClassTableItem(classname, classid, count,i,
+            MemConnect.getClasst().classTableList.add(new ClassTableItem(classname, classid, count,i,
                     columnDefinitionArrayList.get(i).getColumnName(),
                     columnDefinitionArrayList.get(i).toStringDataTypeAndSpec()
                     ,"ori",""));

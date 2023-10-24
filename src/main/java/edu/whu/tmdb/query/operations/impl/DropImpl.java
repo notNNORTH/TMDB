@@ -37,58 +37,58 @@ public class DropImpl implements Drop {
 
     public void drop(int classId){
         ArrayList<ClassTableItem> tempC=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
             if(classTableItem.classid==classId){
                 tempC.add(classTableItem);
             }
         }
         for (ClassTableItem temp :
                 tempC) {
-            MemConnect.getClasst().classTable.remove(temp);
+            MemConnect.getClasst().classTableList.remove(temp);
         }
         ArrayList<DeputyTableItem> tempD=new ArrayList<>();
         ArrayList<Integer> toDrop=new ArrayList<>();
-        for (int i = 0; i < memConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < memConnect.getDeputyt().deputyTableList.size(); i++) {
+            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTableList.get(i);
             if(deputyTableItem.originid==classId){
                 toDrop.add(deputyTableItem.deputyid);
                 tempD.add(deputyTableItem);
             }
         }
         for(DeputyTableItem temp: tempD){
-            MemConnect.getDeputyt().deputyTable.remove(temp);
+            MemConnect.getDeputyt().deputyTableList.remove(temp);
         }
         ArrayList<BiPointerTableItem> tempB=new ArrayList<>();
-        for (int i = 0; i < memConnect.getBiPointerT().biPointerTable.size(); i++) {
-            BiPointerTableItem biPointerTableItem = memConnect.getBiPointerT().biPointerTable.get(i);
+        for (int i = 0; i < memConnect.getBiPointerT().biPointerTableList.size(); i++) {
+            BiPointerTableItem biPointerTableItem = memConnect.getBiPointerT().biPointerTableList.get(i);
             if(biPointerTableItem.objectid==classId || biPointerTableItem.deputyobjectid==classId){
                 tempB.add(biPointerTableItem);
             }
         }
         for(BiPointerTableItem temp:tempB){
-            memConnect.getBiPointerT().biPointerTable.remove(temp);
+            memConnect.getBiPointerT().biPointerTableList.remove(temp);
         }
         ArrayList<SwitchingTableItem> tempS=new ArrayList<>();
-        for (int i = 0; i < memConnect.getSwitchingT().switchingTable.size(); i++) {
-            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTable.get(i);
+        for (int i = 0; i < memConnect.getSwitchingT().switchingTableList.size(); i++) {
+            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTableList.get(i);
             if(switchingTableItem.oriId==classId || switchingTableItem.deputyId==classId){
                 tempS.add(switchingTableItem);
             }
         }
         for(SwitchingTableItem temp:tempS){
-            memConnect.getSwitchingT().switchingTable.remove(temp);
+            memConnect.getSwitchingT().switchingTableList.remove(temp);
         }
         ArrayList<ObjectTableItem> tempT=new ArrayList<>();
-        for (int i = 0; i < memConnect.getTopt().objectTable.size(); i++) {
-            ObjectTableItem objectTableItem = memConnect.getTopt().objectTable.get(i);
+        for (int i = 0; i < memConnect.getTopt().objectTableList.size(); i++) {
+            ObjectTableItem objectTableItem = memConnect.getTopt().objectTableList.get(i);
             if(objectTableItem.classid==classId ){
                 memConnect.DeleteTuple(objectTableItem.tupleid);
                 tempT.add(objectTableItem);
             }
         }
         for(ObjectTableItem temp:tempT){
-            memConnect.getTopt().objectTable.remove(temp);
+            memConnect.getTopt().objectTableList.remove(temp);
         }
         if(toDrop.isEmpty()){
             return;

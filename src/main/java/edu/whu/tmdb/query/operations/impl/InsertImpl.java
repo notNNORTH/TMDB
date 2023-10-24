@@ -118,7 +118,7 @@ public class InsertImpl implements Insert {
         tuple.tupleIds=ids;
         tuple.tupleId=tupleid;
         memConnect.InsertTuple(tuple);
-        MemConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
+        MemConnect.getTopt().objectTableList.add(new ObjectTableItem(classId,tupleid));
 
         //往代理类中进行插入
         ArrayList<Integer> pointTo = deputyTable(classId);
@@ -131,7 +131,7 @@ public class InsertImpl implements Insert {
             List<String> tempColumns=getInsertColumns(classId,tempClassId,tempMap,columns);
             Tuple tuple1=getDeputyTuple(tempMap,tuple,columns);
             int i1 = executeTuple(tempClassId, tempColumns, tuple1);
-            MemConnect.getBiPointerT().biPointerTable.add(
+            MemConnect.getBiPointerT().biPointerTableList.add(
                     new BiPointerTableItem(classId,tupleid,tempClassId,i1)
             );
         }
@@ -173,7 +173,7 @@ public class InsertImpl implements Insert {
                         temp1.tuple[2]=temps;
                         //调用一下方法在代理类中也插入新tuple
                         int i1 = executeTuple(deputyId, columns, temp1);
-                        MemConnect.getBiPointerT().biPointerTable.add(
+                        MemConnect.getBiPointerT().biPointerTableList.add(
                                 new BiPointerTableItem(classId, tupleid, deputyId, i1)
                         );
                     }
@@ -189,8 +189,8 @@ public class InsertImpl implements Insert {
     }
 
     private int getAnotherDeputy(int deputyId, int classId) {
-        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTableList.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTableList.get(i);
             if("5".equals(deputyTableItem.deputyrule[0]) &&
             deputyTableItem.originid!=classId &&
             deputyTableItem.deputyid==deputyId){
@@ -211,8 +211,8 @@ public class InsertImpl implements Insert {
         HashMap<String,String> map2=new HashMap<>();
         HashMap<Integer,String> tempmap1=new HashMap<>();
         HashMap<Integer,String> tempmap2=new HashMap<>();
-        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
             if(classTableItem.classid==classId){
                 tempmap1.put(classTableItem.attrid,classTableItem.attrname);
             }
@@ -254,8 +254,8 @@ public class InsertImpl implements Insert {
 
     public List<String> getColumns(String tableName){
         List<String> res=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(i);
+        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
             if(classTableItem.classname.equals(tableName)){
                 res.add(classTableItem.attrname);
             }
@@ -273,15 +273,15 @@ public class InsertImpl implements Insert {
         int i=0;
         int c=-1;
         ArrayList<HashMap<Integer,Integer>> res=new ArrayList<>();
-        while(i< MemConnect.getSwitchingT().switchingTable.size()){
-            SwitchingTableItem switchingTableItem = MemConnect.getSwitchingT().switchingTable.get(i);
+        while(i< MemConnect.getSwitchingT().switchingTableList.size()){
+            SwitchingTableItem switchingTableItem = MemConnect.getSwitchingT().switchingTableList.get(i);
             if(switchingTableItem.oriId==oriId){
                 c=switchingTableItem.deputyId;
                 HashMap<Integer,Integer> map=new HashMap<>();
-                while(i< MemConnect.getSwitchingT().switchingTable.size() &&
-                        MemConnect.getSwitchingT().switchingTable.get(i).deputyId==c){
-                    map.put(MemConnect.getSwitchingT().switchingTable.get(i).oriAttrid,
-                            MemConnect.getSwitchingT().switchingTable.get(i).deputyAttrId);
+                while(i< MemConnect.getSwitchingT().switchingTableList.size() &&
+                        MemConnect.getSwitchingT().switchingTableList.get(i).deputyId==c){
+                    map.put(MemConnect.getSwitchingT().switchingTableList.get(i).oriAttrid,
+                            MemConnect.getSwitchingT().switchingTableList.get(i).deputyAttrId);
                     i++;
                 }
                 res.add(map);
@@ -294,9 +294,9 @@ public class InsertImpl implements Insert {
     }
 
     private int getLength(int classId) {
-        for (int i = 0; i < MemConnect.getClasst().classTable.size(); i++) {
-            if(MemConnect.getClasst().classTable.get(i).classid==classId){
-                return MemConnect.getClasst().classTable.get(i).attrnum;
+        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
+            if(MemConnect.getClasst().classTableList.get(i).classid==classId){
+                return MemConnect.getClasst().classTableList.get(i).attrnum;
             }
         }
         try {
@@ -310,8 +310,8 @@ public class InsertImpl implements Insert {
     private int[] getTemplate(int classId, List<String> columns) {
         HashMap<Integer,ClassTableItem> map=new HashMap<>();
         ArrayList<ClassTableItem> list=new ArrayList<>();
-        for (int j = 0; j < MemConnect.getClasst().classTable.size(); j++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTable.get(j);
+        for (int j = 0; j < MemConnect.getClasst().classTableList.size(); j++) {
+            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(j);
             if(classTableItem.classid==classId){
                 list.add(classTableItem);
             }
@@ -336,8 +336,8 @@ public class InsertImpl implements Insert {
      */
     private ArrayList<Integer> deputyTable(int classId) {
         ArrayList<Integer> deputy=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTableList.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTableList.get(i);
             if(deputyTableItem.originid==classId && !deputyTableItem.deputyrule[0].equals("5")){
                 deputy.add(deputyTableItem.deputyid);
             }
@@ -347,8 +347,8 @@ public class InsertImpl implements Insert {
 
     private ArrayList<Integer> tJoinDeputySize(int classId) {
         ArrayList<Integer> deputy=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getDeputyt().deputyTable.size(); i++) {
-            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTable.get(i);
+        for (int i = 0; i < MemConnect.getDeputyt().deputyTableList.size(); i++) {
+            DeputyTableItem deputyTableItem = MemConnect.getDeputyt().deputyTableList.get(i);
             if(deputyTableItem.originid==classId && deputyTableItem.deputyrule[0].equals("5")){
                 deputy.add(deputyTableItem.deputyid);
             }
@@ -364,7 +364,7 @@ public class InsertImpl implements Insert {
         Arrays.fill(ids,tupleid);
         tuple.tupleId=tupleid;
         memConnect.InsertTuple(tuple);
-        MemConnect.getTopt().objectTable.add(new ObjectTableItem(classId,tupleid));
+        MemConnect.getTopt().objectTableList.add(new ObjectTableItem(classId,tupleid));
         if(hasDeputy){
 
         }

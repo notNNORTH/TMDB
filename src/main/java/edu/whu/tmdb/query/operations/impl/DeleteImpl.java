@@ -58,16 +58,16 @@ public class DeleteImpl implements Delete {
             memConnect.DeleteTuple(tuple.getTupleId());
             ObjectTableItem o=new ObjectTableItem(tuple.classId,tuple.getTupleId());
 //            ArrayList<Object> list=memConnect.getTopt().objectTable;
-            MemConnect.getTopt().objectTable.remove(o);
+            MemConnect.getTopt().objectTableList.remove(o);
             delete.add(tuple.getTupleId());
         }
         deleteId.addAll(delete);
         ArrayList<Integer> toDelete=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getBiPointerT().biPointerTable.size(); i++) {
-            BiPointerTableItem biPointerTableItem = MemConnect.getBiPointerT().biPointerTable.get(i);
+        for (int i = 0; i < MemConnect.getBiPointerT().biPointerTableList.size(); i++) {
+            BiPointerTableItem biPointerTableItem = MemConnect.getBiPointerT().biPointerTableList.get(i);
             if(delete.contains(biPointerTableItem.objectid)){
                 toDelete.add(biPointerTableItem.deputyobjectid);
-                MemConnect.getBiPointerT().biPointerTable.remove(biPointerTableItem);
+                MemConnect.getBiPointerT().biPointerTableList.remove(biPointerTableItem);
             }
         }
         if(toDelete.isEmpty()){

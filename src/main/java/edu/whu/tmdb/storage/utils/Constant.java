@@ -144,17 +144,11 @@ public class Constant {
         if (array1Start < 0 || array2Start < 0 || (array1Start + length) > array1.length || (array2Start + length) > array2.length) {
             return false;
         }
-
         for (int i = 0; i < length; i++) {
             if (array1[array1Start + i] != array2[array2Start + i]) {
                 return false;
             }
         }
-
         return true;
     }
-
-
-
-
 }

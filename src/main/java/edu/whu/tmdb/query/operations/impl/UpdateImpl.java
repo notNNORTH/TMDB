@@ -121,8 +121,8 @@ public class UpdateImpl implements Update {
         }
         changedTupleIndex.addAll(insertIndex);
         ArrayList<Integer> toUpdate=new ArrayList<>();
-        for (int i = 0; i < memConnect.getBiPointerT().biPointerTable.size(); i++) {
-            BiPointerTableItem biPointerTableItem = memConnect.getBiPointerT().biPointerTable.get(i);
+        for (int i = 0; i < memConnect.getBiPointerT().biPointerTableList.size(); i++) {
+            BiPointerTableItem biPointerTableItem = memConnect.getBiPointerT().biPointerTableList.get(i);
             if(insertIndex.contains(biPointerTableItem.objectid)){
                 toUpdate.add(biPointerTableItem.deputyobjectid);
             }
@@ -133,8 +133,8 @@ public class UpdateImpl implements Update {
         List<Integer> collect = Arrays.stream(indexs).boxed().collect(Collectors.toList());
         HashMap<Integer,ArrayList<Integer>> map=new HashMap<>();
         HashMap<Integer,ArrayList<Object>> map2=new HashMap<>();
-        for (int i = 0; i < memConnect.getSwitchingT().switchingTable.size(); i++) {
-            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTable.get(i);
+        for (int i = 0; i < memConnect.getSwitchingT().switchingTableList.size(); i++) {
+            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTableList.get(i);
             if(switchingTableItem.oriId==classId && collect.contains(switchingTableItem.oriAttrid)){
                 if(!map.containsKey(switchingTableItem.deputyId)){
                     map.put(switchingTableItem.deputyId,new ArrayList<>());

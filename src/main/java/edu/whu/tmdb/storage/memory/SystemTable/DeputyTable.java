@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DeputyTable implements Serializable {
-    public List<DeputyTableItem> deputyTable=new ArrayList<>();
+    public List<DeputyTableItem> deputyTableList = new ArrayList<>();
 
     public void clear(){
-        deputyTable.clear();
+        deputyTableList.clear();
     }
 }
 
