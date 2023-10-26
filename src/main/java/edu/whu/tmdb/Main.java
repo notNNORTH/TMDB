@@ -14,13 +14,26 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 
 import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        String sqlCommand;
+
+        while (true) {
+            System.out.print("tmdb> ");
+            sqlCommand = reader.readLine().trim();
+            if ("exit".equalsIgnoreCase(sqlCommand)) {
+                break;
+            } else {
+                SelectResult result = execute(sqlCommand);
+                System.out.println("Result: " + result.toString());
+            }
+        }
+
         // execute("CREATE CLASS id_vertex (name char,age int, salary int);");
         // execute("INSERT INTO id_vertex VALUES ('test', 21, 10000);");
         // execute("show tables;");

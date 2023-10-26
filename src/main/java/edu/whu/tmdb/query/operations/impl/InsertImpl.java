@@ -1,5 +1,11 @@
-package edu.whu.tmdb.query.operations.impl;
+/**
+ * className: InsertImpl
+ * Package: edu.whu.tmdb.query.operations.impl
+ * Description: select的输出结果，对应传统数据库打印的结果，另外此处附带其他属性若干
+ * Last modified by lzp, 2023.10.26
+ */
 
+package edu.whu.tmdb.query.operations.impl;
 
 import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
@@ -12,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
 
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.Insert;
@@ -30,36 +35,33 @@ import edu.whu.tmdb.storage.memory.TupleList;
 public class InsertImpl implements Insert {
     private MemConnect memConnect;
 
-    ArrayList<Integer> indexs=new ArrayList<>();
+    ArrayList<Integer> indexs = new ArrayList<>();
 
     public InsertImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
     public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException {
-        net.sf.jsqlparser.statement.insert.Insert statement=(net.sf.jsqlparser.statement.insert.Insert) stmt;
-        //获取插入的table名
-        Table table= statement.getTable();
-        //获取插入的column的名称
-
-        List<String> columns=new ArrayList<>();
-        if(statement.getColumns()==null){
-            columns=getColumns(table.getName());
+        net.sf.jsqlparser.statement.insert.Insert insertStmt = (net.sf.jsqlparser.statement.insert.Insert) stmt;
+        Table table = insertStmt.getTable();        // 解析insert对应的表
+        List<String> attrNames = new ArrayList<>(); // 解析插入的字段名
+        if (insertStmt.getColumns() == null){
+            attrNames = getColumns(table.getName());
         }
         else{
-            for (int i = 0; i < statement.getColumns().size(); i++) {
-                columns.add(statement.getColumns().get(i).getColumnName());
+            for (int i = 0; i < insertStmt.getColumns().size(); i++) {
+                attrNames.add(insertStmt.getColumns().get(i).getColumnName());
             }
         }
         //插入的TupleList
-        SelectImpl select=new SelectImpl();
+        SelectImpl select = new SelectImpl();
 
         //insert后面的values是一个select节点，获取values或者其它类型select的值
-        SelectResult selectResult=select.select(statement.getSelect());
+        SelectResult selectResult = select.select(insertStmt.getSelect());
         //tuplelist就是SelectResult中实际存储tuple部分
-        TupleList tupleList=selectResult.getTpl();
-        execute(table.getName(),columns,tupleList);
+        TupleList tupleList = selectResult.getTpl();
+        execute(table.getName(), attrNames, tupleList);
         return indexs;
     }
 
@@ -253,14 +255,13 @@ public class InsertImpl implements Insert {
     }
 
     public List<String> getColumns(String tableName){
-        List<String> res=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
+        List<String> colName = new ArrayList<>();
+        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
             if(classTableItem.classname.equals(tableName)){
-                res.add(classTableItem.attrname);
+                colName.add(classTableItem.attrname);
             }
         }
-        return res;
+        return colName;
     }
 
     /**

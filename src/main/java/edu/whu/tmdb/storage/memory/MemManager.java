@@ -163,8 +163,9 @@ public class MemManager {
     // 将内存中的数据持久化保存
     public int saveMemTableToFile(){
 
-        if(this.memTable.size() == 0)
+        if (this.memTable.size() == 0) {
             return -1;
+        }
 
         // 获取最新dataFileSuffix并+1
         int dataFileSuffix = levelManager.addFileSuffix();

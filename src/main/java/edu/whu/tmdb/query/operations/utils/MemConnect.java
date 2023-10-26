@@ -19,9 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MemConnect {
-    //进行内存操作的一些一些方法和数据
+    // 进行内存操作的一些一些方法和数据
     private static Logger logger = LoggerFactory.getLogger(MemConnect.class);
-    private MemManager mem;
+    private MemManager memManager;
     public static ObjectTable topt;
     private static ClassTable classt;
     private static DeputyTable deputyt;
@@ -55,7 +55,7 @@ public class MemConnect {
     }
 
     private MemConnect(MemManager mem) {
-        this.mem = mem;
+        this.memManager = mem;
         topt = MemManager.objectTable;
         classt = MemManager.classTable;
         deputyt = MemManager.deputyTable;
@@ -63,14 +63,12 @@ public class MemConnect {
         switchingT = MemManager.switchingTable;
     }
 
-
-
     //获取tuple
     public Tuple GetTuple(int id) {
         rwLock.readLock().lock(); // 获取读锁
         Tuple t = null;
         try {
-            Object searchResult = this.mem.search(new K("t" + id));
+            Object searchResult = this.memManager.search(new K("t" + id));
             if (searchResult == null)
                 t= null;
             if (searchResult instanceof Tuple)
@@ -89,7 +87,7 @@ public class MemConnect {
     public void InsertTuple(Tuple tuple) {
         rwLock.writeLock().lock(); // 获取写锁
         try {
-            this.mem.add(tuple);
+            this.memManager.add(tuple);
         }finally {
             rwLock.writeLock().unlock();
         }
@@ -103,7 +101,7 @@ public class MemConnect {
                 Tuple tuple = new Tuple();
                 tuple.tupleId = id;
                 tuple.delete = true;
-                mem.add(tuple);
+                memManager.add(tuple);
             }
         }finally {
             rwLock.writeLock().unlock();
@@ -115,7 +113,7 @@ public class MemConnect {
         rwLock.writeLock().unlock();
         try {
             tuple.tupleId = tupleId;
-            this.mem.add(tuple);
+            this.memManager.add(tuple);
         }finally {
             rwLock.writeLock().unlock();
         }
@@ -150,15 +148,15 @@ public class MemConnect {
     }
 
     public void SaveAll() {
-        mem.saveAll();
+        memManager.saveAll();
     }
 
     public void reload() {
         try {
-            mem.loadClassTable();
-            mem.loadDeputyTable();
-            mem.loadBiPointerTable();
-            mem.loadSwitchingTable();
+            memManager.loadClassTable();
+            memManager.loadDeputyTable();
+            memManager.loadBiPointerTable();
+            memManager.loadSwitchingTable();
         }catch (IOException e){
             logger.error(e.getMessage());
         }
