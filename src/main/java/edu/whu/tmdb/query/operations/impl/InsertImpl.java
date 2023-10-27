@@ -50,43 +50,81 @@ public class InsertImpl implements Insert {
             attrNames = getColumns(table.getName());
         }
         else{
-            for (int i = 0; i < insertStmt.getColumns().size(); i++) {
+            int insertColSize = insertStmt.getColumns().size();
+            for (int i = 0; i < insertColSize; i++) {
                 attrNames.add(insertStmt.getColumns().get(i).getColumnName());
             }
         }
-        //插入的TupleList
+
+        // 插入的TupleList
         SelectImpl select = new SelectImpl();
 
-        //insert后面的values是一个select节点，获取values或者其它类型select的值
+        // insert后面的values是一个select节点，获取values或者其它类型select的值
         SelectResult selectResult = select.select(insertStmt.getSelect());
-        //tuplelist就是SelectResult中实际存储tuple部分
+        // tuplelist就是SelectResult中实际存储tuple部分
         TupleList tupleList = selectResult.getTpl();
         execute(table.getName(), attrNames, tupleList);
         return indexs;
     }
 
-    public void execute(String table, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
-        int classId=memConnect.getClassId(table);
-        int l=getLength(classId);
-        int[] index=getTemplate(classId,columns);
+    /**
+     *
+     * @param tableName 表名/类名
+     * @param columns 表/类所具有的属性列表
+     * @param tupleList 我到现在也不知道这个是什么东西
+     * @throws TMDBException
+     * @throws IOException
+     */
+    public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
+        int classId = memConnect.getClassId(tableName);         // 类id
+        int attrNum = memConnect.getClassAttrnum(tableName);    // 属性的数量
+        int[] attrId = getAttridList(classId, columns);         // 插入的属性对应的attrid列表
         for (int i = 0; i < tupleList.tuplelist.size(); i++) {
-            indexs.add(insert(classId,columns,tupleList.tuplelist.get(i),l,index));
+            indexs.add(insert(classId, columns, tupleList.tuplelist.get(i), attrNum, attrId));
         }
     }
     public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
-        int l=getLength(classId);
-        int[] index=getTemplate(classId,columns);
+        int l = memConnect.getClassAttrnum(classId);
+        int[] index = getAttridList(classId, columns);
         for (int i = 0; i < tupleList.tuplelist.size(); i++) {
             indexs.add(insert(classId,columns,tupleList.tuplelist.get(i),l,index));
         }
     }
 
     public int executeTuple(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException {
-        int l=getLength(classId);
-        int[] index=getTemplate(classId,columns);
+        int l = memConnect.getClassAttrnum(classId);
+        int[] index = getAttridList(classId, columns);
         int insert = insert(classId, columns, tuple, l, index);
         indexs.add(insert);
         return insert;
+    }
+
+    /**
+     * 用于获取插入位置对应的属性id (attrid)
+     * @param classId insert对应的表id/类id
+     * @param columns insert对应的属性名称列表
+     * @return 属性名列表对应的attrid列表
+     */
+    private int[] getAttridList(int classId, List<String> columns) {
+        int attrnum = memConnect.getClassAttrnum(classId);
+        int[] attridList = new int[attrnum];
+
+        // 遍历当前的ClassTableItem
+        for (ClassTableItem classTableItem : memConnect.getClasst().classTableList) {
+            if (classTableItem.classid != classId) {
+                continue;
+            }
+            // 找到对应classId的类，遍历当前属性名称列表columns
+            for (int i = 0; i < attrnum; i++) {
+                if (!columns.get(i).equals(classTableItem.attrname)) {
+                    continue;
+                }
+                // 若colname和当前item对应的attrname相同，获取attrid放到对应位置
+                attridList[i] = classTableItem.attrid;
+            }
+        }
+
+        return attridList;
     }
 
 
@@ -102,23 +140,23 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      */
     private Integer insert(int classId, List<String> columns, Tuple tuple, int l, int[] index) throws TMDBException, IOException {
-        //插入tuple
-        SelectImpl select=new SelectImpl();
+        // 插入tuple
+        SelectImpl select = new SelectImpl();
         int tupleid = MemConnect.getTopt().maxTupleId++;
-        Object[] temp=new Object[l];
-        if(tuple.tuple.length!=columns.size()){
+        Object[] temp = new Object[l];
+        if(tuple.tuple.length != columns.size()){
             throw new TMDBException("Insert error: columns size not equals to tuple size");
         }
         for (int i = 0; i < index.length; i++) {
-            temp[index[i]]=tuple.tuple[i];
+            temp[index[i]] = tuple.tuple[i];
         }
-        tuple.classId=classId;
-        tuple.tuple=temp;
-        tuple.tupleHeader=tuple.tuple.length;
-        int[] ids=new int[tuple.tupleHeader];
+        tuple.classId = classId;
+        tuple.tuple = temp;
+        tuple.tupleHeader = tuple.tuple.length;
+        int[] ids = new int[tuple.tupleHeader];
         Arrays.fill(ids,tupleid);
-        tuple.tupleIds=ids;
-        tuple.tupleId=tupleid;
+        tuple.tupleIds = ids;
+        tuple.tupleId = tupleid;
         memConnect.InsertTuple(tuple);
         MemConnect.getTopt().objectTableList.add(new ObjectTableItem(classId,tupleid));
 
@@ -128,17 +166,17 @@ public class InsertImpl implements Insert {
         ArrayList<HashMap<Integer, Integer>> deputyAttr = getDeputyAttr(pointTo.size(), classId);
         //找到插入的类对应的代理类进行遍历
         for (int i = 0; i < pointTo.size(); i++) {
-            int tempClassId=pointTo.get(i);
-            HashMap<String,String> tempMap=trans(deputyAttr.get(i),classId,tempClassId);
-            List<String> tempColumns=getInsertColumns(classId,tempClassId,tempMap,columns);
-            Tuple tuple1=getDeputyTuple(tempMap,tuple,columns);
+            int tempClassId = pointTo.get(i);
+            HashMap<String, String> tempMap = trans(deputyAttr.get(i), classId, tempClassId);
+            List<String> tempColumns = getInsertColumns(classId, tempClassId, tempMap, columns);
+            Tuple tuple1 = getDeputyTuple(tempMap, tuple, columns);
             int i1 = executeTuple(tempClassId, tempColumns, tuple1);
             MemConnect.getBiPointerT().biPointerTableList.add(
-                    new BiPointerTableItem(classId,tupleid,tempClassId,i1)
+                    new BiPointerTableItem(classId, tupleid, tempClassId, i1)
             );
         }
 
-        LongestCommonSubSequence longestCommonSubSequence=new LongestCommonSubSequence();
+        LongestCommonSubSequence longestCommonSubSequence = new LongestCommonSubSequence();
         //现在由于多了基于轨迹相似度的代理类，因此，需要进行额外的逻辑处理
         //首先调用tJoinDeputySize方法得到是否当前类是否存在基于轨迹相似度的代理类，并得到代理类的id list
         ArrayList<Integer> tJoinDeputy = tJoinDeputySize(classId);
@@ -166,13 +204,13 @@ public class InsertImpl implements Insert {
                     if (commonSubsequence.size() > 1) {
                         //新建临时tuple，这个tuple就是要往代理类中进行插入的tuple
                         //临时tuple除了轨迹部分存的和当前进行插入的tuple（方法形参里的不同，其它都相同）步骤和TJoinSelect一样
-                        Tuple temp1=new Tuple();
-                        temp1.tupleId=tuple.tupleId;
-                        temp1.tupleIds=tuple.tupleIds;
-                        temp1.tuple=tuple.tuple;
+                        Tuple temp1 = new Tuple();
+                        temp1.tupleId = tuple.tupleId;
+                        temp1.tupleIds = tuple.tupleIds;
+                        temp1.tuple = tuple.tuple;
                         //需要将得到的轨迹子序列，转换成string的形式，然后将tuple中轨迹部分设置为转换后的值
-                        String temps=TrajTrans.getString(commonSubsequence);
-                        temp1.tuple[2]=temps;
+                        String temps = TrajTrans.getString(commonSubsequence);
+                        temp1.tuple[2] = temps;
                         //调用一下方法在代理类中也插入新tuple
                         int i1 = executeTuple(deputyId, columns, temp1);
                         MemConnect.getBiPointerT().biPointerTableList.add(
@@ -182,13 +220,15 @@ public class InsertImpl implements Insert {
                 }
             }
         }
-
-
-
-
-
         return tupleid;
     }
+
+
+
+
+
+
+
 
     private int getAnotherDeputy(int deputyId, int classId) {
         for (int i = 0; i < MemConnect.getDeputyt().deputyTableList.size(); i++) {
@@ -254,6 +294,7 @@ public class InsertImpl implements Insert {
         return res;
     }
 
+    // 给定表名，返回该表的属性列表，注：未加异常处理
     public List<String> getColumns(String tableName){
         List<String> colName = new ArrayList<>();
         for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
@@ -289,42 +330,6 @@ public class InsertImpl implements Insert {
             }
             else{
                 i++;
-            }
-        }
-        return res;
-    }
-
-    private int getLength(int classId) {
-        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
-            if(MemConnect.getClasst().classTableList.get(i).classid==classId){
-                return MemConnect.getClasst().classTableList.get(i).attrnum;
-            }
-        }
-        try {
-            throw  new TMDBException("Insert error: class doesn't exist");
-        } catch (TMDBException e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    private int[] getTemplate(int classId, List<String> columns) {
-        HashMap<Integer,ClassTableItem> map=new HashMap<>();
-        ArrayList<ClassTableItem> list=new ArrayList<>();
-        for (int j = 0; j < MemConnect.getClasst().classTableList.size(); j++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(j);
-            if(classTableItem.classid==classId){
-                list.add(classTableItem);
-            }
-        }
-        int[] res=new int[columns.size()];
-        for (int i = 0; i < columns.size(); i++) {
-            for (int j = 0; j < list.size(); j++) {
-                ClassTableItem classTableItem = list.get(j);
-                if(classTableItem.attrname.equals(columns.get(i))){
-                    res[i]=classTableItem.attrid;
-                    break;
-                }
             }
         }
         return res;

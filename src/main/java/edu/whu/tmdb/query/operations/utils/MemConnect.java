@@ -108,7 +108,7 @@ public class MemConnect {
         }
     }
 
-    //更新tuple
+    // 更新tuple
     public void UpateTuple(Tuple tuple, int tupleId) {
         rwLock.writeLock().unlock();
         try {
@@ -119,11 +119,31 @@ public class MemConnect {
         }
     }
 
-//   获取表在classTable中的id值
-    public int getClassId(String fromItem) throws TMDBException {
+    // 给定表名(类名), 获取表在classTable中的id值
+    public int getClassId(String tableName) throws TMDBException {
         for (ClassTableItem item : classt.classTableList) {
-            if (item.classname.equals(fromItem)) {
+            if (item.classname.equals(tableName)) {
                 return item.classid;
+            }
+        }
+        return -1;
+    }
+
+    // 给定表名(类名), 获取表在classTable中的属性数量
+    public int getClassAttrnum(String tableName) {
+        for (ClassTableItem item : classt.classTableList) {
+            if (item.classname.equals(tableName)) {
+                return item.attrnum;
+            }
+        }
+        return -1;
+    }
+
+    // 给定表id(类id), 获取表在classTable中的属性数量
+    public int getClassAttrnum(int classId) {
+        for (ClassTableItem item : classt.classTableList) {
+            if(item.classid == classId){
+                return item.attrnum;
             }
         }
         return -1;

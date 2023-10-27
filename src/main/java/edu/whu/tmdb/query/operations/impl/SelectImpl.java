@@ -48,21 +48,25 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     @Override
     public SelectResult select(Object stmt) throws TMDBException, IOException {
         SelectBody selectBody = null;
-        //如果语法树的形式是Select，将查询主题赋值给selectBody
-        if(stmt.getClass().getSimpleName().equals("Select")) selectBody=((net.sf.jsqlparser.statement.select.Select)stmt).getSelectBody();
-        //如果语法树形式是subselect（subSelect也要走select的逻辑）
-        else if(stmt.getClass().getSimpleName().equals("SubSelect")) selectBody=((SubSelect)stmt).getSelectBody();
+        // 如果语法树的形式是Select，将查询主题赋值给selectBody
+        if (stmt.getClass().getSimpleName().equals("Select")) {
+            selectBody = ((net.sf.jsqlparser.statement.select.Select)stmt).getSelectBody();
+        }
+        // 如果语法树形式是subselect（subSelect也要走select的逻辑）
+        else if (stmt.getClass().getSimpleName().equals("SubSelect")) {
+            selectBody = ((SubSelect)stmt).getSelectBody();
+        }
 
-        SelectResult res=new SelectResult();
+        SelectResult res = new SelectResult();
 
-        //如果selectBody形式是SetOperationList，那种带union，except的查询就是这种
-        if((selectBody.getClass().getSimpleName().equals("SetOperationList"))){
-            SetOperationList setOperationList= (SetOperationList) selectBody;
+        // 如果selectBody形式是SetOperationList，那种带union，except的查询就是这种
+        if ((selectBody.getClass().getSimpleName().equals("SetOperationList"))) {
+            SetOperationList setOperationList = (SetOperationList) selectBody;
             return setOperation(setOperationList);
         }
-        //如果selectBody只是一个plainSelct
-        else{
-            res=plainSelect(selectBody);
+        // 如果selectBody只是一个plainSelect
+        else {
+            res = plainSelect(selectBody);
         }
         return res;
     }

@@ -4,16 +4,16 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class ClassTableItem implements Serializable {
-    public String classname = "";        //类名
-    public int classid = 0;                //类id
-    public int attrnum = 0;                //类属性个数
-    public int    attrid = 0;
-    public String attrname = "";         //属性名
-    public String attrtype = "";         //属性类型
+    public String classname = "";       // 类名
+    public int classid = 0;             // 类id
+    public int attrnum = 0;             // 类属性总个数
+    public int attrid = 0;              // 当前属性id
+    public String attrname = "";        // 当前属性名
+    public String attrtype = "";        // 当前属性类型
     public String classtype = "";
     public String alias="";
 
-    public ClassTableItem(String classname, int classid, int attrnum,int attrid, String attrname, String attrtype,String classtype,String alias) {
+    public ClassTableItem(String classname, int classid, int attrnum,int attrid, String attrname, String attrtype, String classtype, String alias) {
         this.classname = classname;
         this.classid = classid;
         this.attrnum = attrnum;
@@ -26,16 +26,17 @@ public class ClassTableItem implements Serializable {
     public ClassTableItem(){}
 
     public ClassTableItem getCopy(){
-        return new ClassTableItem(this.classname,this.classid,this.attrnum,this.attrid,this.attrname,this.attrtype,this.classtype,this.alias);
+        return new ClassTableItem(this.classname, this.classid, this.attrnum, this.attrid, this.attrname, this.attrtype, this.classtype, this.alias);
     }
 
     @Override
     public boolean equals(Object object){
-        if(this==object) return true;
+        if (this == object) { return true; }
         if (!(object instanceof ClassTableItem)) {
             return false;
         }
-        ClassTableItem oi=(ClassTableItem) object;
+
+        ClassTableItem oi = (ClassTableItem) object;
         if(this.classid!=oi.classid){
             return false;
         }
