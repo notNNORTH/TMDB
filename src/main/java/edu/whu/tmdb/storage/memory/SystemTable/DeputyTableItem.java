@@ -5,15 +5,15 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class DeputyTableItem implements Serializable {
-    public int originid = 0;           //类id
-    public int deputyid = 0;           //代理类id
-    public String[] deputyrule = new String[0];    //代理规则
+    public int originid = 0;           // 源类id(从哪里代理而来)
+    public int deputyid = 0;           // 代理类id
+    public String[] deputyrule = new String[0];    // 代理规则
 
 
     public DeputyTableItem() {}
 
     public DeputyTableItem(int originid, int deputyid, String[] deputyrule) {
-        this.originid = originid;           // 类id
+        this.originid = originid;           // 源类id
         this.deputyid = deputyid;           // 代理类id
         this.deputyrule = deputyrule;       // 代理规则
     }

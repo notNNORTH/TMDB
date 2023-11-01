@@ -5,13 +5,13 @@ import java.util.Objects;
 
 
 public class SwitchingTableItem implements Serializable {
-    public int oriId;
-    public int oriAttrid;
-    public String oriAttr;
-    public int deputyId;
-    public int deputyAttrId;
-    public String deputyAttr;
-    public String rule = "";
+    public int oriId;           // 源类id
+    public int oriAttrid;       // 源类属性id
+    public String oriAttr;      // 源类属性名称
+    public int deputyId;        // 代理类id
+    public int deputyAttrId;    // 代理类属性id
+    public String deputyAttr;   // 代理类属性名称
+    public String rule = "";    // 代理规则
 
     public SwitchingTableItem(int oriId, int oriAttrid, String oriAttr, int deputyId, int deputyAttrId, String deputyAttr, String rule) {
         this.oriId = oriId;

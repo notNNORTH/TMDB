@@ -119,7 +119,12 @@ public class MemConnect {
         }
     }
 
-    // 给定表名(类名), 获取表在classTable中的id值
+    /**
+     * 给定表名(类名), 获取表在classTable中的id值
+     * @param tableName 表名(类名)
+     * @return 给定表名(类名)所对应的class id
+     * @throws TMDBException
+     */
     public int getClassId(String tableName) throws TMDBException {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
@@ -129,7 +134,12 @@ public class MemConnect {
         return -1;
     }
 
-    // 给定表名(类名), 获取表在classTable中的属性数量
+    /**
+     * 给定表名(类名), 获取表在中属性的数量
+     * @param tableName 表名(类名)
+     * @return 给定表名(类名)所具有的属性数量(attrNum)
+     * @throws TMDBException
+     */
     public int getClassAttrnum(String tableName) {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
@@ -147,6 +157,35 @@ public class MemConnect {
             }
         }
         return -1;
+    }
+
+
+    /**
+     * 用于获取插入位置对应的属性id列表 (attrid)
+     * @param classId insert对应的表id/类id
+     * @param columns insert对应的属性名称列表
+     * @return 属性名列表对应的attrid列表
+     */
+    public int[] getAttridList(int classId, List<String> columns) {
+        int attrnum = getClassAttrnum(classId);
+        int[] attridList = new int[attrnum];
+
+        // 遍历当前的ClassTableItem
+        for (ClassTableItem classTableItem : getClasst().classTableList) {
+            if (classTableItem.classid != classId) {
+                continue;
+            }
+            // 找到对应classId的类，遍历当前属性名称列表columns
+            for (int i = 0; i < attrnum; i++) {
+                if (!columns.get(i).equals(classTableItem.attrname)) {
+                    continue;
+                }
+                // 若colname和当前item对应的attrname相同，获取attrid放到对应位置
+                attridList[i] = classTableItem.attrid;
+            }
+        }
+
+        return attridList;
     }
 
     public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {

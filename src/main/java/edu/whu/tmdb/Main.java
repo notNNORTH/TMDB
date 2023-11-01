@@ -77,7 +77,7 @@ public class Main {
         Statement stmt = null;
         SelectResult selectResult = new SelectResult();
         try {
-            //使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
+            // 使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
             stmt = CCJSqlParserUtil.parse(byteArrayInputStream);
 

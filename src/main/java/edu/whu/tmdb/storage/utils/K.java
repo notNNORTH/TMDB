@@ -9,17 +9,20 @@ public class K implements Serializable, Comparable{
 
     public String key = "";
 
+    public K() {}
 
-    public K(){
-    }
-
+    /**
+     * 构造函数，将输入的键值key标准化
+     * @param key 输入的键值
+     */
     public K(String key){
         // key最大长度为Constant.MAX_KEY_LENGTH，不足的补0
-        if(key.length() < Constant.MAX_KEY_LENGTH){
+        if (key.length() < Constant.MAX_KEY_LENGTH) {
             this.key = key + new String(new byte[Constant.MAX_KEY_LENGTH - key.length()]);
         }
-        else
+        else {
             this.key = key;
+        }
     }
 
     public K(byte[] bytes){
@@ -40,8 +43,7 @@ public class K implements Serializable, Comparable{
         if(o == null)
             return 0;
         if(o instanceof K){
-            int i = this.key.compareTo(((K) o).key);
-            return i;
+            return this.key.compareTo(((K) o).key);
         }
         return 0;
     }

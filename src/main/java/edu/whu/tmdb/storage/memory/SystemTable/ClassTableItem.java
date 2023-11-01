@@ -11,7 +11,7 @@ public class ClassTableItem implements Serializable {
     public String attrname = "";        // 当前属性名
     public String attrtype = "";        // 当前属性类型
     public String classtype = "";
-    public String alias="";
+    public String alias = "";
 
     public ClassTableItem(String classname, int classid, int attrnum,int attrid, String attrname, String attrtype, String classtype, String alias) {
         this.classname = classname;

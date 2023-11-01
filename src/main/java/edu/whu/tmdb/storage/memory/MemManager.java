@@ -119,17 +119,16 @@ public class MemManager {
 
     // 往MemManager中添加对象
     public void add(Object o){
-
         if(o instanceof ObjectTableItem){
-            this.objectTable.objectTableList.add((ObjectTableItem) o);
+            objectTable.objectTableList.add((ObjectTableItem) o);
         }else if(o instanceof BiPointerTableItem){
-            this.biPointerTable.biPointerTableList.add((BiPointerTableItem) o);
+            biPointerTable.biPointerTableList.add((BiPointerTableItem) o);
         }else if(o instanceof ClassTableItem){
-            this.classTable.classTableList.add((ClassTableItem) o);
+            classTable.classTableList.add((ClassTableItem) o);
         }else if(o instanceof DeputyTableItem){
-            this.deputyTable.deputyTableList.add((DeputyTableItem) o);
+            deputyTable.deputyTableList.add((DeputyTableItem) o);
         }else if(o instanceof SwitchingTableItem){
-            this.switchingTable.switchingTableList.add((SwitchingTableItem) o);
+            switchingTable.switchingTableList.add((SwitchingTableItem) o);
         }else if(o instanceof Tuple){
             //先写日志
             K k = new K("t" + ((Tuple) o).tupleId);
@@ -139,7 +138,7 @@ public class MemManager {
             this.currentMemSize += k.key.length() + v.valueString.length();
 
             // 加入缓存
-            this.cacheManager.dataCache.put(k, v);
+            cacheManager.dataCache.put(k, v);
 
             // 如果内存数据大小超过限制则开始compaction
             if(this.currentMemSize > Constant.MAX_MEM_SIZE){
