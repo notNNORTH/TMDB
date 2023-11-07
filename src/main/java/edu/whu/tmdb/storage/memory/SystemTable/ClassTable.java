@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ClassTable implements Serializable {
     public List<ClassTableItem> classTableList = new ArrayList<>();
-    public int maxid=0;
+    public int maxid = 0;
 
     public void clear(){
         classTableList.clear();

@@ -1,6 +1,7 @@
 package edu.whu.tmdb.query;
 
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.query.operations.impl.*;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -187,6 +188,8 @@ public class Transaction {
             logger.warn(e.getMessage());
         } catch (IOException e) {
             logger.error(e.getMessage(),e);
+        } catch (TableNotExistError tableNotExistError) {
+            tableNotExistError.printError();
         }
         /*
         int[] ints = new int[tuples.size()];

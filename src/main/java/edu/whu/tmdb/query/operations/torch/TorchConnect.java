@@ -2,6 +2,7 @@ package edu.whu.tmdb.query.operations.torch;
 
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import edu.whu.tmdb.query.Transaction;
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.query.operations.torch.proto.IdEdge;
 import edu.whu.tmdb.query.operations.torch.proto.IdEdgeRaw;
 import edu.whu.tmdb.query.operations.torch.proto.IdVertex;
@@ -203,10 +204,10 @@ public class TorchConnect {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (TMDBException e) {
+        } catch (TMDBException | JSQLParserException e) {
             logger.warn(e.getMessage());
-        } catch (JSQLParserException e) {
-            logger.warn(e.getMessage());
+        } catch (TableNotExistError tableNotExistError) {
+            tableNotExistError.printError();
         } finally {
             try {
                 // 关闭文件读取器
@@ -219,7 +220,7 @@ public class TorchConnect {
         }
     }
 
-    public void toTMDB(String baseDir) throws JSQLParserException, TMDBException, IOException {
+    public void toTMDB(String baseDir) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         String sql="select * from engine where base_dir="+baseDir;
         Statement parse = CCJSqlParserUtil.parse(sql);
         Select select=new SelectImpl();
@@ -229,7 +230,7 @@ public class TorchConnect {
         }
     }
 
-    private void buildTMDBData(String baseDir) throws JSQLParserException, TMDBException, IOException {
+    private void buildTMDBData(String baseDir) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         String sql="inset into engine values("+baseDir+");";
         Insert insert=new InsertImpl();
         insert.insert(CCJSqlParserUtil.parse(sql));

@@ -32,7 +32,7 @@ public class Main {
                 break;
             } else {
                 SelectResult result = execute(sqlCommand);
-                System.out.println("Result: " + result.toString());
+                // System.out.println("Result: " + result.toString());
             }
         }
 
@@ -68,16 +68,13 @@ public class Main {
         long endTime=System.nanoTime();
         System.out.println("exe执行时间: " + (endTime - startTime) + " ns");*/
 
-        // execute("CREATE CLASS id_vertex (name char,age int, salary int);");
-        // execute("INSERT INTO id_vertex VALUES ('test', 21, 10000);");
+
         // execute("show tables;");
         // execute("select * from id_vertex;");
 //        execute("select * from traj;");
 //        execute("select * from trajectory_vertex limit 1;");
 //        execute("CREATE CLASS company (name char,age int, salary int);");
 //        execute("INSERT INTO company VALUES (aa,20,1000);");
-//        execute("INSERT INTO company VALUES (ab,30,1000);");
-//        execute("INSERT INTO company VALUES (ac,40,1000);");
 //        execute("create selectdeputy deputy as select * from company limit 1;");
 //        execute("select * from traj"+
 //                " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");

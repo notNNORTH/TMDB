@@ -7,6 +7,7 @@
 
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -31,14 +32,14 @@ import edu.whu.tmdb.storage.memory.TupleList;
 public class InsertImpl implements Insert {
     private MemConnect memConnect;
 
-    ArrayList<Integer> indexs = new ArrayList<>();
+    ArrayList<Integer> tupleIdList = new ArrayList<>();
 
     public InsertImpl() {
         this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
-    public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException {
+    public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException, TableNotExistError {
         net.sf.jsqlparser.statement.insert.Insert insertStmt = (net.sf.jsqlparser.statement.insert.Insert) stmt;
         Table table = insertStmt.getTable();        // 解析insert对应的表
         List<String> attrNames = new ArrayList<>(); // 解析插入的字段名
@@ -59,7 +60,7 @@ public class InsertImpl implements Insert {
         // tuplelist存储需要插入的tuple部分
         TupleList tupleList = selectResult.getTpl();
         execute(table.getName(), attrNames, tupleList);
-        return indexs;
+        return tupleIdList;
     }
 
     /**
@@ -70,7 +71,7 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
+    public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException, TableNotExistError {
         int classId = memConnect.getClassId(tableName);         // 类id
         int attrNum = memConnect.getClassAttrnum(tableName);    // 属性的数量
         int[] attrIdList = memConnect.getAttridList(classId, columns);         // 插入的属性对应的attrid列表
@@ -78,7 +79,7 @@ public class InsertImpl implements Insert {
             if (tuple.tuple.length != columns.size()){
                 throw new TMDBException("Insert error: columns size doesn't match tuple size");
             }
-            indexs.add(insert(classId, columns, tuple, attrNum, attrIdList));
+            tupleIdList.add(insert(classId, columns, tuple, attrNum, attrIdList));
         }
     }
 
@@ -90,14 +91,14 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
+    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException, TableNotExistError {
         int attrNum = memConnect.getClassAttrnum(classId);
         int[] attrIdList = memConnect.getAttridList(classId, columns);
         for (Tuple tuple : tupleList.tuplelist) {
             if (tuple.tuple.length != columns.size()){
                 throw new TMDBException("Insert error: columns size doesn't match tuple size");
             }
-            indexs.add(insert(classId, columns, tuple, attrNum, attrIdList));
+            tupleIdList.add(insert(classId, columns, tuple, attrNum, attrIdList));
         }
     }
 
@@ -110,7 +111,7 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public int execute(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException {
+    public int execute(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException, TableNotExistError {
         int attrNum = memConnect.getClassAttrnum(classId);
         int[] attridList = memConnect.getAttridList(classId, columns);
 
@@ -118,7 +119,7 @@ public class InsertImpl implements Insert {
             throw new TMDBException("Insert error: columns size doesn't match tuple size");
         }
         int tupleId = insert(classId, columns, tuple, attrNum, attridList);
-        indexs.add(tupleId);
+        tupleIdList.add(tupleId);
         return tupleId;
     }
 
@@ -132,7 +133,7 @@ public class InsertImpl implements Insert {
      * @return 新插入属性的tuple id
      * @throws TMDBException
      */
-    private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException {
+    private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException, TableNotExistError {
         // 1.直接在对应类中插入tuple
         // 1.1 获取新插入元组的id
         int tupleid = MemConnect.getTopt().maxTupleId++;

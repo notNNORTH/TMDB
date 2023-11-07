@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSON;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.storage.memory.SystemTable.*;
 import edu.whu.tmdb.storage.memory.Tuple;
@@ -123,40 +124,45 @@ public class MemConnect {
      * 给定表名(类名), 获取表在classTable中的id值
      * @param tableName 表名(类名)
      * @return 给定表名(类名)所对应的class id
-     * @throws TMDBException
+     * @throws TableNotExistError 不存在给定表名的表，抛出异常
      */
-    public int getClassId(String tableName) throws TMDBException {
+    public int getClassId(String tableName) throws TableNotExistError {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
                 return item.classid;
             }
         }
-        return -1;
+        throw new TableNotExistError(tableName);
     }
 
     /**
      * 给定表名(类名), 获取表在中属性的数量
      * @param tableName 表名(类名)
      * @return 给定表名(类名)所具有的属性数量(attrNum)
-     * @throws TMDBException
+     * @throws TableNotExistError 不存在给定表名的表，抛出异常
      */
-    public int getClassAttrnum(String tableName) {
+    public int getClassAttrnum(String tableName) throws TableNotExistError {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
                 return item.attrnum;
             }
         }
-        return -1;
+        throw new TableNotExistError(tableName);
     }
 
-    // 给定表id(类id), 获取表在classTable中的属性数量
-    public int getClassAttrnum(int classId) {
+    /**
+     * 给定表id(类id), 获取表在classTable中的属性数量
+     * @param classId 表名(类名)
+     * @return 给定表名(类名)所具有的属性数量(attrNum)
+     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     */
+    public int getClassAttrnum(int classId) throws TableNotExistError {
         for (ClassTableItem item : classt.classTableList) {
             if(item.classid == classId){
                 return item.attrnum;
             }
         }
-        return -1;
+        throw new TableNotExistError(classId);
     }
 
 
@@ -166,7 +172,7 @@ public class MemConnect {
      * @param columns insert对应的属性名称列表
      * @return 属性名列表对应的attrid列表
      */
-    public int[] getAttridList(int classId, List<String> columns) {
+    public int[] getAttridList(int classId, List<String> columns) throws TableNotExistError {
         int attrnum = getClassAttrnum(classId);
         int[] attridList = new int[attrnum];
 

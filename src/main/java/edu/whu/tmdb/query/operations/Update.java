@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations;
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.Statement;
 
@@ -9,5 +10,5 @@ import java.util.ArrayList;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 
 public interface Update {
-    ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException, IOException;
+    ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException, IOException, TableNotExistError;
 }

@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.schema.Table;
@@ -30,7 +31,7 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
     }
 
 
-    private boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass stmt) throws TMDBException, IOException {
+    private boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass stmt) throws TMDBException, IOException, TableNotExistError {
         Table deputyClass = stmt.getDeputyClass();
         if(memConnect.getClassId(String.valueOf(deputyClass))!=-1){
             throw new TMDBException(deputyClass+" already exists");
@@ -56,12 +57,12 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
         return help;
     }
 
-    private void insertElseDeputyTable(String[] strings, int i, String deputyClass) throws TMDBException {
+    private void insertElseDeputyTable(String[] strings, int i, String deputyClass) throws TMDBException, TableNotExistError {
         int classId = memConnect.getClassId(deputyClass);
         super.insertDeputyTable(strings,i,classId);
     }
 
-    public boolean createTJoinDeputyClass(Statement stmt) throws TMDBException, IOException {
+    public boolean createTJoinDeputyClass(Statement stmt) throws TMDBException, IOException, TableNotExistError {
         return execute((CreateTJoinDeputyClass) stmt);
     }
 }

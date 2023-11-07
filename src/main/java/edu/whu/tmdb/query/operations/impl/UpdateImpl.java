@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.StringValue;
@@ -34,14 +35,14 @@ public class UpdateImpl implements Update {
     }
 
     @Override
-    public ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException, IOException {
+    public ArrayList<Integer> update(Statement stmt) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         return execute((net.sf.jsqlparser.statement.update.Update) stmt);
     }
 
     //UPDATE Song SET type = ‘jazz’ WHERE songId = 100;
     //OPT_CREATE_UPDATE，Song，type，“jazz”，songId，=，100
     //0                  1     2      3        4      5  6
-    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.update.Update update) throws JSQLParserException, TMDBException, IOException {
+    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.update.Update update) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         String updateTable=update.getTable().getName();
         int classId=memConnect.getClassId(updateTable);
         String sql="select * from " + updateTable + " where " + update.getWhere().toString() + ";";
