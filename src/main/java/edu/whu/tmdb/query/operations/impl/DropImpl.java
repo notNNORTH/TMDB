@@ -17,11 +17,11 @@ import edu.whu.tmdb.query.operations.Drop;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 
 public class DropImpl implements Drop {
+
     private MemConnect memConnect;
 
-
     public DropImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
@@ -30,156 +30,119 @@ public class DropImpl implements Drop {
     }
 
     public boolean execute(net.sf.jsqlparser.statement.drop.Drop drop) throws TMDBException, TableNotExistError {
-        String dropTable=drop.getName().getName();
-        int classId=memConnect.getClassId(dropTable);
+        String tableName = drop.getName().getName();
+        int classId = memConnect.getClassId(tableName);
         drop(classId);
         return true;
     }
 
-    public void drop(int classId){
-        ArrayList<ClassTableItem> tempC=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
-            ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
-            if(classTableItem.classid==classId){
-                tempC.add(classTableItem);
+    public void drop(int classId) {
+        ArrayList<Integer> deputyClassIdList = new ArrayList<>();   // 存储该类对应所有代理类id
+
+        // 1.删除ClassTableItem
+        dropClassTable(classId);
+
+        // 2.获取代理类id并在表中删除
+        dropDeputyClassTable(classId, deputyClassIdList);
+
+        // 3.删除 源类/对象<->代理类/对象 的双向关系表
+        dropBiPointerTable(classId);
+
+        // 4.删除switchingTable
+        dropSwitchingTable(classId);
+
+        // 5.删除已创建的源类对象
+        dropObject(classId);
+
+        // 6.递归删除代理类相关
+        if(!deputyClassIdList.isEmpty()){
+            for (Integer deputyClassId : deputyClassIdList) {
+                drop(deputyClassId);
             }
-        }
-        for (ClassTableItem temp :
-                tempC) {
-            MemConnect.getClasst().classTableList.remove(temp);
-        }
-        ArrayList<DeputyTableItem> tempD=new ArrayList<>();
-        ArrayList<Integer> toDrop=new ArrayList<>();
-        for (int i = 0; i < memConnect.getDeputyt().deputyTableList.size(); i++) {
-            DeputyTableItem deputyTableItem = memConnect.getDeputyt().deputyTableList.get(i);
-            if(deputyTableItem.originid==classId){
-                toDrop.add(deputyTableItem.deputyid);
-                tempD.add(deputyTableItem);
-            }
-        }
-        for(DeputyTableItem temp: tempD){
-            MemConnect.getDeputyt().deputyTableList.remove(temp);
-        }
-        ArrayList<BiPointerTableItem> tempB=new ArrayList<>();
-        for (int i = 0; i < memConnect.getBiPointerT().biPointerTableList.size(); i++) {
-            BiPointerTableItem biPointerTableItem = memConnect.getBiPointerT().biPointerTableList.get(i);
-            if(biPointerTableItem.objectid==classId || biPointerTableItem.deputyobjectid==classId){
-                tempB.add(biPointerTableItem);
-            }
-        }
-        for(BiPointerTableItem temp:tempB){
-            memConnect.getBiPointerT().biPointerTableList.remove(temp);
-        }
-        ArrayList<SwitchingTableItem> tempS=new ArrayList<>();
-        for (int i = 0; i < memConnect.getSwitchingT().switchingTableList.size(); i++) {
-            SwitchingTableItem switchingTableItem = memConnect.getSwitchingT().switchingTableList.get(i);
-            if(switchingTableItem.oriId==classId || switchingTableItem.deputyId==classId){
-                tempS.add(switchingTableItem);
-            }
-        }
-        for(SwitchingTableItem temp:tempS){
-            memConnect.getSwitchingT().switchingTableList.remove(temp);
-        }
-        ArrayList<ObjectTableItem> tempT=new ArrayList<>();
-        for (int i = 0; i < memConnect.getTopt().objectTableList.size(); i++) {
-            ObjectTableItem objectTableItem = memConnect.getTopt().objectTableList.get(i);
-            if(objectTableItem.classid==classId ){
-                memConnect.DeleteTuple(objectTableItem.tupleid);
-                tempT.add(objectTableItem);
-            }
-        }
-        for(ObjectTableItem temp:tempT){
-            memConnect.getTopt().objectTableList.remove(temp);
-        }
-        if(toDrop.isEmpty()){
-            return;
-        }
-        for (int i = 0; i < toDrop.size(); i++) {
-            drop(toDrop.get(i));
         }
     }
 
-    //DROP CLASS asd;
-    //3,asd
-//    public boolean drop(String[]p) throws TMDBException {
-//        List<DeputyTableItem> dti;
-//        dti = Drop1(p);
-//        for(DeputyTableItem item:dti){
-//            memConnect.getDeputyt().deputyTable.remove(item);
-//        }
-//        return  true;
-//    }
-//
-//    private List<DeputyTableItem> Drop1(String[] p) throws TMDBException {
-//        String classname = p[1];
-//        int classid = memConnect.getClassId(p[1]);
-//        //找到classid顺便 清除类表和switch表
-//
-//        for (Iterator it1 = memConnect.getClasst().classTable.iterator(); it1.hasNext();) {
-//            ClassTableItem item =(ClassTableItem) it1.next();
-//            if (item.classname.equals(classname) ){
-//                classid = item.classid;
-//                for(Iterator it = memConnect.getSwitchingT().switchingTable.iterator(); it.hasNext();) {
-//                    SwitchingTableItem item2 =(SwitchingTableItem) it.next();
-////                    if (item2.attr.equals( item.attrname)||item2.deputy .equals( item.attrname)){
-////                        it.remove();
-////                    }
-//                }
-//                it1.remove();
-//            }
-//        }
-//        //清元组表同时清了bi
-//        MemConnect.OandB ob2 = new MemConnect.OandB();
-//        DeleteImpl delete=new DeleteImpl(memConnect);
-//        for(ObjectTableItem item1: memConnect.getTopt().objectTable){
-//            if(item1.classid == classid){
-//                MemConnect.OandB ob = delete.DeletebyID(item1.tupleid);
-//                for(ObjectTableItem obj:ob.o){
-//                    ob2.o.add(obj);
-//                }
-//                for(BiPointerTableItem bip:ob.b){
-//                    ob2.b.add(bip);
-//                }
-//            }
-//        }
-//        for(ObjectTableItem obj:ob2.o){
-//            memConnect.getTopt().objectTable.remove(obj);
-//        }
-//        for(BiPointerTableItem bip:ob2.b) {
-//            memConnect.getBiPointerT().biPointerTable.remove(bip);
-//        }
-//
-//        //清deputy
-//        List<DeputyTableItem> dti = new ArrayList<>();
-//        for(DeputyTableItem item3: memConnect.getDeputyt().deputyTable){
-//            if(item3.deputyid == classid){
-//                if(!dti.contains(item3))
-//                    dti.add(item3);
-//            }
-//            if(item3.originid == classid){
-//                //删除代理类
-//                String[]s = p.clone();
-//                List<String> sname = new ArrayList<>();
-//                for(ClassTableItem item5: memConnect.getClasst().classTable) {
-//                    if (item5.classid == item3.deputyid) {
-//                        sname.add(item5.classname);
-//                    }
-//                }
-//                for(String item4: sname){
-//
-//                    s[1] = item4;
-//                    List<DeputyTableItem> dti2 = Drop1(s);
-//                    for(DeputyTableItem item8:dti2){
-//                        if(!dti.contains(item8))
-//                            dti.add(item8);
-//                    }
-//
-//                }
-//                if(!dti.contains(item3))
-//                    dti.add(item3);
-//            }
-//        }
-//        return dti;
-//
-//    }
+    /**
+     * 给定要删除的class id，删除系统表类表(class table)中的表项
+     * @param classId 要删除的表对应的id
+     */
+    private void dropClassTable(int classId) {
+        ArrayList<ClassTableItem> classItemList = new ArrayList<>();
+        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
+            if(classTableItem.classid == classId){
+                classItemList.add(classTableItem);
+            }
+        }
+        for (ClassTableItem item : classItemList) {
+            MemConnect.getClasst().classTableList.remove(item);
+        }
+    }
+
+    /**
+     * 删除系统表中的deputy table，并获取class id对应源类的代理类id
+     * @param classId 源类id
+     * @param deputyClassIdList 作为返回值，源类对应的代理类id列表
+     */
+    private void dropDeputyClassTable(int classId, ArrayList<Integer> deputyClassIdList) {
+        ArrayList<DeputyTableItem> deputyCalssItemList = new ArrayList<>();
+        for (DeputyTableItem deputyTableItem : MemConnect.getDeputyt().deputyTableList) {
+            if(deputyTableItem.originid == classId){
+                deputyClassIdList.add(deputyTableItem.deputyid);
+                deputyCalssItemList.add(deputyTableItem);
+            }
+        }
+        for(DeputyTableItem item : deputyCalssItemList){
+            MemConnect.getDeputyt().deputyTableList.remove(item);
+        }
+    }
+
+    /**
+     * 删除系统表中的BiPointerTable
+     * @param classId 源类id
+     */
+    private void dropBiPointerTable(int classId) {
+        ArrayList<BiPointerTableItem> biPointerItemList = new ArrayList<>();
+        for (BiPointerTableItem biPointerTableItem : memConnect.getBiPointerT().biPointerTableList) {
+            if(biPointerTableItem.objectid == classId || biPointerTableItem.deputyobjectid == classId){
+                biPointerItemList.add(biPointerTableItem);
+            }
+        }
+        for (BiPointerTableItem item : biPointerItemList){
+            memConnect.getBiPointerT().biPointerTableList.remove(item);
+        }
+    }
+
+    /**
+     * 删除系统表中的SwitchingTable
+     * @param classId 源类id
+     */
+    private void dropSwitchingTable(int classId) {
+        ArrayList<SwitchingTableItem> switchingTableList = new ArrayList<>();
+        for (SwitchingTableItem switchingTableItem : memConnect.getSwitchingT().switchingTableList) {
+            if(switchingTableItem.oriId == classId || switchingTableItem.deputyId == classId){
+                switchingTableList.add(switchingTableItem);
+            }
+        }
+        for(SwitchingTableItem temp : switchingTableList){
+            memConnect.getSwitchingT().switchingTableList.remove(temp);
+        }
+    }
+
+    /**
+     * 删除源类具有的所有对象
+     * @param classId 源类id
+     */
+    private void dropObject(int classId) {
+        ArrayList<ObjectTableItem> objectList = new ArrayList<>();
+        for (ObjectTableItem objectTableItem : memConnect.getTopt().objectTableList) {
+            if(objectTableItem.classid == classId ){
+                memConnect.DeleteTuple(objectTableItem.tupleid);
+                objectList.add(objectTableItem);
+            }
+        }
+        for(ObjectTableItem temp : objectList){
+            memConnect.getTopt().objectTableList.remove(temp);
+        }
+    }
+
 }

@@ -4,10 +4,10 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class BiPointerTableItem implements Serializable {
-    public int classid = 0;
-    public int objectid = 0;
-    public int deputyid = 0;
-    public int deputyobjectid = 0;
+    public int classid = 0;         // 源类id
+    public int objectid = 0;        // 源类对象id
+    public int deputyid = 0;        // 代理类id
+    public int deputyobjectid = 0;  // 代理类对象id
 
     public BiPointerTableItem(int classid, int objectid, int deputyid, int deputyobjectid) {
         this.classid = classid;
