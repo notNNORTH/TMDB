@@ -26,21 +26,24 @@ public class CreateImpl implements Create {
     }
 
     public boolean execute(CreateTable stmt) throws TMDBException {
-        // 获取新定义class具体元素
-        ArrayList<ColumnDefinition> columnDefinitionArrayList= (ArrayList<ColumnDefinition>) stmt.getColumnDefinitions();
+        // 1.获取新定义class的属性列表和类名
+        ArrayList<ColumnDefinition> columnDefinitionArrayList = (ArrayList<ColumnDefinition>) stmt.getColumnDefinitions();
         String classname = stmt.getTable().toString();
-        int count = columnDefinitionArrayList.size();
-        MemConnect.getClasst().maxid++;
-        int classid = MemConnect.getClasst().maxid;
-        for(ClassTableItem item : MemConnect.getClasst().classTableList){
+
+        // 2.判断类名的唯一性（要满足唯一性约束）
+        for (ClassTableItem item : memConnect.getClasst().classTableList){
             if(item.classname.equals(classname)){
                 throw new TMDBException("table " + classname + "已经存在！");
             }
         }
+
+        // 3.新建class
+        int count = columnDefinitionArrayList.size();
+        MemConnect.getClasst().maxid++;
+        int classid = MemConnect.getClasst().maxid;
         for (int i = 0; i < count; i++) {
-            MemConnect.getClasst().classTableList.add(new ClassTableItem(classname, classid, count,i,
-                    columnDefinitionArrayList.get(i).getColumnName(),
-                    columnDefinitionArrayList.get(i).toStringDataTypeAndSpec()
+            MemConnect.getClasst().classTableList.add(new ClassTableItem(classname, classid, count, i,
+                    columnDefinitionArrayList.get(i).getColumnName(), columnDefinitionArrayList.get(i).toStringDataTypeAndSpec()
                     ,"ori",""));
         }
         return true;

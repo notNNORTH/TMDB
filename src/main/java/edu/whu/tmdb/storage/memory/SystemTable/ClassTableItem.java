@@ -10,7 +10,7 @@ public class ClassTableItem implements Serializable {
     public int attrid = 0;              // 当前属性id
     public String attrname = "";        // 当前属性名
     public String attrtype = "";        // 当前属性类型
-    public String classtype = "";
+    public String classtype = "";       // ori为源类的属性
     public String alias = "";
 
     public ClassTableItem(String classname, int classid, int attrnum,int attrid, String attrname, String attrtype, String classtype, String alias) {

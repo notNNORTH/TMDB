@@ -42,7 +42,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     private MemConnect memConnect;
 
     public SelectImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
@@ -72,31 +72,33 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException {
-//      //Values 也是一种plainSelect，如果是values，由values方法处理
-        if(stmt.getClass().getSimpleName().equals("ValuesStatement")) return values((ValuesStatement) stmt);
+        // Values 也是一种plainSelect，如果是values，由values方法处理
+        if(stmt.getClass().getSimpleName().equals("ValuesStatement")) {
+            return values((ValuesStatement) stmt);
+        }
 
-        PlainSelect plainSelect= (PlainSelect) stmt;
+        PlainSelect plainSelect = (PlainSelect) stmt;
 
-        //如果是对象代理的跨类查询，则用
-        if(plainSelect.isDeputySelect()==true){
+        // 如果是对象代理的跨类查询，则用
+        if(plainSelect.isDeputySelect()){
             return deputySelect((PlainSelect) stmt);
         }
 
-        //以下是正常的plainselect逻辑，from->where->select
-        //先是from从存储中拿到数据
-        SelectResult selectResult=from(plainSelect);
-        //通过where进行筛选
-        if(plainSelect.getWhere()!=null){
-            Where where=new Where();
-            selectResult=where.where(plainSelect,selectResult);
+        // 以下是正常的plainselect逻辑，from->where->select
+        // 先是from从存储中拿到数据
+        SelectResult selectResult = from(plainSelect);
+        // 通过where进行筛选
+        if(plainSelect.getWhere() != null){
+            Where where = new Where();
+            selectResult = where.where(plainSelect, selectResult);
         }
-        if(plainSelect.getLimit()!=null){
-            selectResult=limit(Integer.parseInt(plainSelect.getLimit().getRowCount().toString()),selectResult);
+        if(plainSelect.getLimit() != null){
+            selectResult = limit(Integer.parseInt(plainSelect.getLimit().getRowCount().toString()), selectResult);
         }
-        if(plainSelect.getGroupBy()!=null){
-            GroupBy groupBy=new GroupBy();
-            HashMap<Object,ArrayList<Tuple>> hashMap = groupBy.groupBy(plainSelect, selectResult);
-            selectResult=groupByElicit(plainSelect,hashMap,selectResult);
+        if(plainSelect.getGroupBy() != null){
+            GroupBy groupBy = new GroupBy();
+            HashMap<Object, ArrayList<Tuple>> hashMap = groupBy.groupBy(plainSelect, selectResult);
+            selectResult = groupByElicit(plainSelect, hashMap, selectResult);
         }
         else {//然后通过selectItem提取想要的列
             selectResult = elicit(plainSelect, selectResult);
@@ -374,30 +376,30 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return result;
     }
 
-    //from部分
+    // from部分
     public SelectResult from(PlainSelect plainSelect) throws TMDBException {
-        //获取plainselect的fromItem（多表查询的话，会取第一个table名）
-        FromItem fromItem=plainSelect.getFromItem();
-        //获取这个table对应的tuple
-        TupleList tupleList=getTable(fromItem);
-        //这是这个table对应的table Item
-        ArrayList<ClassTableItem> classTableItemList=this.getSelectItem(fromItem);
-        //通过classTableItemList和tuplelist获取selectResult（基本所有操作都针对selectresult进行）
-        SelectResult selectResult=getSelectResult(classTableItemList,tupleList);
-        //进行join操作
-        if(!(plainSelect.getJoins() ==null)){
-            for(Join join:plainSelect.getJoins()){
-                //获取当前join表的的一些元祖
-                ArrayList<ClassTableItem> tempClassTableItem=this.getSelectItem(join.getRightItem());
-                TupleList tempTupleList=getTable(join.getRightItem());
-                SelectResult tempSelectResult=getSelectResult(tempClassTableItem,tempTupleList);
+        // 获取plainselect的fromItem（多表查询的话，会取第一个table名）
+        FromItem fromItem = plainSelect.getFromItem();
+        // 获取这个table对应的tuple
+        TupleList tupleList = getTable(fromItem);
+        // 这是这个table对应的table Item
+        ArrayList<ClassTableItem> classTableItemList = this.getSelectItem(fromItem);
+        // 通过classTableItemList和tuplelist获取selectResult（基本所有操作都针对selectresult进行）
+        SelectResult selectResult = getSelectResult(classTableItemList, tupleList);
+        // 进行join操作
+        if(!(plainSelect.getJoins() == null)){
+            for (Join join:plainSelect.getJoins()) {
+                // 获取当前join表的的一些元祖
+                ArrayList<ClassTableItem> tempClassTableItem = this.getSelectItem(join.getRightItem());
+                TupleList tempTupleList = getTable(join.getRightItem());
+                SelectResult tempSelectResult = getSelectResult(tempClassTableItem, tempTupleList);
 
-                //将本来的TupleList和当前操作的join的tuplelist根据join的形式进行组合
-                tupleList=join(selectResult,tempSelectResult,join);
-                //把classTableItem进行合并
+                // 将本来的TupleList和当前操作的join的tuplelist根据join的形式进行组合
+                tupleList = join(selectResult,tempSelectResult,join);
+                // 把classTableItem进行合并
                 classTableItemList.addAll(tempClassTableItem);
-                //根据join后的tuple和合并后的classtableItemlist生成selectResult
-                selectResult=getSelectResult(classTableItemList,tupleList);
+                // 根据join后的tuple和合并后的classtableItemlist生成selectResult
+                selectResult=getSelectResult(classTableItemList, tupleList);
             }
         }
         return selectResult;

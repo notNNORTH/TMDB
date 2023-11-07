@@ -23,6 +23,8 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String sqlCommand;
 
+
+        // 调试用
         while (true) {
             System.out.print("tmdb> ");
             sqlCommand = reader.readLine().trim();
@@ -33,6 +35,38 @@ public class Main {
                 System.out.println("Result: " + result.toString());
             }
         }
+
+
+        /*
+        long startTime = System.currentTimeMillis();
+        long tmp = startTime;
+
+        String fileName = "D:\\cs\\JavaProject\\TMDB\\src\\main\\java\\edu\\whu\\tmdb\\test\\insert_test_1k.txt";
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String sqlCommand;
+            while ((sqlCommand = br.readLine()) != null) {
+                execute(sqlCommand);
+                long TimeNow = System.currentTimeMillis();
+                System.out.println(sqlCommand);
+                System.out.println("spend time: " + (TimeNow - tmp) + "ms, total: " + (TimeNow - startTime) + "ms");
+                tmp = TimeNow;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        long endTime = System.currentTimeMillis();
+        System.out.println("spend time: " + (endTime - startTime) + " ms");
+
+         */
+
+        /*
+        long startTime=System.nanoTime();
+        execute("INSERT INTO company_1k VALUES ('fDXKK', 666, 666);");
+
+        long endTime=System.nanoTime();
+        System.out.println("exe执行时间: " + (endTime - startTime) + " ns");*/
 
         // execute("CREATE CLASS id_vertex (name char,age int, salary int);");
         // execute("INSERT INTO id_vertex VALUES ('test', 21, 10000);");

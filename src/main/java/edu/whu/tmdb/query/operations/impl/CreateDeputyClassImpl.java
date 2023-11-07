@@ -1,6 +1,5 @@
 package edu.whu.tmdb.query.operations.impl;
 
-
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
@@ -32,32 +31,33 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     private MemConnect memConnect;
 
     public CreateDeputyClassImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
     public boolean createDeputyClass(Statement stmt) throws TMDBException, IOException {
         return execute((net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass) stmt);
     }
+
     public boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) throws TMDBException, IOException {
-        //获取新创建代理类的名称
-        String deputyClass=stmt.getDeputyClass().toString();
-        int deputyType=getDeputyType(stmt);
-        Select select=stmt.getSelect();
-        //获取select语句的selectResult
-        SelectResult selectResult=getSelectResult(select);
-        if(memConnect.getClassId(deputyClass)!=-1){
-            throw new TMDBException(deputyClass+" already exists");
+        // 获取新创建代理类的名称
+        String deputyClassName = stmt.getDeputyClass().toString();
+        int deputyType = getDeputyType(stmt);
+        Select select = stmt.getSelect();
+        // 获取select语句的selectResult
+        SelectResult selectResult = getSelectResult(select);
+        if (memConnect.getClassId(deputyClassName) != -1){
+            throw new TMDBException(deputyClassName + " already exists");
         }
-        return createDeputyClassStreamLine(selectResult,deputyType,deputyClass);
+        return createDeputyClassStreamLine(selectResult, deputyType, deputyClassName);
     }
 
 
 
     public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException, IOException {
         int deputyId = createDeputyClass(deputyClass, selectResult, deputyType);
-        insertDeputyTable(selectResult.getClassName(),deputyType,deputyId);
-        insertTuple(selectResult,deputyId);
+        insertDeputyTable(selectResult.getClassName(), deputyType, deputyId);
+        insertTuple(selectResult, deputyId);
         return true;
     }
 
@@ -158,7 +158,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         List<String> columns= Arrays.asList(selectResult.getAttrname());
         for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
             Tuple tuple=selectResult.getTpl().tuplelist.get(i);
-            int deputyTupleId = insert.executeTuple(deputyId, columns, new Tuple(tuple.tuple));
+            int deputyTupleId = insert.execute(deputyId, columns, new Tuple(tuple.tuple));
             HashSet<Integer> origin = getOriginClass(selectResult);
             for (int o :
                     origin) {
@@ -179,7 +179,5 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
             res.add(collect.indexOf(s));
         }
         return res;
-    } 
-
-
+    }
 }

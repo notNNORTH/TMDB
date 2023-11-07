@@ -169,7 +169,7 @@ public class Transaction {
                     break;
                 case "Select":
                     Select select = new SelectImpl();
-                    selectResult = select.select((net.sf.jsqlparser.statement.select.Select) stmt);
+                    selectResult = select.select(stmt);
                     for (Tuple t : selectResult.getTpl().tuplelist) {
                          tuples.add(t.getTupleId());
                     }
@@ -183,17 +183,17 @@ public class Transaction {
                     break;
 
             }
-        } catch (JSQLParserException e) {
-            logger.warn(e.getMessage());
-        } catch (TMDBException e) {
+        } catch (JSQLParserException | TMDBException e) {
             logger.warn(e.getMessage());
         } catch (IOException e) {
             logger.error(e.getMessage(),e);
         }
+        /*
         int[] ints = new int[tuples.size()];
         for (int i = 0; i < tuples.size(); i++) {
             ints[i]=tuples.get(i);
         }
+        */
 
         return selectResult;
     }
