@@ -1,6 +1,7 @@
 package edu.whu.tmdb.query.operations.impl;
 
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.storage.memory.SystemTable.BiPointerTableItem;
 import edu.whu.tmdb.storage.memory.SystemTable.ObjectTableItem;
@@ -32,11 +33,11 @@ public class DeleteImpl implements Delete {
     }
 
     @Override
-    public ArrayList<Integer> delete(Statement statement) throws JSQLParserException, TMDBException, IOException {
+    public ArrayList<Integer> delete(Statement statement) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         return execute((net.sf.jsqlparser.statement.delete.Delete) statement);
     }
 
-    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.delete.Delete delete) throws JSQLParserException, TMDBException, IOException {
+    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.delete.Delete delete) throws JSQLParserException, TMDBException, IOException, TableNotExistError {
         //获取需要删除的表名
         Table table = delete.getTable();
         //获取delete中的where表达式

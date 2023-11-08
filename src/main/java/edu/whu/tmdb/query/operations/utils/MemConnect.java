@@ -14,8 +14,11 @@ import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.storage.memory.SystemTable.*;
 import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.storage.memory.TupleList;
 import edu.whu.tmdb.storage.utils.K;
 import edu.whu.tmdb.storage.utils.V;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.FromItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,7 +168,6 @@ public class MemConnect {
         throw new TableNotExistError(classId);
     }
 
-
     /**
      * 用于获取插入位置对应的属性id列表 (attrid)
      * @param classId insert对应的表id/类id
@@ -193,6 +195,53 @@ public class MemConnect {
 
         return attridList;
     }
+
+    /**
+     * 给定表名，获取表下的所有元组
+     * @param fromItem 表名
+     * @return 查询语句中，该表之下所具有的所有元组
+     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     */
+    public TupleList getTupleList(FromItem fromItem) throws TableNotExistError {
+        int classId = getClassId(((Table) fromItem).getName());
+        TupleList tupleList = new TupleList();
+        for (ObjectTableItem item : getTopt().objectTableList) {
+            if (item.classid != classId) {
+                continue;
+            }
+            Tuple tuple = GetTuple(item.tupleid);
+            if (tuple != null && !tuple.delete) {
+                tuple.setTupleId(item.tupleid);
+                tupleList.addTuple(tuple);
+            }
+        }
+        return tupleList;
+    }
+
+    /**
+     * 给定表名，获取表名class table的副本
+     * @param fromItem 表名
+     * @return 表名对应的class table副本
+     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     */
+    public ArrayList<ClassTableItem> copyClassTableList(FromItem fromItem) throws TableNotExistError{
+        ArrayList<ClassTableItem> classTableList = new ArrayList<>();
+        for (ClassTableItem item : getClasst().classTableList){
+            if (item.classname.equals(((Table)fromItem).getName())){
+                // 硬拷贝，不然后续操作会影响原始信息
+                ClassTableItem classTableItem = item.getCopy();
+                if (fromItem.getAlias() != null) {
+                    classTableItem.alias = fromItem.getAlias().getName();
+                }
+                classTableList.add(classTableItem);
+            }
+        }
+        if (classTableList.isEmpty()) {
+            throw new TableNotExistError(((Table)fromItem).getName());
+        }
+        return classTableList;
+    }
+
 
     public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {
         String value = value1.replace("\"", "");

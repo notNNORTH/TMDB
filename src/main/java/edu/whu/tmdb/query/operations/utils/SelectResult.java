@@ -1,16 +1,12 @@
-/**
- * @className: SelectResult
- * @Package: edu.whu.tmdb.query.operations.utils
- * @Description: select的输出结果，对应传统数据库打印的结果，另外此处附带其他属性若干
- * Last modified by lzp, 2023.10.26
- */
-
 package edu.whu.tmdb.query.operations.utils;
 
 import edu.whu.tmdb.storage.memory.TupleList;
 
 public class SelectResult {
+    // 数据信息
     TupleList tpl;          // 元组数据列表
+
+    // 表头信息，相同下标为一列
     String[] className;     // 字段所属的类名
     String[] attrname;      // 字段名
     String[] alias;         // 字段的别名，在进行select时会用到
@@ -27,6 +23,18 @@ public class SelectResult {
     }
 
     public SelectResult(){}
+
+    /**
+     * 初始化表头大小，设置selectResult表项的数量
+     * @param size selectResult表项的数量
+     */
+    public void setHeaderSzie(int size) {
+        setClassName(new String[size]);
+        setAttrname(new String[size]);
+        setAttrid(new int[size]);
+        setType(new String[size]);
+        setAlias(new String[size]);
+    }
 
     // 读写元组数据
     public void setTpl(TupleList tpl) { this.tpl = tpl; }

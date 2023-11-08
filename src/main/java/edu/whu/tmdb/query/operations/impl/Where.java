@@ -4,6 +4,7 @@ import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -36,32 +37,45 @@ public class Where {
     private MemConnect memConnect;
 
     public Where() throws TMDBException, IOException {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
-    Formula formula=new Formula();
-    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException, IOException {
-        execute(plainSelect.getWhere(),selectResult);
+    Formula formula = new Formula();
 
+    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+        execute(plainSelect.getWhere(), selectResult);
         return selectResult;
     }
 
-    //核心类，将整个where语法树进行后续遍历
-    public SelectResult execute(Expression expression,SelectResult selectResult) throws TMDBException, IOException {
-        SelectResult res=new SelectResult();
-//        if(selectResult.getTpl().tuplelist.isEmpty()) return selectResult;
-        String a=expression.getClass().getSimpleName();
-        switch (a){
-            case "OrExpression": res=orExpression((OrExpression) expression,selectResult); break;
-            case "AndExpression": res=andExpression((AndExpression) expression,selectResult); break;
-            case "InExpression": res=inExpression((InExpression) expression,selectResult); break;
-            case "EqualsTo": res=equalsToExpression((EqualsTo) expression,selectResult); break;
-            case "MinorThan": res=minorThan((MinorThan) expression,selectResult); break;
-            case "GreaterThan": res=greaterThan((GreaterThan) expression,selectResult); break;
-            case "Function": res=function((Function)expression,selectResult); break;
-
+    /**
+     * 核心类，将整个where语法树进行后续遍历
+     * @param expression where关键字后面的表达式
+     * @param selectResult 待筛选的selectResult
+     * @return 筛选之后的selectResult
+     */
+    public SelectResult execute(Expression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+        SelectResult result = new SelectResult();
+        if (selectResult.getTpl().tuplelist.isEmpty()) {
+            return selectResult;
         }
-        return res;
+        String opt = expression.getClass().getSimpleName();
+        switch (opt){
+            case "OrExpression":
+                result = orExpression((OrExpression) expression, selectResult); break;
+            case "AndExpression":
+                result = andExpression((AndExpression) expression, selectResult); break;
+            case "InExpression":
+                result = inExpression((InExpression) expression, selectResult); break;
+            case "EqualsTo":
+                result = equalsToExpression((EqualsTo) expression, selectResult); break;
+            case "MinorThan":
+                result = minorThan((MinorThan) expression, selectResult); break;
+            case "GreaterThan":
+                result = greaterThan((GreaterThan) expression, selectResult); break;
+            case "Function":
+                result = function((Function)expression, selectResult); break;
+        }
+        return result;
     }
 
     private SelectResult function(Function expression, SelectResult selectResult)  {
@@ -174,7 +188,7 @@ public class Where {
 
 
 
-    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException, IOException {
+    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -189,7 +203,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,overlap);
     }
 
-    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException, IOException {
+    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -203,7 +217,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,selectResultSet1);
     }
 
-    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException, IOException {
+    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
         ArrayList<Object> left=formula.formulaExecute(expression.getLeftExpression(),selectResult);
         List<Object> right=new ArrayList<>();
         //in表达式右边可能是一个list
@@ -256,19 +270,21 @@ public class Where {
         return getSelectResultFromSet(selectResult,set);
     }
 
-    public SelectResult greaterThan(GreaterThan expression,SelectResult selectResult) throws TMDBException {
-        ArrayList<Object> left=formula.formulaExecute(expression.getLeftExpression(),selectResult);
-        ArrayList<Object> right=formula.formulaExecute(expression.getRightExpression(),selectResult);
-        HashSet<Tuple> set=new HashSet<>();
-        for(int i=0;i<left.size();i++){
-            String tempLeft=transType(left.get(i));
-            String tempRight=transType(right.get(i));
-            //左边大于右边，则加入结果集合
-            if(tempLeft.compareTo(tempRight)>0) set.add(selectResult.getTpl().tuplelist.get(i));
+    public SelectResult greaterThan(GreaterThan expression, SelectResult selectResult) throws TMDBException {
+        // 获取表达式左右数据列表
+        ArrayList<Object> left = formula.formulaExecute(expression.getLeftExpression(), selectResult);
+        ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
+        HashSet<Tuple> set = new HashSet<>();
+        for (int i = 0; i < left.size(); i++){
+            String tempLeft = transType(left.get(i));
+            String tempRight = transType(right.get(i));
+            // 左边大于右边，则加入结果集合
+            if (tempLeft.compareTo(tempRight) > 0) {
+                set.add(selectResult.getTpl().tuplelist.get(i));
+            }
         }
-        return getSelectResultFromSet(selectResult,set);
+        return getSelectResultFromSet(selectResult, set);
     }
-    
 
     public HashSet<Tuple> getTupleSet(SelectResult selectResult){
         HashSet<Tuple> set=new HashSet<>();
@@ -278,20 +294,20 @@ public class Where {
         return set;
     }
 
-    public SelectResult getSelectResultFromSet(SelectResult selectResult,HashSet<Tuple> set){
-        TupleList tupleList=new TupleList();
-        for(Tuple tuple:set){
+    public SelectResult getSelectResultFromSet(SelectResult selectResult, HashSet<Tuple> set){
+        TupleList tupleList = new TupleList();
+        for(Tuple tuple : set){
             tupleList.addTuple(tuple);
         }
         selectResult.setTpl(tupleList);
         return selectResult;
     }
 
-    //进行类型转换，很多时候需要使用
+    // 进行类型转换，很多时候需要使用
     public String transType(Object obj){
-        switch(obj.getClass().getSimpleName()){
+        switch (obj.getClass().getSimpleName()) {
             case "String":
-                boolean flag=false;
+                boolean flag = false;
                 try{
                     Double temp=Double.parseDouble(String.valueOf(obj));
                     flag=true;

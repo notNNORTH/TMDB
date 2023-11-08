@@ -18,21 +18,31 @@ import java.util.ArrayList;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 
 public class Formula {
-    //表达式后续遍历处理的核心
+    // 表达式后续遍历处理的核心
     public ArrayList<Object> formulaExecute(Expression expression, SelectResult selectResult) throws TMDBException {
-        ArrayList<Object> res=new ArrayList<>();
-        switch ((expression.getClass().getSimpleName())){//根据表达式的类别，分别处理
-            case "Addition": res=addition((Addition) expression,selectResult); break;
-            case "Subtraction": res=subtraction((Subtraction) expression,selectResult); break;
-            case "Division": res=division((Division) expression,selectResult); break;
-            case "Modulo": res=modulo((Modulo) expression,selectResult); break;
-            case "Multiplication": res= multiplication((Multiplication) expression,selectResult); break;
-            case "LongValue": res=longValue((LongValue) expression,selectResult); break;
-            case "Column": res=column((Column) expression,selectResult); break;
-            case "Parenthesis": res=parenthesis((Parenthesis) expression,selectResult);break;
-            case "StringValue" :res=StringValue((StringValue)expression,selectResult); break;
+        ArrayList<Object> dataList = new ArrayList<>();
+        // 根据表达式的类别，分别处理
+        switch ((expression.getClass().getSimpleName())){
+            case "Addition":
+                dataList = addition((Addition) expression, selectResult); break;
+            case "Subtraction":
+                dataList = subtraction((Subtraction) expression, selectResult); break;
+            case "Division":
+                dataList = division((Division) expression, selectResult); break;
+            case "Modulo":
+                dataList = modulo((Modulo) expression, selectResult); break;
+            case "Multiplication":
+                dataList = multiplication((Multiplication) expression, selectResult); break;
+            case "LongValue":
+                dataList = longValue((LongValue) expression, selectResult); break;
+            case "Column":
+                dataList = column((Column) expression, selectResult); break;
+            case "Parenthesis":
+                dataList = parenthesis((Parenthesis) expression, selectResult);break;
+            case "StringValue":
+                dataList = StringValue((StringValue)expression, selectResult); break;
         }
-        return res;
+        return dataList;
     }
 
     private ArrayList<Object> StringValue(StringValue expression, SelectResult selectResult) {
@@ -46,32 +56,31 @@ public class Formula {
         return res;
     }
 
-    //最底层的算子之一，column，表示一个参数的信息
+    // 最底层的算子之一，column，表示一个参数的信息（返回selectResult该属性的数据列表）
     public ArrayList<Object> column(Column column, SelectResult selectResult) throws TMDBException {
-        //获取columnName
-        String columnName=column.getColumnName();
-        int index=-1;
-        //找到这个column在selectResult中的对应index，在原始名和别名中都要进行寻找。
-        for(int i=0;i<selectResult.getClassName().length;i++){
-            if(selectResult.getAttrname()[i].equals(columnName)){
-                if(column.getTable()==null
-                        || column.getTable().getName().equals(selectResult.getClassName()[i])
-                        || column.getTable().getName().equals(selectResult.getAlias()[i])){
-                    index=i;
-                    break;
-                }
+        // 获取columnName
+        String columnName = column.getColumnName();
+        int index = -1;
+        // 找到这个column在selectResult中的对应index，在原始名和别名中都要进行寻找。
+        for (int i = 0; i < selectResult.getClassName().length; i++){
+            if (!selectResult.getAttrname()[i].equals(columnName)) {
+                continue;
+            }
+            if (column.getTable().getName().equals(selectResult.getClassName()[i])
+                    || column.getTable().getName().equals(selectResult.getAlias()[i])
+                    || column.getTable() == null) {
+                index = i;
+                break;
             }
         }
-        if(index==-1) {
-            throw new TMDBException("找不到"+columnName);
+        if (index == -1) {
+            throw new TMDBException("can't find column: " + columnName);
         }
-        ArrayList<Object> res=new ArrayList<>();
-        //正常的情况，从selectresult中提取出该列的数据
+        ArrayList<Object> dataList = new ArrayList<>();
         for (Tuple tuple : selectResult.getTpl().tuplelist) {
-            res.add(tuple.tuple[index]);
+            dataList.add(tuple.tuple[index]);
         }
-
-        return res;
+        return dataList;
     }
 
     //加法的处理

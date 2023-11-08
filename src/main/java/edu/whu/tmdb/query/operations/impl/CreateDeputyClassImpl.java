@@ -87,7 +87,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     //将创建deputyclass后面的select语句中的selectResult拿到，用于后面的处理
-     private SelectResult getSelectResult(Select select) throws TMDBException, IOException {
+     private SelectResult getSelectResult(Select select) throws TMDBException, IOException, TableNotExistError {
          SelectImpl select1 = new SelectImpl();
         SelectResult selectResult=select1.select(select);
         return selectResult;

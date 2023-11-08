@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -46,53 +47,47 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     @Override
-    public SelectResult select(Object stmt) throws TMDBException, IOException {
+    public SelectResult select(Object stmt) throws TMDBException, IOException, TableNotExistError {
         SelectBody selectBody = null;
-        // 如果语法树的形式是Select，将查询主题赋值给selectBody
-        if (stmt.getClass().getSimpleName().equals("Select")) {
+        if (stmt.getClass().getSimpleName().equals("Select")) {         // 不带子查询的类型转换
             selectBody = ((net.sf.jsqlparser.statement.select.Select)stmt).getSelectBody();
-        }
-        // 如果语法树形式是subselect（subSelect也要走select的逻辑）
-        else if (stmt.getClass().getSimpleName().equals("SubSelect")) {
+        }else if (stmt.getClass().getSimpleName().equals("SubSelect")) {// 带子查询的类型转换
             selectBody = ((SubSelect)stmt).getSelectBody();
         }
 
         SelectResult res = new SelectResult();
-
-        // 如果selectBody形式是SetOperationList，那种带union，except的查询就是这种
+        assert selectBody != null;
         if ((selectBody.getClass().getSimpleName().equals("SetOperationList"))) {
+            // 带union，except关键字的查询
             SetOperationList setOperationList = (SetOperationList) selectBody;
             return setOperation(setOperationList);
-        }
-        // 如果selectBody只是一个plainSelect
-        else {
+        }else {     // 简单查询
             res = plainSelect(selectBody);
         }
         return res;
     }
 
-    public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException {
+    // 简单查询的执行过程
+    public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException, TableNotExistError {
         // Values 也是一种plainSelect，如果是values，由values方法处理
         if(stmt.getClass().getSimpleName().equals("ValuesStatement")) {
             return values((ValuesStatement) stmt);
         }
 
         PlainSelect plainSelect = (PlainSelect) stmt;
-
-        // 如果是对象代理的跨类查询，则用
-        if(plainSelect.isDeputySelect()){
+        if (plainSelect.isDeputySelect()) {     // 对象代理的跨类查询
             return deputySelect((PlainSelect) stmt);
         }
 
-        // 以下是正常的plainselect逻辑，from->where->select
-        // 先是from从存储中拿到数据
+        // 以下是常规plainselect逻辑：from->where->select
+        // 1.调用from方法获取相关的所有元数据
         SelectResult selectResult = from(plainSelect);
-        // 通过where进行筛选
-        if(plainSelect.getWhere() != null){
+        // 2.调用where对元数据进行进行筛选
+        if (plainSelect.getWhere() != null){
             Where where = new Where();
             selectResult = where.where(plainSelect, selectResult);
         }
-        if(plainSelect.getLimit() != null){
+        if (plainSelect.getLimit() != null){
             selectResult = limit(Integer.parseInt(plainSelect.getLimit().getRowCount().toString()), selectResult);
         }
         if(plainSelect.getGroupBy() != null){
@@ -260,18 +255,18 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
 
     //提取
-    public SelectResult elicit(PlainSelect plainSelect,SelectResult selectResult) throws TMDBException {
-        ArrayList<SelectItem> selectItemList= (ArrayList<SelectItem>) plainSelect.getSelectItems();
+    public SelectResult elicit(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException {
+        ArrayList<SelectItem> selectItemList = (ArrayList<SelectItem>) plainSelect.getSelectItems();
         HashMap<SelectItem, ArrayList<Column>> map = getSelectItemColumn(selectItemList);
 
-        int length=selectItemList.size();
-        for(int i=0;i<selectItemList.size();i++) {
+        int length = selectItemList.size();
+        for(int i = 0 ; i < selectItemList.size(); i++) {
             //如果当前情况是select * from，则显示作为选择allcolumns，直接返回全部
             if (selectItemList.get(i).getClass().getSimpleName().equals("AllColumns")) {
                 selectResult.setAlias(selectResult.getAttrname());
                 //要对attrid重拍以下，不然最终printresult的时候会有问题
-                for(int j=0;j<selectResult.getAttrid().length;j++){
-                    selectResult.getAttrid()[j]=j;
+                for(int j = 0; j < selectResult.getAttrid().length; j++){
+                    selectResult.getAttrid()[j] = j;
                 }
                 return selectResult;
             }
@@ -376,22 +371,26 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return result;
     }
 
-    // from部分
-    public SelectResult from(PlainSelect plainSelect) throws TMDBException {
-        // 获取plainselect的fromItem（多表查询的话，会取第一个table名）
-        FromItem fromItem = plainSelect.getFromItem();
-        // 获取这个table对应的tuple
-        TupleList tupleList = getTable(fromItem);
-        // 这是这个table对应的table Item
-        ArrayList<ClassTableItem> classTableItemList = this.getSelectItem(fromItem);
-        // 通过classTableItemList和tuplelist获取selectResult（基本所有操作都针对selectresult进行）
+    // from部分   （返回一个selectRseult，包含from后面所有表的所有元组）
+
+    /**
+     * 获取查询语句中涉及的所有元数据
+     * @param plainSelect 平凡查询语句
+     * @return 查询语句中涉及的所有元数据
+     * @throws TMDBException
+     */
+    public SelectResult from(PlainSelect plainSelect) throws TMDBException, TableNotExistError {
+        FromItem fromItem = plainSelect.getFromItem();              // 获取plainSelect的表（多表查询时取第一个table）
+        TupleList tupleList = memConnect.getTupleList(fromItem);    // 获取from后面table的所有元组
+        ArrayList<ClassTableItem> classTableItemList = memConnect.copyClassTableList(fromItem);     // 获取class item信息，对应于select输出列表的表头
         SelectResult selectResult = getSelectResult(classTableItemList, tupleList);
+
         // 进行join操作
         if(!(plainSelect.getJoins() == null)){
             for (Join join:plainSelect.getJoins()) {
                 // 获取当前join表的的一些元祖
-                ArrayList<ClassTableItem> tempClassTableItem = this.getSelectItem(join.getRightItem());
-                TupleList tempTupleList = getTable(join.getRightItem());
+                ArrayList<ClassTableItem> tempClassTableItem = memConnect.copyClassTableList(join.getRightItem());
+                TupleList tempTupleList = memConnect.getTupleList(join.getRightItem());
                 SelectResult tempSelectResult = getSelectResult(tempClassTableItem, tempTupleList);
 
                 // 将本来的TupleList和当前操作的join的tuplelist根据join的形式进行组合
@@ -406,10 +405,10 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     //跨类查询。。。。
-    public SelectResult deputySelect(PlainSelect plainSelect) throws TMDBException {
+    public SelectResult deputySelect(PlainSelect plainSelect) throws TMDBException, TableNotExistError {
         ArrayList<SelectItem> selectItemList=(ArrayList<SelectItem>)plainSelect.getSelectItems();
         FromItem fromItem=plainSelect.getFromItem();
-        TupleList tupleList=getTable(fromItem);
+        TupleList tupleList= memConnect.getTupleList(fromItem);
         HashMap<SelectItem,ArrayList<Column>> selectItemToColumn=getSelectItemColumn(selectItemList);
         List<Column> selectColumnList=getSelectColumnList(selectItemToColumn);
         ArrayList<ClassTableItem> classTableItemList=this.getSelectItem(fromItem,selectColumnList);
@@ -417,7 +416,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     //进行union这种操作的方法
-    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException, IOException {
+    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException, IOException, TableNotExistError {
         SelectResult selectResult=new SelectResult();
         //提取出不同的select
         List<SelectBody> plainSelectList=setOperationList.getSelects();
@@ -887,20 +886,21 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return tupleList;
     }
 
-    //对classTableItemList和tuplelist综合处理一下，获取selectResult
-    public SelectResult getSelectResult(ArrayList<ClassTableItem> classTableItemList,TupleList tupleList){
-        SelectResult selectResult=new SelectResult();
-        selectResult.setClassName(new String[classTableItemList.size()]);
-        selectResult.setAttrname(new String[classTableItemList.size()]);
-        selectResult.setAttrid(new int[classTableItemList.size()]);
-        selectResult.setType(new String[classTableItemList.size()]);
-        selectResult.setAlias(new String[classTableItemList.size()]);
-        for(int i=0;i<classTableItemList.size();i++){
-            selectResult.getClassName()[i]=classTableItemList.get(i).classname;
-            selectResult.getAlias()[i]=classTableItemList.get(i).alias;
-            selectResult.getAttrid()[i]=classTableItemList.get(i).attrid;
-            selectResult.getAttrname()[i]=classTableItemList.get(i).attrname;
-            selectResult.getType()[i]=classTableItemList.get(i).attrtype;
+    /**
+     * 给定表项和所有的元组，包装成selectResult类，获取select表的所有元组
+     * @param classTableItemList class item，对应查询结果的表头
+     * @param tupleList 元组列表，对应查询结果的元数据
+     * @return 包含所有查询元组的selectResult类
+     */
+    public SelectResult getSelectResult(ArrayList<ClassTableItem> classTableItemList, TupleList tupleList){
+        SelectResult selectResult = new SelectResult();
+        selectResult.setHeaderSzie(classTableItemList.size());
+        for(int i = 0; i < classTableItemList.size();i++){
+            selectResult.getClassName()[i] = classTableItemList.get(i).classname;
+            selectResult.getAlias()[i] = classTableItemList.get(i).alias;
+            selectResult.getAttrid()[i] = classTableItemList.get(i).attrid;
+            selectResult.getAttrname()[i] = classTableItemList.get(i).attrname;
+            selectResult.getType()[i] = classTableItemList.get(i).attrtype;
         }
         selectResult.setTpl(tupleList);
         return selectResult;
@@ -940,22 +940,6 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return res;
     }
 
-    public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem){
-        ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
-//        System.out.println(MemConnect.getClasst().classTable.size());
-        for(ClassTableItem item : MemConnect.getClasst().classTableList){
-            //如果classTableItem中的className对上了fromItem就加入结果中
-            if(item.classname.equals(((Table)fromItem).getName())){
-                //硬拷贝，不然后续操作会影响原始信息。
-                ClassTableItem temp=item.getCopy();
-                //因为后续有许多针对alias的比对操作，所以，如果fromItem中使用了alias，则在classTableItem中的alias属性中存入该值
-                if(fromItem.getAlias()!=null) temp.alias=fromItem.getAlias().getName();
-                elicitAttrItemList.add(temp);
-            }
-        }
-        return elicitAttrItemList;
-    }
-
     public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem, List<Column> columnList){
         // 从class表中提取将要获取的元素。
         ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
@@ -975,52 +959,6 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             }
         }
         return elicitAttrItemList;
-    }
-
-    public int getClassId(String fromItem) throws TMDBException {
-        for(ClassTableItem item : memConnect.getClasst().classTableList) {
-            if (item.classname.equals(fromItem)) {
-                return item.classid;
-            }
-        }
-        throw new TMDBException(fromItem+"表不存在");
-//        return -1;
-    }
-
-    //输入需要获取的表名，得到对应的元祖值
-    public TupleList getTable(FromItem fromItem) throws TMDBException {
-        int classid=this.getClassId(((Table) fromItem).getName());
-        TupleList res=new TupleList();
-        for(ObjectTableItem item : MemConnect.getTopt().objectTableList) {
-            if (item.classid == classid) {
-                Tuple tuple = memConnect.GetTuple(item.tupleid);
-                if(tuple!= null && tuple.delete==false){
-                    tuple.setTupleId(item.tupleid);
-                    res.addTuple(tuple);
-                }
-            }
-        }
-        return res;
-    }
-
-    public TupleList getTable(int classid) throws TMDBException {
-        TupleList res=new TupleList();
-        for(ObjectTableItem item : memConnect.getTopt().objectTableList) {
-            if (item.classid == classid) {
-                Tuple tuple = memConnect.GetTuple(item.tupleid);
-                if(tuple!= null && tuple.delete==false){
-                    tuple.setTupleId(item.tupleid);
-                    res.addTuple(tuple);
-                }
-//                Tuple newTuple=new Tuple();
-//                newTuple.tuple=new Object[elicitAttrItemList.size()];
-//                for(int i=0;i<elicitAttrItemList.size();i++){
-//                    newTuple.tuple[i]=tuple.tuple[elicitAttrItemList.get(i).attrid];
-//                }
-
-            }
-        }
-        return res;
     }
 
 }
