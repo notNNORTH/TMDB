@@ -303,23 +303,22 @@ public class Where {
     }
 
     // 进行类型转换，很多时候需要使用
-    public String transType(Object obj){
+    public String transType(Object obj) {
         switch (obj.getClass().getSimpleName()) {
             case "String":
-                boolean flag = false;
-                try{
-                    Double temp=Double.parseDouble(String.valueOf(obj));
-                    flag=true;
+                try {
+                    return String.valueOf(Double.parseDouble(String.valueOf(obj)));
+                } catch (Throwable ignored) {
+                    return (String) obj;
                 }
-                catch(Throwable throwable){}
-                if(flag==true) return String.valueOf(Double.parseDouble(String.valueOf(obj)));
-                else return (String)obj;
-            case "Float": return String.valueOf((double) obj);
-            case "Double": return String.valueOf(obj);
-            case "Integer": return String.valueOf((double) obj);
-            case "Long": return String.valueOf((double) obj);
-            case "Character": return String.valueOf(obj);
-            case "Short": return String.valueOf((double) obj);
+            case "Float":
+            case "Integer":
+            case "Long":
+            case "Short":
+                return String.valueOf((double) obj);
+            case "Double":
+            case "Character":
+                return String.valueOf(obj);
             default: return "";
         }
     }

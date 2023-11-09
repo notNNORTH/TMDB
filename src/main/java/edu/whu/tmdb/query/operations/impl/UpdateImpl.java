@@ -71,7 +71,7 @@ public class UpdateImpl implements Update {
                     break;
                 }
             }
-            if(indexs[i]==-1) throw new TMDBException(updateSet.getColumns().get(0).getColumnName()+"在"+updateTable+"中不存在");
+            if(indexs[i]==-1) throw new TMDBException(/*updateSet.getColumns().get(0).getColumnName()+"在"+updateTable+"中不存在"*/);
         }
         update(selectResult.getTpl(),indexs,updateValue,classId);
         return changedTupleIndex;

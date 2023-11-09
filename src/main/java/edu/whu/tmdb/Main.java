@@ -30,6 +30,8 @@ public class Main {
             sqlCommand = reader.readLine().trim();
             if ("exit".equalsIgnoreCase(sqlCommand)) {
                 break;
+            } else if (sqlCommand.isEmpty()) {
+                continue;
             } else {
                 SelectResult result = execute(sqlCommand);
                 // System.out.println("Result: " + result.toString());
@@ -105,19 +107,18 @@ public class Main {
 
     public static SelectResult execute(String s)  {
         Transaction transaction = Transaction.getInstance();    // 创建一个事务实例
-        Statement stmt = null;
         SelectResult selectResult = new SelectResult();
         try {
             // 使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
-            stmt = CCJSqlParserUtil.parse(byteArrayInputStream);
-
+            Statement stmt = CCJSqlParserUtil.parse(byteArrayInputStream);
             selectResult = transaction.query("", -1, stmt);
+            if(!stmt.getClass().getSimpleName().toLowerCase().equals("select")){
+                transaction.SaveAll();
+            }
         }catch (JSQLParserException e) {
-            e.printStackTrace();
-        }
-        if(!stmt.getClass().getSimpleName().toLowerCase().equals("select")){
-            transaction.SaveAll();
+            // e.printStackTrace();    // 打印语法错误的堆栈信息
+            System.out.println("syntax error");
         }
         return selectResult;
     }

@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -169,7 +170,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
                         }
                     }
                     if(pIndex==-1){
-                        throw new TMDBException("cannot find element "+p);
+                        throw new TMDBException(/*2, p*/);
                     }
                     thisColumn=solveAggregationFunction(resultMap,funcName,pIndex);
                 }
@@ -380,6 +381,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
      */
     public SelectResult from(PlainSelect plainSelect) throws TMDBException {
         FromItem fromItem = plainSelect.getFromItem();              // 获取plainSelect的表（多表查询时取第一个table）
+        if (fromItem == null) { throw new TMDBException(ErrorList.MISSING_FROM_CLAUSE ); }
         TupleList tupleList = memConnect.getTupleList(fromItem);    // 获取from后面table的所有元组
         ArrayList<ClassTableItem> classTableItemList = memConnect.copyClassTableList(fromItem);     // 获取class item信息，对应于select输出列表的表头
         SelectResult selectResult = getSelectResult(classTableItemList, tupleList);
@@ -435,7 +437,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     //setOperation核心方法
     public SelectResult Operate(SelectResult selectResult1, SelectResult selectResult2, SetOperation setOperation) throws TMDBException {
-        if(selectResult1.getAttrname().length!=selectResult2.getAttrname().length) throw new TMDBException("无法进行集合操作");
+        if(selectResult1.getAttrname().length!=selectResult2.getAttrname().length) throw new TMDBException();
         //根据setOperation的种类进行操作划分
         switch (setOperation.toString()){
             case "UNION": return union(selectResult1,selectResult2);
@@ -521,10 +523,10 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         ExpressionList expressionList= (ExpressionList) valuesStatement.getExpressions();
         List<Expression> expressions=expressionList.getExpressions();
         TupleList tupleList=new TupleList();
-        for(int i=0;i<expressions.size();i++){
-            if(expressions.get(i).getClass().getSimpleName().equals("RowConstructor")) {
+        for (Expression value : expressions) {
+            if (value.getClass().getSimpleName().equals("RowConstructor")) {
                 //values按照行进行存储
-                RowConstructor rowConstructor = (RowConstructor) expressions.get(i);
+                RowConstructor rowConstructor = (RowConstructor) value;
                 ExpressionList expressionList1 = rowConstructor.getExprList();
                 Object[] tuple = new Object[expressionList1.getExpressions().size()];
                 //将每行的值传到新建的tuple中
@@ -532,9 +534,8 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
                     tuple[j] = expressionList1.getExpressions().get(j).toString();
                 }
                 tupleList.addTuple(new Tuple(tuple));
-            }
-            else if(expressions.get(i).getClass().getSimpleName().equals("Parenthesis")){
-                Parenthesis parenthesis = (Parenthesis) expressions.get(i);
+            } else if (value.getClass().getSimpleName().equals("Parenthesis")) {
+                Parenthesis parenthesis = (Parenthesis) value;
                 Expression expression = parenthesis.getExpression();
                 Object[] tuple = new Object[]{expression.toString()};
                 tupleList.addTuple(new Tuple(tuple));
@@ -573,14 +574,14 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
                     break;
                 }
             }
-            if(leftIndex==-1) throw new TMDBException("找不到"+leftExpression.getColumnName());
+            if(leftIndex==-1) throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, leftExpression.getColumnName());
             for(int i=0;i<right.getAttrname().length;i++){
                 if(rightExpression.getColumnName().equals(right.getAttrname()[i])){
                     rightIndex=i;
                     break;
                 }
             }
-            if(rightIndex==-1) throw new TMDBException("找不到"+rightExpression.getColumnName());
+            if(rightIndex==-1) throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, rightExpression.getColumnName());
             //innerJoin
             if(join.isNatural() || join.isInner()){
                 leftTupleList=naturalJoin(leftTupleList,rightTupleList,leftIndex,rightIndex);

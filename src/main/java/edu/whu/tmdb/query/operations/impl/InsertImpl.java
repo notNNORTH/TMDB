@@ -69,7 +69,7 @@ public class InsertImpl implements Insert {
         int[] attrIdList = memConnect.getAttridList(classId, columns);         // 插入的属性对应的attrid列表
         for (Tuple tuple : tupleList.tuplelist) {
             if (tuple.tuple.length != columns.size()){
-                throw new TMDBException("Insert error: columns size doesn't match tuple size");
+                throw new TMDBException(/*"Insert error: columns size doesn't match tuple size"*/);
             }
             tupleIdList.add(insert(classId, columns, tuple, attrNum, attrIdList));
         }
@@ -88,7 +88,7 @@ public class InsertImpl implements Insert {
         int[] attrIdList = memConnect.getAttridList(classId, columns);
         for (Tuple tuple : tupleList.tuplelist) {
             if (tuple.tuple.length != columns.size()){
-                throw new TMDBException("Insert error: columns size doesn't match tuple size");
+                throw new TMDBException(/*"Insert error: columns size doesn't match tuple size"*/);
             }
             tupleIdList.add(insert(classId, columns, tuple, attrNum, attrIdList));
         }
@@ -108,7 +108,7 @@ public class InsertImpl implements Insert {
         int[] attridList = memConnect.getAttridList(classId, columns);
 
         if (tuple.tuple.length != columns.size()){
-            throw new TMDBException("Insert error: columns size doesn't match tuple size");
+            throw new TMDBException(/*"Insert error: columns size doesn't match tuple size"*/);
         }
         int tupleId = insert(classId, columns, tuple, attrNum, attridList);
         tupleIdList.add(tupleId);

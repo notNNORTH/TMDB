@@ -101,13 +101,13 @@ public class DropImpl implements Drop {
      */
     private void dropBiPointerTable(int classId) {
         ArrayList<BiPointerTableItem> biPointerItemList = new ArrayList<>();
-        for (BiPointerTableItem biPointerTableItem : memConnect.getBiPointerT().biPointerTableList) {
+        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerT().biPointerTableList) {
             if(biPointerTableItem.objectid == classId || biPointerTableItem.deputyobjectid == classId){
                 biPointerItemList.add(biPointerTableItem);
             }
         }
         for (BiPointerTableItem item : biPointerItemList){
-            memConnect.getBiPointerT().biPointerTableList.remove(item);
+            MemConnect.getBiPointerT().biPointerTableList.remove(item);
         }
     }
 
@@ -117,13 +117,13 @@ public class DropImpl implements Drop {
      */
     private void dropSwitchingTable(int classId) {
         ArrayList<SwitchingTableItem> switchingTableList = new ArrayList<>();
-        for (SwitchingTableItem switchingTableItem : memConnect.getSwitchingT().switchingTableList) {
+        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingT().switchingTableList) {
             if(switchingTableItem.oriId == classId || switchingTableItem.deputyId == classId){
                 switchingTableList.add(switchingTableItem);
             }
         }
         for(SwitchingTableItem temp : switchingTableList){
-            memConnect.getSwitchingT().switchingTableList.remove(temp);
+            MemConnect.getSwitchingT().switchingTableList.remove(temp);
         }
     }
 
@@ -133,14 +133,14 @@ public class DropImpl implements Drop {
      */
     private void dropObject(int classId) {
         ArrayList<ObjectTableItem> objectList = new ArrayList<>();
-        for (ObjectTableItem objectTableItem : memConnect.getTopt().objectTableList) {
+        for (ObjectTableItem objectTableItem : MemConnect.getTopt().objectTableList) {
             if(objectTableItem.classid == classId ){
                 memConnect.DeleteTuple(objectTableItem.tupleid);
                 objectList.add(objectTableItem);
             }
         }
         for(ObjectTableItem temp : objectList){
-            memConnect.getTopt().objectTableList.remove(temp);
+            MemConnect.getTopt().objectTableList.remove(temp);
         }
     }
 

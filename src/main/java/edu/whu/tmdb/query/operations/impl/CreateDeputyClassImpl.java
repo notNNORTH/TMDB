@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
@@ -47,7 +48,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         // 获取select语句的selectResult
         SelectResult selectResult = getSelectResult(select);
         if (memConnect.getClassId(deputyClassName) != -1){
-            throw new TMDBException(deputyClassName + " already exists");
+            throw new TMDBException(ErrorList.TABLE_ALREADY_EXISTS, deputyClassName);
         }
         return createDeputyClassStreamLine(selectResult, deputyType, deputyClassName);
     }

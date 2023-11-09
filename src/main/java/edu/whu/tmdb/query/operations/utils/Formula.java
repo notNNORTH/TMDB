@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.utils;
 
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.Tuple;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -74,7 +75,7 @@ public class Formula {
             }
         }
         if (index == -1) {
-            throw new TMDBException("can't find column: " + columnName);
+            throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, columnName);
         }
         ArrayList<Object> dataList = new ArrayList<>();
         for (Tuple tuple : selectResult.getTpl().tuplelist) {

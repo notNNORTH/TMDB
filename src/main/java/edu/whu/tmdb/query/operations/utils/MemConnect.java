@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import com.alibaba.fastjson2.JSON;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.storage.memory.MemManager;
@@ -134,7 +134,7 @@ public class MemConnect {
                 return item.classid;
             }
         }
-        throw new TMDBException(tableName);
+        throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
     }
 
     /**
@@ -149,7 +149,7 @@ public class MemConnect {
                 return item.attrnum;
             }
         }
-        throw new TMDBException(tableName);
+        throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
     }
 
     /**
@@ -164,7 +164,7 @@ public class MemConnect {
                 return item.attrnum;
             }
         }
-        throw new TMDBException(classId);
+        throw new TMDBException(ErrorList.CLASS_ID_DOES_NOT_EXIST, classId);
     }
 
     /**
@@ -236,7 +236,7 @@ public class MemConnect {
             }
         }
         if (classTableList.isEmpty()) {
-            throw new TMDBException(((Table)fromItem).getName());
+            throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, ((Table)fromItem).getName());
         }
         return classTableList;
     }

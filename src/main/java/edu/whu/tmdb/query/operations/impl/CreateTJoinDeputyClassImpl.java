@@ -34,7 +34,7 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
     private boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateTJoinDeputyClass stmt) throws TMDBException, IOException {
         Table deputyClass = stmt.getDeputyClass();
         if(memConnect.getClassId(String.valueOf(deputyClass))!=-1){
-            throw new TMDBException(deputyClass+" already exists");
+            throw new TMDBException(/*deputyClass+" already exists"*/);
         }
         Select select = stmt.getSelect();
         TJoinSelect tJoinSelect=new TJoinSelect();

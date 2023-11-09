@@ -1,5 +1,6 @@
 package edu.whu.tmdb.query.operations.impl;
 
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
@@ -33,7 +34,7 @@ public class CreateImpl implements Create {
         // 2.判断类名的唯一性（要满足唯一性约束）
         for (ClassTableItem item : memConnect.getClasst().classTableList){
             if(item.classname.equals(classname)){
-                throw new TMDBException("table " + classname + "已经存在！");
+                throw new TMDBException(ErrorList.TABLE_ALREADY_EXISTS, classname);
             }
         }
 

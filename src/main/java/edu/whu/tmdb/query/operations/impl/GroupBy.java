@@ -35,7 +35,7 @@ public class GroupBy {
         HashMap<Object, ArrayList<Tuple>> map = new HashMap<>();
         int i=groupByIndex(groupBy,selectResult.getAlias(),selectResult.getAttrname());
         if(i==-1){
-            throw new TMDBException("group by element doesn't exist");
+            throw new TMDBException(/*"group by element doesn't exist"*/);
         }
         HashSet<String> groupByElement=new HashSet<>();
         for (Tuple tuple : selectResult.getTpl().tuplelist) {
