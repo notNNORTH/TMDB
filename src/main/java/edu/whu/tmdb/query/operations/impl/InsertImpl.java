@@ -1,13 +1,5 @@
-/*
- * className: InsertImpl
- * Package: edu.whu.tmdb.query.operations.impl
- * Description: insert语句的查询执行过程：先执行源类insert，后递归执行代理类的insert
- * Last modified by lzp, 2023.11.2
- */
-
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -39,7 +31,7 @@ public class InsertImpl implements Insert {
     }
 
     @Override
-    public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException, TableNotExistError {
+    public ArrayList<Integer> insert(Statement stmt) throws TMDBException, IOException {
         net.sf.jsqlparser.statement.insert.Insert insertStmt = (net.sf.jsqlparser.statement.insert.Insert) stmt;
         Table table = insertStmt.getTable();        // 解析insert对应的表
         List<String> attrNames = new ArrayList<>(); // 解析插入的字段名
@@ -71,7 +63,7 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException, TableNotExistError {
+    public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int classId = memConnect.getClassId(tableName);         // 类id
         int attrNum = memConnect.getClassAttrnum(tableName);    // 属性的数量
         int[] attrIdList = memConnect.getAttridList(classId, columns);         // 插入的属性对应的attrid列表
@@ -91,7 +83,7 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException, TableNotExistError {
+    public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int attrNum = memConnect.getClassAttrnum(classId);
         int[] attrIdList = memConnect.getAttridList(classId, columns);
         for (Tuple tuple : tupleList.tuplelist) {
@@ -111,7 +103,7 @@ public class InsertImpl implements Insert {
      * @throws TMDBException
      * @throws IOException
      */
-    public int execute(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException, TableNotExistError {
+    public int execute(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException {
         int attrNum = memConnect.getClassAttrnum(classId);
         int[] attridList = memConnect.getAttridList(classId, columns);
 
@@ -133,7 +125,7 @@ public class InsertImpl implements Insert {
      * @return 新插入属性的tuple id
      * @throws TMDBException
      */
-    private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException, TableNotExistError {
+    private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException {
         // 1.直接在对应类中插入tuple
         // 1.1 获取新插入元组的id
         int tupleid = MemConnect.getTopt().maxTupleId++;

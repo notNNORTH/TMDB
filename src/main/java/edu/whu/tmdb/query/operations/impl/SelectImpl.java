@@ -1,6 +1,5 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -47,7 +46,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     @Override
-    public SelectResult select(Object stmt) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult select(Object stmt) throws TMDBException, IOException {
         SelectBody selectBody = null;
         if (stmt.getClass().getSimpleName().equals("Select")) {         // 不带子查询的类型转换
             selectBody = ((net.sf.jsqlparser.statement.select.Select)stmt).getSelectBody();
@@ -68,7 +67,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     // 简单查询的执行过程
-    public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult plainSelect(SelectBody stmt) throws TMDBException, IOException {
         // Values 也是一种plainSelect，如果是values，由values方法处理
         if(stmt.getClass().getSimpleName().equals("ValuesStatement")) {
             return values((ValuesStatement) stmt);
@@ -379,7 +378,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
      * @return 查询语句中涉及的所有元数据
      * @throws TMDBException
      */
-    public SelectResult from(PlainSelect plainSelect) throws TMDBException, TableNotExistError {
+    public SelectResult from(PlainSelect plainSelect) throws TMDBException {
         FromItem fromItem = plainSelect.getFromItem();              // 获取plainSelect的表（多表查询时取第一个table）
         TupleList tupleList = memConnect.getTupleList(fromItem);    // 获取from后面table的所有元组
         ArrayList<ClassTableItem> classTableItemList = memConnect.copyClassTableList(fromItem);     // 获取class item信息，对应于select输出列表的表头
@@ -405,7 +404,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     //跨类查询。。。。
-    public SelectResult deputySelect(PlainSelect plainSelect) throws TMDBException, TableNotExistError {
+    public SelectResult deputySelect(PlainSelect plainSelect) throws TMDBException {
         ArrayList<SelectItem> selectItemList=(ArrayList<SelectItem>)plainSelect.getSelectItems();
         FromItem fromItem=plainSelect.getFromItem();
         TupleList tupleList= memConnect.getTupleList(fromItem);
@@ -416,7 +415,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     //进行union这种操作的方法
-    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult setOperation(SetOperationList setOperationList) throws TMDBException, IOException {
         SelectResult selectResult=new SelectResult();
         //提取出不同的select
         List<SelectBody> plainSelectList=setOperationList.getSelects();

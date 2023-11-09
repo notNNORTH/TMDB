@@ -10,7 +10,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
 import com.alibaba.fastjson2.JSON;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.storage.memory.SystemTable.*;
 import edu.whu.tmdb.storage.memory.Tuple;
@@ -127,45 +126,45 @@ public class MemConnect {
      * 给定表名(类名), 获取表在classTable中的id值
      * @param tableName 表名(类名)
      * @return 给定表名(类名)所对应的class id
-     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public int getClassId(String tableName) throws TableNotExistError {
+    public int getClassId(String tableName) throws TMDBException {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
                 return item.classid;
             }
         }
-        throw new TableNotExistError(tableName);
+        throw new TMDBException(tableName);
     }
 
     /**
      * 给定表名(类名), 获取表在中属性的数量
      * @param tableName 表名(类名)
      * @return 给定表名(类名)所具有的属性数量(attrNum)
-     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public int getClassAttrnum(String tableName) throws TableNotExistError {
+    public int getClassAttrnum(String tableName) throws TMDBException {
         for (ClassTableItem item : classt.classTableList) {
             if (item.classname.equals(tableName)) {
                 return item.attrnum;
             }
         }
-        throw new TableNotExistError(tableName);
+        throw new TMDBException(tableName);
     }
 
     /**
      * 给定表id(类id), 获取表在classTable中的属性数量
      * @param classId 表名(类名)
      * @return 给定表名(类名)所具有的属性数量(attrNum)
-     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public int getClassAttrnum(int classId) throws TableNotExistError {
+    public int getClassAttrnum(int classId) throws TMDBException {
         for (ClassTableItem item : classt.classTableList) {
             if(item.classid == classId){
                 return item.attrnum;
             }
         }
-        throw new TableNotExistError(classId);
+        throw new TMDBException(classId);
     }
 
     /**
@@ -174,7 +173,7 @@ public class MemConnect {
      * @param columns insert对应的属性名称列表
      * @return 属性名列表对应的attrid列表
      */
-    public int[] getAttridList(int classId, List<String> columns) throws TableNotExistError {
+    public int[] getAttridList(int classId, List<String> columns) throws TMDBException {
         int attrnum = getClassAttrnum(classId);
         int[] attridList = new int[attrnum];
 
@@ -200,9 +199,9 @@ public class MemConnect {
      * 给定表名，获取表下的所有元组
      * @param fromItem 表名
      * @return 查询语句中，该表之下所具有的所有元组
-     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public TupleList getTupleList(FromItem fromItem) throws TableNotExistError {
+    public TupleList getTupleList(FromItem fromItem) throws TMDBException {
         int classId = getClassId(((Table) fromItem).getName());
         TupleList tupleList = new TupleList();
         for (ObjectTableItem item : getTopt().objectTableList) {
@@ -222,9 +221,9 @@ public class MemConnect {
      * 给定表名，获取表名class table的副本
      * @param fromItem 表名
      * @return 表名对应的class table副本
-     * @throws TableNotExistError 不存在给定表名的表，抛出异常
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public ArrayList<ClassTableItem> copyClassTableList(FromItem fromItem) throws TableNotExistError{
+    public ArrayList<ClassTableItem> copyClassTableList(FromItem fromItem) throws TMDBException{
         ArrayList<ClassTableItem> classTableList = new ArrayList<>();
         for (ClassTableItem item : getClasst().classTableList){
             if (item.classname.equals(((Table)fromItem).getName())){
@@ -237,7 +236,7 @@ public class MemConnect {
             }
         }
         if (classTableList.isEmpty()) {
-            throw new TableNotExistError(((Table)fromItem).getName());
+            throw new TMDBException(((Table)fromItem).getName());
         }
         return classTableList;
     }

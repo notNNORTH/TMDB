@@ -1,6 +1,5 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.statement.Statement;
 
@@ -25,11 +24,11 @@ public class DropImpl implements Drop {
     }
 
     @Override
-    public boolean drop(Statement statement) throws TMDBException, TableNotExistError {
+    public boolean drop(Statement statement) throws TMDBException {
         return execute((net.sf.jsqlparser.statement.drop.Drop) statement);
     }
 
-    public boolean execute(net.sf.jsqlparser.statement.drop.Drop drop) throws TMDBException, TableNotExistError {
+    public boolean execute(net.sf.jsqlparser.statement.drop.Drop drop) throws TMDBException {
         String tableName = drop.getName().getName();
         int classId = memConnect.getClassId(tableName);
         drop(classId);

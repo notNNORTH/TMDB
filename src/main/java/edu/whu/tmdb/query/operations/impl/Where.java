@@ -4,7 +4,6 @@ import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -42,7 +41,7 @@ public class Where {
 
     Formula formula = new Formula();
 
-    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult where(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException, IOException {
         execute(plainSelect.getWhere(), selectResult);
         return selectResult;
     }
@@ -53,7 +52,7 @@ public class Where {
      * @param selectResult 待筛选的selectResult
      * @return 筛选之后的selectResult
      */
-    public SelectResult execute(Expression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult execute(Expression expression, SelectResult selectResult) throws TMDBException, IOException {
         SelectResult result = new SelectResult();
         if (selectResult.getTpl().tuplelist.isEmpty()) {
             return selectResult;
@@ -188,7 +187,7 @@ public class Where {
 
 
 
-    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult andExpression(AndExpression expression, SelectResult selectResult) throws TMDBException, IOException {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -203,7 +202,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,overlap);
     }
 
-    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult orExpression(OrExpression expression,SelectResult selectResult) throws TMDBException, IOException {
         Expression left=expression.getLeftExpression();
         Expression right=expression.getRightExpression();
         SelectResult selectResult1=execute(left,selectResult);
@@ -217,7 +216,7 @@ public class Where {
         return getSelectResultFromSet(selectResult,selectResultSet1);
     }
 
-    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException, IOException, TableNotExistError {
+    public SelectResult inExpression(InExpression expression, SelectResult selectResult) throws TMDBException, IOException {
         ArrayList<Object> left=formula.formulaExecute(expression.getLeftExpression(),selectResult);
         List<Object> right=new ArrayList<>();
         //in表达式右边可能是一个list

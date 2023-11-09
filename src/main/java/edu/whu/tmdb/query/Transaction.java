@@ -1,7 +1,6 @@
 package edu.whu.tmdb.query;
 
-import au.edu.rmit.bdm.Torch.mapMatching.TorSaver;
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
+
 import edu.whu.tmdb.query.operations.impl.*;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -55,7 +54,8 @@ public class Transaction {
             }
             return instance;
         }catch (TMDBException e){
-            logger.warn(e.getMessage());
+            // logger.warn(e.getMessage());
+            e.printError();
         }catch (JSQLParserException e){
             logger.warn(e.getMessage());
         }catch (IOException e){
@@ -70,7 +70,7 @@ public class Transaction {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
         this.mem = MemManager.getInstance();
-        this.levelManager = mem.levelManager;
+        this.levelManager = MemManager.levelManager;
         this.memConnect = MemConnect.getInstance(mem);
     }
 
@@ -122,13 +122,11 @@ public class Transaction {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());
         Statement stmt= CCJSqlParserUtil.parse(byteArrayInputStream);
 
-        SelectResult query = this.query("", -1, stmt);
-        return query;
+        return this.query("", -1, stmt);
     }
 
     public SelectResult query(Statement s) {
-        SelectResult query = this.query("", -1, s);
-        return query;
+        return this.query("", -1, s);
     }
     public SelectResult query(String k, int op, Statement stmt) {
         ArrayList<Integer> tuples = new ArrayList<>();
@@ -184,12 +182,12 @@ public class Transaction {
                     break;
 
             }
-        } catch (JSQLParserException | TMDBException e) {
+        } catch (JSQLParserException e) {
             logger.warn(e.getMessage());
         } catch (IOException e) {
             logger.error(e.getMessage(),e);
-        } catch (TableNotExistError tableNotExistError) {
-            tableNotExistError.printError();
+        } catch (TMDBException e) {
+            e.printError();
         }
         /*
         int[] ints = new int[tuples.size()];

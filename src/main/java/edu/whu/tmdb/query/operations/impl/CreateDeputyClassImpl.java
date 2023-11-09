@@ -1,6 +1,5 @@
 package edu.whu.tmdb.query.operations.impl;
 
-import edu.whu.tmdb.query.operations.Exception.TableNotExistError;
 import edu.whu.tmdb.storage.memory.MemManager;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
@@ -36,11 +35,11 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     @Override
-    public boolean createDeputyClass(Statement stmt) throws TMDBException, IOException, TableNotExistError {
+    public boolean createDeputyClass(Statement stmt) throws TMDBException, IOException {
         return execute((net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass) stmt);
     }
 
-    public boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) throws TMDBException, IOException, TableNotExistError {
+    public boolean execute(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) throws TMDBException, IOException {
         // 获取新创建代理类的名称
         String deputyClassName = stmt.getDeputyClass().toString();
         int deputyType = getDeputyType(stmt);
@@ -55,7 +54,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
 
 
-    public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException, IOException, TableNotExistError {
+    public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException, IOException {
         int deputyId = createDeputyClass(deputyClass, selectResult, deputyType);
         insertDeputyTable(selectResult.getClassName(), deputyType, deputyId);
         insertTuple(selectResult, deputyId);
@@ -87,7 +86,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     //将创建deputyclass后面的select语句中的selectResult拿到，用于后面的处理
-     private SelectResult getSelectResult(Select select) throws TMDBException, IOException, TableNotExistError {
+     private SelectResult getSelectResult(Select select) throws TMDBException, IOException {
          SelectImpl select1 = new SelectImpl();
         SelectResult selectResult=select1.select(select);
         return selectResult;
@@ -95,7 +94,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
     //第一步，创建代理类，代理类的classtype设置为de
     //同时，在switchingtable中插入源属性到代理属性的映射
-    private int createDeputyClass(String deputyClassName, SelectResult selectResult, int deputyRule) throws TMDBException, TableNotExistError {
+    private int createDeputyClass(String deputyClassName, SelectResult selectResult, int deputyRule) throws TMDBException {
         MemConnect.getClasst().maxid++;
         int classid = MemConnect.getClasst().maxid;//代理类的id
         int count=selectResult.getAttrid().length;//代理类的长度
@@ -142,7 +141,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
      * @param deputyId
      * @throws TMDBException
      */
-    public void insertDeputyTable(String[] className,int deputyType, int deputyId) throws TMDBException, TableNotExistError {
+    public void insertDeputyTable(String[] className,int deputyType, int deputyId) throws TMDBException {
         HashSet<String> collect = Arrays.stream(className).collect(Collectors.toCollection(HashSet::new));
         for (String s :
                 collect) {
@@ -154,7 +153,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     //第三步，在ObjectTable中插入实际值
-    private void insertTuple(SelectResult selectResult, int deputyId) throws TMDBException, IOException, TableNotExistError {
+    private void insertTuple(SelectResult selectResult, int deputyId) throws TMDBException, IOException {
         InsertImpl insert=new InsertImpl();
         List<String> columns= Arrays.asList(selectResult.getAttrname());
         for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
