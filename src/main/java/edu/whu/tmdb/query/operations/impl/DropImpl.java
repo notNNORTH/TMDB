@@ -38,20 +38,11 @@ public class DropImpl implements Drop {
     public void drop(int classId) {
         ArrayList<Integer> deputyClassIdList = new ArrayList<>();   // 存储该类对应所有代理类id
 
-        // 1.删除ClassTableItem
-        dropClassTable(classId);
-
-        // 2.获取代理类id并在表中删除
-        dropDeputyClassTable(classId, deputyClassIdList);
-
-        // 3.删除 源类/对象<->代理类/对象 的双向关系表
-        dropBiPointerTable(classId);
-
-        // 4.删除switchingTable
-        dropSwitchingTable(classId);
-
-        // 5.删除已创建的源类对象
-        dropObject(classId);
+        dropClassTable(classId);                            // 1.删除ClassTableItem
+        dropDeputyClassTable(classId, deputyClassIdList);   // 2.获取代理类id并在表中删除
+        dropBiPointerTable(classId);                        // 3.删除 源类/对象<->代理类/对象 的双向关系表
+        dropSwitchingTable(classId);                        // 4.删除switchingTable
+        dropObjectTable(classId);                                // 5.删除已创建的源类对象
 
         // 6.递归删除代理类相关
         if(!deputyClassIdList.isEmpty()){
@@ -128,18 +119,18 @@ public class DropImpl implements Drop {
     }
 
     /**
-     * 删除源类具有的所有对象
+     * 删除源类具有的所有对象的列表
      * @param classId 源类id
      */
-    private void dropObject(int classId) {
-        ArrayList<ObjectTableItem> objectList = new ArrayList<>();
+    private void dropObjectTable(int classId) {
+        ArrayList<ObjectTableItem> objectTableList = new ArrayList<>();
         for (ObjectTableItem objectTableItem : MemConnect.getTopt().objectTableList) {
             if(objectTableItem.classid == classId ){
                 memConnect.DeleteTuple(objectTableItem.tupleid);
-                objectList.add(objectTableItem);
+                objectTableList.add(objectTableItem);
             }
         }
-        for(ObjectTableItem temp : objectList){
+        for(ObjectTableItem temp : objectTableList){
             MemConnect.getTopt().objectTableList.remove(temp);
         }
     }

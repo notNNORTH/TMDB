@@ -164,7 +164,7 @@ public class Transaction {
                 case "Delete":
  //                   log.WriteLog(id,k,op,s);
                     Delete delete = new DeleteImpl();
-                    tuples = delete.delete(stmt);
+                    delete.delete(stmt);
                     break;
                 case "Select":
                     Select select = new SelectImpl();

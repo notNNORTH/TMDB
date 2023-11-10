@@ -67,9 +67,8 @@ public class Formula {
             if (!selectResult.getAttrname()[i].equals(columnName)) {
                 continue;
             }
-            if (column.getTable().getName().equals(selectResult.getClassName()[i])
-                    || column.getTable().getName().equals(selectResult.getAlias()[i])
-                    || column.getTable() == null) {
+            if (column.getTable() == null || column.getTable().getName().equals(selectResult.getClassName()[i])
+                    || column.getTable().getName().equals(selectResult.getAlias()[i])) {
                 index = i;
                 break;
             }

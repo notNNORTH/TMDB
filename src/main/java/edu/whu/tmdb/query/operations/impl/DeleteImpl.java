@@ -25,60 +25,57 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 public class DeleteImpl implements Delete {
 
     private MemConnect memConnect;
-    private ArrayList<Integer> deleteId=new ArrayList<>();
 
     public DeleteImpl() {
-        this.memConnect=MemConnect.getInstance(MemManager.getInstance());
+        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
     }
 
     @Override
-    public ArrayList<Integer> delete(Statement statement) throws JSQLParserException, TMDBException, IOException {
-        return execute((net.sf.jsqlparser.statement.delete.Delete) statement);
+    public void delete(Statement statement) throws JSQLParserException, TMDBException, IOException {
+        execute((net.sf.jsqlparser.statement.delete.Delete) statement);
     }
 
-    public ArrayList<Integer> execute(net.sf.jsqlparser.statement.delete.Delete delete) throws JSQLParserException, TMDBException, IOException {
-        //获取需要删除的表名
-        Table table = delete.getTable();
-        //获取delete中的where表达式
-        Expression where = delete.getWhere();
-        String sql="select * from " + table + " where " + where.toString() + ";";
+    public void execute(net.sf.jsqlparser.statement.delete.Delete deleteStmt) throws JSQLParserException, TMDBException, IOException {
+        // 1.获取符合where条件的所有元组
+        Table table = deleteStmt.getTable();        // 获取需要删除的表名
+        Expression where = deleteStmt.getWhere();   // 获取delete中的where表达式
+        String sql = "select * from " + table + " where " + where.toString() + ";";
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sql.getBytes());
         net.sf.jsqlparser.statement.select.Select parse = (net.sf.jsqlparser.statement.select.Select) CCJSqlParserUtil.parse(byteArrayInputStream);
-        Select select=new SelectImpl();
+        Select select = new SelectImpl();
         SelectResult selectResult = select.select(parse);
-        ArrayList<Integer> integers = new ArrayList<>();
-//        int classid=memConnect.getClassId(table.getName());
+
+        // 2.执行delete
         delete(selectResult.getTpl());
-        return integers;
     }
 
-    public void delete(TupleList tupleList){
-        ArrayList<Integer> delete=new ArrayList<>();
-        for(Tuple tuple:tupleList.tuplelist){
-            memConnect.DeleteTuple(tuple.getTupleId());
-            ObjectTableItem o=new ObjectTableItem(tuple.classId,tuple.getTupleId());
-//            ArrayList<Object> list=memConnect.getTopt().objectTable;
-            MemConnect.getTopt().objectTableList.remove(o);
-            delete.add(tuple.getTupleId());
+    public void delete(TupleList tupleList) {
+        // 1.删除源类tuple和object table
+        ArrayList<Integer> deleteTupleIdList = new ArrayList<>();   // 用于存储要删除的tuple id
+        for (Tuple tuple : tupleList.tuplelist) {
+            memConnect.DeleteTuple(tuple.getTupleId());             // 删除元组
+            ObjectTableItem objectTableItem = new ObjectTableItem(tuple.classId, tuple.getTupleId());
+            MemConnect.getTopt().objectTableList.remove(objectTableItem);   // 删除对象表
+            deleteTupleIdList.add(tuple.getTupleId());
         }
-        deleteId.addAll(delete);
-        ArrayList<Integer> toDelete=new ArrayList<>();
-        for (int i = 0; i < MemConnect.getBiPointerT().biPointerTableList.size(); i++) {
-            BiPointerTableItem biPointerTableItem = MemConnect.getBiPointerT().biPointerTableList.get(i);
-            if(delete.contains(biPointerTableItem.objectid)){
-                toDelete.add(biPointerTableItem.deputyobjectid);
+
+        // 2.删除源类biPointerTable
+        ArrayList<Integer> deputyTupleIdList = new ArrayList<>();
+        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerT().biPointerTableList) {
+            if (deleteTupleIdList.contains(biPointerTableItem.objectid)){
+                deputyTupleIdList.add(biPointerTableItem.deputyobjectid);
                 MemConnect.getBiPointerT().biPointerTableList.remove(biPointerTableItem);
             }
         }
-        if(toDelete.isEmpty()){
-            return;
+
+        // 3.根据biPointerTable递归删除代理类相关表
+        if (deputyTupleIdList.isEmpty()) { return; }
+        TupleList deputyTupleList = new TupleList();
+        for (Integer deputyTupleId : deputyTupleIdList) {
+            Tuple tuple = memConnect.GetTuple(deputyTupleId);
+            deputyTupleList.addTuple(tuple);
         }
-        TupleList tupleList1 = new TupleList();
-        for (int i = 0; i < toDelete.size(); i++) {
-            Tuple tuple = memConnect.GetTuple(toDelete.get(i));
-            tupleList1.addTuple(tuple);
-        }
-        delete(tupleList1);
+        delete(deputyTupleList);
     }
 
 }

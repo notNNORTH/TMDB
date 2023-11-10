@@ -32,8 +32,8 @@ public class CreateImpl implements Create {
         String classname = stmt.getTable().toString();
 
         // 2.判断类名的唯一性（要满足唯一性约束）
-        for (ClassTableItem item : memConnect.getClasst().classTableList){
-            if(item.classname.equals(classname)){
+        for (ClassTableItem item : MemConnect.getClasst().classTableList) {
+            if (item.classname.equals(classname)) {
                 throw new TMDBException(ErrorList.TABLE_ALREADY_EXISTS, classname);
             }
         }
