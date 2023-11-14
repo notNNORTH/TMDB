@@ -176,7 +176,7 @@ public class Transaction {
                 case "Update":
  //                   log.WriteLog(id,k,op,s);
                     Update update = new UpdateImpl();
-                    tuples = update.update(stmt);
+                    update.update(stmt);
                     break;
                 default:
                     break;

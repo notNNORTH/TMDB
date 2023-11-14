@@ -113,7 +113,7 @@ public class MemConnect {
 
     // 更新tuple
     public void UpateTuple(Tuple tuple, int tupleId) {
-        rwLock.writeLock().unlock();
+        rwLock.writeLock().lock();
         try {
             tuple.tupleId = tupleId;
             this.memManager.add(tuple);
