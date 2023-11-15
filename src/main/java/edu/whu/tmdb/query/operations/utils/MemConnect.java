@@ -241,6 +241,34 @@ public class MemConnect {
         return classTableList;
     }
 
+    /**
+     * 给定表名，返回该表是否存在，存在返回true
+     * @param tableName 表名
+     * @return 存在返回true
+     */
+    public boolean classExist(String tableName) {
+        for (ClassTableItem item : classt.classTableList) {
+            if (item.classname.equals(tableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 给定表名和属性名，返回该属性是否存在，存在返回true
+     * @param tableName 表名
+     * @param columnName 属性名
+     * @return 存在返回true
+     */
+    public boolean columnExist(String tableName, String columnName) throws TMDBException {
+        for (ClassTableItem item : classt.classTableList) {
+            if (item.classname.equals(tableName) && item.attrname.equals(columnName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {
         String value = value1.replace("\"", "");
@@ -260,9 +288,7 @@ public class MemConnect {
         return false;
     }
 
-    public void SaveAll() {
-        memManager.saveAll();
-    }
+    public void SaveAll() { memManager.saveAll(); }
 
     public void reload() {
         try {
@@ -294,23 +320,13 @@ public class MemConnect {
     }
 
 
-    public static ObjectTable getTopt() {
-        return topt;
-    }
+    public static ObjectTable getTopt() { return topt; }
 
-    public static ClassTable getClasst() {
-        return classt;
-    }
+    public static ClassTable getClasst() { return classt; }
 
-    public static DeputyTable getDeputyt() {
-        return deputyt;
-    }
+    public static DeputyTable getDeputyt() { return deputyt; }
 
-    public static BiPointerTable getBiPointerT() {
-        return biPointerT;
-    }
+    public static BiPointerTable getBiPointerT() { return biPointerT; }
 
-    public static SwitchingTable getSwitchingT() {
-        return switchingT;
-    }
+    public static SwitchingTable getSwitchingT() { return switchingT; }
 }

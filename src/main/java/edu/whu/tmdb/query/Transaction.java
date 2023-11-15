@@ -93,16 +93,16 @@ public class Transaction {
     public void Test(){
         TupleList tpl = new TupleList();
         Tuple t1 = new Tuple();
-        t1.tupleHeader = 5;
-        t1.tuple = new Object[t1.tupleHeader];
+        t1.tupleSize = 5;
+        t1.tuple = new Object[t1.tupleSize];
         t1.tuple[0] = "a";
         t1.tuple[1] = 1;
         t1.tuple[2] = "b";
         t1.tuple[3] = 3;
         t1.tuple[4] = "e";
         Tuple t2 = new Tuple();
-        t2.tupleHeader = 5;
-        t2.tuple = new Object[t2.tupleHeader];
+        t2.tupleSize = 5;
+        t2.tuple = new Object[t2.tupleSize];
         t2.tuple[0] = "d";
         t2.tuple[1] = 2;
         t2.tuple[2] = "e";
@@ -129,8 +129,7 @@ public class Transaction {
         return this.query("", -1, s);
     }
     public SelectResult query(String k, int op, Statement stmt) {
-        ArrayList<Integer> tuples = new ArrayList<>();
-        SelectResult selectResult = new SelectResult();
+        SelectResult selectResult = null;
         try {
             // 获取生成语法树的类型，用于进一步判断
             String sqlType = stmt.getClass().getSimpleName();
@@ -159,7 +158,7 @@ public class Transaction {
                 case "Insert":
 //                    log.WriteLog(id,k,op,s);
                     Insert insert = new InsertImpl();
-                    tuples = insert.insert(stmt);
+                    insert.insert(stmt);
                     break;
                 case "Delete":
  //                   log.WriteLog(id,k,op,s);
@@ -169,9 +168,6 @@ public class Transaction {
                 case "Select":
                     Select select = new SelectImpl();
                     selectResult = select.select(stmt);
-                    for (Tuple t : selectResult.getTpl().tuplelist) {
-                         tuples.add(t.getTupleId());
-                    }
                     break;
                 case "Update":
  //                   log.WriteLog(id,k,op,s);
@@ -180,7 +176,6 @@ public class Transaction {
                     break;
                 default:
                     break;
-
             }
         } catch (JSQLParserException e) {
             logger.warn(e.getMessage());
@@ -189,12 +184,6 @@ public class Transaction {
         } catch (TMDBException e) {
             e.printError();
         }
-        /*
-        int[] ints = new int[tuples.size()];
-        for (int i = 0; i < tuples.size(); i++) {
-            ints[i]=tuples.get(i);
-        }
-        */
 
         return selectResult;
     }

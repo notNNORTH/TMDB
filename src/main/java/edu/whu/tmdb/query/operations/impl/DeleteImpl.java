@@ -26,9 +26,7 @@ public class DeleteImpl implements Delete {
 
     private MemConnect memConnect;
 
-    public DeleteImpl() {
-        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
-    }
+    public DeleteImpl() { this.memConnect = MemConnect.getInstance(MemManager.getInstance()); }
 
     @Override
     public void delete(Statement statement) throws JSQLParserException, TMDBException, IOException {

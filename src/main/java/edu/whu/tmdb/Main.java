@@ -10,6 +10,7 @@ package edu.whu.tmdb;/*
 import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
+import edu.whu.tmdb.storage.memory.Tuple;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -31,10 +32,28 @@ public class Main {
             if ("exit".equalsIgnoreCase(sqlCommand)) {
                 break;
             } else if (sqlCommand.isEmpty()) {
+                // do nothing
                 continue;
             } else {
                 SelectResult result = execute(sqlCommand);
                 // System.out.println("Result: " + result.toString());
+                if (result == null) { continue; }
+
+                // 输出表头信息
+                StringBuilder tableHeader = new StringBuilder("|");
+                for (int i = 0; i < result.getAttrname().length; i++) {
+                    tableHeader.append(String.format("%-20s", result.getClassName()[i] + "." + result.getAttrname()[i])).append("|");
+                }
+                System.out.println(tableHeader);
+
+                // 输出元组信息
+                for (Tuple tuple : result.getTpl().tuplelist) {
+                    StringBuilder data = new StringBuilder("|");
+                    for (int i = 0; i < tuple.tuple.length; i++) {
+                        data.append(String.format("%-20s", tuple.tuple[i].toString())).append("|");
+                    }
+                    System.out.println(data);
+                }
             }
         }
 
@@ -72,12 +91,7 @@ public class Main {
 
 
         // execute("show tables;");
-        // execute("select * from id_vertex;");
-//        execute("select * from traj;");
 //        execute("select * from trajectory_vertex limit 1;");
-//        execute("CREATE CLASS company (name char,age int, salary int);");
-//        execute("INSERT INTO company VALUES (aa,20,1000);");
-//        execute("create selectdeputy deputy as select * from company limit 1;");
 //        execute("select * from traj"+
 //                " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");
 //        execute(args[0]);
@@ -107,7 +121,7 @@ public class Main {
 
     public static SelectResult execute(String s)  {
         Transaction transaction = Transaction.getInstance();    // 创建一个事务实例
-        SelectResult selectResult = new SelectResult();
+        SelectResult selectResult = null;
         try {
             // 使用JSqlparser进行sql语句解析，会根据sql类型生成对应的语法树
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(s.getBytes());

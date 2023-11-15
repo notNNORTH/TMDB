@@ -29,7 +29,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 
 
 public class CreateDeputyClassImpl implements CreateDeputyClass {
-    private MemConnect memConnect;
+    private final MemConnect memConnect;
 
     public CreateDeputyClassImpl() {
         this.memConnect = MemConnect.getInstance(MemManager.getInstance());
@@ -47,12 +47,11 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         Select select = stmt.getSelect();
         // 获取select语句的selectResult
         SelectResult selectResult = getSelectResult(select);
-        if (memConnect.getClassId(deputyClassName) != -1){
+        if (memConnect.classExist(deputyClassName)) {
             throw new TMDBException(ErrorList.TABLE_ALREADY_EXISTS, deputyClassName);
         }
         return createDeputyClassStreamLine(selectResult, deputyType, deputyClassName);
     }
-
 
 
     public boolean createDeputyClassStreamLine(SelectResult selectResult, int deputyType, String deputyClass) throws TMDBException, IOException {
@@ -63,13 +62,12 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
 
-
     private List<String> getColumns(Select select) {
-        SelectImpl select1=new SelectImpl();
-        ArrayList<SelectItem> selectItemList=(ArrayList<SelectItem>)((PlainSelect)select.getSelectBody()).getSelectItems();
-        HashMap<SelectItem,ArrayList<Column>> selectItemToColumn=select1.getSelectItemColumn(selectItemList);
-        List<Column> selectColumnList=select1.getSelectColumnList(selectItemToColumn);
-        List<String> res=new ArrayList<>();
+        SelectImpl select1 = new SelectImpl();
+        ArrayList<SelectItem> selectItemList = (ArrayList<SelectItem>) ((PlainSelect) select.getSelectBody()).getSelectItems();
+        HashMap<SelectItem, ArrayList<Column>> selectItemToColumn = select1.getSelectItemColumn(selectItemList);
+        List<Column> selectColumnList = select1.getSelectColumnList(selectItemToColumn);
+        List<String> res = new ArrayList<>();
         for (int i = 0; i < selectColumnList.size(); i++) {
             res.add(selectColumnList.get(i).getColumnName());
         }
@@ -77,19 +75,23 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     private int getDeputyType(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) {
-        switch (stmt.getType().toLowerCase(Locale.ROOT)){
-            case "selectdeputy": return 0;
-            case "joindeputy": return 1;
-            case "uniondeputy": return 2;
-            case "groupbydeputy": return 3;
+        switch (stmt.getType().toLowerCase(Locale.ROOT)) {
+            case "selectdeputy":
+                return 0;
+            case "joindeputy":
+                return 1;
+            case "uniondeputy":
+                return 2;
+            case "groupbydeputy":
+                return 3;
         }
         return -1;
     }
 
     //将创建deputyclass后面的select语句中的selectResult拿到，用于后面的处理
-     private SelectResult getSelectResult(Select select) throws TMDBException, IOException {
-         SelectImpl select1 = new SelectImpl();
-        SelectResult selectResult=select1.select(select);
+    private SelectResult getSelectResult(Select select) throws TMDBException, IOException {
+        SelectImpl select1 = new SelectImpl();
+        SelectResult selectResult = select1.select(select);
         return selectResult;
     }
 
@@ -98,22 +100,22 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     private int createDeputyClass(String deputyClassName, SelectResult selectResult, int deputyRule) throws TMDBException {
         MemConnect.getClasst().maxid++;
         int classid = MemConnect.getClasst().maxid;//代理类的id
-        int count=selectResult.getAttrid().length;//代理类的长度
+        int count = selectResult.getAttrid().length;//代理类的长度
         for (int i = 0; i < selectResult.getAttrid().length; i++) {
             MemConnect.getClasst().classTableList.add(
                     new ClassTableItem(deputyClassName,
-                                        classid,
-                                        count,
-                                        selectResult.getAttrid()[i],
-                                        selectResult.getAttrname()[i],
-                                        selectResult.getType()[i],
-                                        "de",
-                                        ""));
-            String className=selectResult.getClassName()[i];
-            int oriId=memConnect.getClassId(className);
-            int oriAttrId=getOriAttrId(oriId,selectResult.getAlias()[i]);
+                            classid,
+                            count,
+                            selectResult.getAttrid()[i],
+                            selectResult.getAttrname()[i],
+                            selectResult.getType()[i],
+                            "de",
+                            ""));
+            String className = selectResult.getClassName()[i];
+            int oriId = memConnect.getClassId(className);
+            int oriAttrId = getOriAttrId(oriId, selectResult.getAlias()[i]);
             MemConnect.getSwitchingT().switchingTableList.add(
-                    new SwitchingTableItem(oriId,oriAttrId,selectResult.getAlias()[i],classid,i,selectResult.getAttrname()[i],deputyRule+"")
+                    new SwitchingTableItem(oriId, oriAttrId, selectResult.getAlias()[i], classid, i, selectResult.getAttrname()[i], deputyRule + "")
             );
         }
         return classid;
@@ -121,6 +123,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
     /**
      * get the origin class classid
+     *
      * @param oriId
      * @param alias
      * @return
@@ -128,7 +131,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     private int getOriAttrId(int oriId, String alias) {
         for (int i = 0; i < MemConnect.getClasst().classTableList.size(); i++) {
             ClassTableItem classTableItem = MemConnect.getClasst().classTableList.get(i);
-            if(classTableItem.classid==oriId && classTableItem.attrname.equals(alias)){
+            if (classTableItem.classid == oriId && classTableItem.attrname.equals(alias)) {
                 return classTableItem.attrid;
             }
         }
@@ -137,46 +140,47 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
 
     /**
      * 第二步，在deputytable中插入具体的tuple
-     * @param className deputy class's className
+     *
+     * @param className  deputy class's className
      * @param deputyType deputy class's deputytype
      * @param deputyId
      * @throws TMDBException
      */
-    public void insertDeputyTable(String[] className,int deputyType, int deputyId) throws TMDBException {
+    public void insertDeputyTable(String[] className, int deputyType, int deputyId) throws TMDBException {
         HashSet<String> collect = Arrays.stream(className).collect(Collectors.toCollection(HashSet::new));
         for (String s :
                 collect) {
-            int oriId=memConnect.getClassId(s);
+            int oriId = memConnect.getClassId(s);
             MemConnect.getDeputyt().deputyTableList.add(
-                    new DeputyTableItem(oriId,deputyId,new String[]{deputyType+""})
+                    new DeputyTableItem(oriId, deputyId, new String[]{deputyType + ""})
             );
         }
     }
 
     //第三步，在ObjectTable中插入实际值
     private void insertTuple(SelectResult selectResult, int deputyId) throws TMDBException, IOException {
-        InsertImpl insert=new InsertImpl();
-        List<String> columns= Arrays.asList(selectResult.getAttrname());
+        InsertImpl insert = new InsertImpl();
+        List<String> columns = Arrays.asList(selectResult.getAttrname());
         for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
-            Tuple tuple=selectResult.getTpl().tuplelist.get(i);
+            Tuple tuple = selectResult.getTpl().tuplelist.get(i);
             int deputyTupleId = insert.execute(deputyId, columns, new Tuple(tuple.tuple));
             HashSet<Integer> origin = getOriginClass(selectResult);
             for (int o :
                     origin) {
-                int classId=memConnect.getClassId(selectResult.getClassName()[o]);
-                int oriTupleId=tuple.tupleIds[o];
+                int classId = memConnect.getClassId(selectResult.getClassName()[o]);
+                int oriTupleId = tuple.tupleIds[o];
                 MemConnect.getBiPointerT().biPointerTableList.add(
-                        new BiPointerTableItem(classId,oriTupleId,deputyId,deputyTupleId)
+                        new BiPointerTableItem(classId, oriTupleId, deputyId, deputyTupleId)
                 );
             }
         }
     }
-    
-    private HashSet<Integer> getOriginClass(SelectResult selectResult){
+
+    private HashSet<Integer> getOriginClass(SelectResult selectResult) {
         ArrayList<String> collect = Arrays.stream(selectResult.getClassName()).collect(Collectors.toCollection(ArrayList::new));
         HashSet<String> collect1 = Arrays.stream(selectResult.getClassName()).collect(Collectors.toCollection(HashSet::new));
-        HashSet<Integer> res=new HashSet<>();
-        for(String s:collect1){
+        HashSet<Integer> res = new HashSet<>();
+        for (String s : collect1) {
             res.add(collect.indexOf(s));
         }
         return res;

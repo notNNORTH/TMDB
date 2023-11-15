@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class Tuple implements Serializable {
-    public int tupleHeader;     // tuple中字段的数量
+    public int tupleSize;       // tuple中字段的数量
     public int tupleId;
     public int classId;         // tuple所属的class id
     public int[] tupleIds;      // tuple id填满的数组
@@ -15,7 +15,7 @@ public class Tuple implements Serializable {
 
     public Tuple(Object[] values) {
         tuple = values.clone();
-        tupleHeader = values.length;
+        tupleSize = values.length;
     }
 
     public int getTupleId() {
@@ -28,11 +28,11 @@ public class Tuple implements Serializable {
 
     // 根据给定变量对tuple进行赋值
     public void setTuple(int header, int tupleid, int classid, Object[] tuple) {
-        this.tupleHeader = header;
+        this.tupleSize = header;
         this.tupleId = tupleid;
         this.classId = classid;
         this.tuple = tuple;
-        int[] ids = new int[this.tupleHeader];
+        int[] ids = new int[this.tupleSize];
         Arrays.fill(ids, tupleid);
         this.tupleIds = ids;
     }
@@ -62,9 +62,9 @@ public class Tuple implements Serializable {
     @Override
     public int hashCode() {
         int result = 17;
-        result = 31 * result + Objects.hash(this.tupleHeader);
-        for(int i=0;i<this.tuple.length;i++){
-            result = 31 * result + Objects.hash(this.tuple[i]);
+        result = 31 * result + Objects.hash(this.tupleSize);
+        for (Object o : this.tuple) {
+            result = 31 * result + Objects.hash(o);
         }
         return result;
     }
