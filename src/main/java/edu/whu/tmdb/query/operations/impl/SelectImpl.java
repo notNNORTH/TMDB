@@ -260,6 +260,20 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         HashMap<SelectItem, ArrayList<Column>> map = getSelectItemColumn(selectItemList);               // 查询项->使用属性的hashmap
 
         int length = selectItemList.size();     // 对应查询结果的列数
+        TupleList resTupleList = new TupleList();       // 存储最终projection结果的tupleList
+        for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++){
+            Tuple tuple = new Tuple();
+            int[] temp = new int[length];
+            Arrays.fill(temp,-1);
+            tuple.tupleIds = temp;
+
+            tuple.tuple = new Object[length];
+            resTupleList.addTuple(tuple);
+        }
+
+        SelectResult result = new SelectResult(length);
+
+
         for (int i = 0 ; i < selectItemList.size(); i++) {
             // 1.针对select * from，返回全部结果
             if (selectItemList.get(i).getClass().getSimpleName().equals("AllColumns")) {
@@ -284,22 +298,8 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
                 length--;
             }
         }
-        TupleList resTupleList = new TupleList();
-        SelectResult result = new SelectResult();
-        result.setAlias(new String[length]);
-        result.setAttrname(new String[length]);
-        result.setClassName(new String[length]);
-        result.setAttrid(new int[length]);
-        result.setType(new String[length]);
-        for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++){
-            Tuple tuple = new Tuple();
-            int[] temp = new int[length];
-            Arrays.fill(temp,-1);
-            tuple.tupleIds = temp;
 
-            tuple.tuple = new Object[length];
-            resTupleList.addTuple(tuple);
-        }
+
         int i = 0;
         int index = 0;
         while (i < length){
@@ -308,7 +308,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             if (selectItemList.get(index).getClass().getSimpleName().equals("SelectExpressionItem")) {
                 SelectExpressionItem selectItem = (SelectExpressionItem) selectItemList.get(index);
                 // 如果有alias 例如a*b as c则需要将输出的getAttrname()改成别名
-                result.getAlias()[i] = selectResult.getAttrname()[index];
+                result.getAlias()[i] = selectItem.getExpression().toString();/////////////////////////ERROR////////////////////////////
                 if (selectItem.getAlias() != null){
                     result.getAttrname()[i] = selectItem.getAlias().getName();
                 }
@@ -371,13 +371,10 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return result;
     }
 
-    // from部分   （返回一个selectRseult，包含from后面所有表的所有元组）
-
     /**
      * 获取查询语句中涉及的所有元数据
      * @param plainSelect 平凡查询语句
      * @return 查询语句中涉及的所有元数据
-     * @throws TMDBException
      */
     public SelectResult from(PlainSelect plainSelect) throws TMDBException {
         FromItem fromItem = plainSelect.getFromItem();              // 获取plainSelect的表（多表查询时取第一个table）
@@ -440,10 +437,10 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         if(selectResult1.getAttrname().length!=selectResult2.getAttrname().length) throw new TMDBException();
         //根据setOperation的种类进行操作划分
         switch (setOperation.toString()){
-            case "UNION": return union(selectResult1,selectResult2);
-            case "INTERSECT": return intersect(selectResult1,selectResult2);
-            case "EXCEPT": return except(selectResult1,selectResult2);
-            case "MINUS": return minus(selectResult1,selectResult2);
+            case "UNION":       return union(selectResult1, selectResult2);
+            case "INTERSECT":   return intersect(selectResult1, selectResult2);
+            case "EXCEPT":      return except(selectResult1, selectResult2);
+            case "MINUS":       return minus(selectResult1, selectResult2);
         }
         return null;
     }
@@ -893,8 +890,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
      * @return 包含所有查询元组的selectResult类
      */
     public SelectResult getSelectResult(ArrayList<ClassTableItem> classTableItemList, TupleList tupleList){
-        SelectResult selectResult = new SelectResult();
-        selectResult.setHeaderSzie(classTableItemList.size());
+        SelectResult selectResult = new SelectResult(classTableItemList.size());
         for(int i = 0; i < classTableItemList.size();i++){
             selectResult.getClassName()[i] = classTableItemList.get(i).classname;
             selectResult.getAlias()[i] = classTableItemList.get(i).alias;
@@ -906,7 +902,11 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return selectResult;
     }
 
-    //针对每个selectItem，得到其对应的column 比如a*b+c得到a，b，c
+    /**
+     * 针对每个selectItem，得到其对应的column 比如a*b+c得到a，b，c
+     * @param selectItemArrayList select语句之后的SelectItem列表
+     * @return 查询项->使用属性列表的hashmap
+     */
     public HashMap<SelectItem, ArrayList<Column>> getSelectItemColumn(ArrayList<SelectItem> selectItemArrayList){
         HashMap<SelectItem, ArrayList<Column>> res = new HashMap<>();
         for (SelectItem selectItem : selectItemArrayList) {
@@ -917,7 +917,11 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         return res;
     }
 
-    // 递归遍历，直到当前元素是column为止
+    /**
+     * 给定SelectItem的语法树节点，将节点所包含的属性名加入到selectColumnList
+     * @param node SelectItem的语法树节点
+     * @param selectColumnList 赋值：SelectItem的语法树节点所包含的属性名
+     */
     public void getSelectColumn(SimpleNode node, ArrayList<Column> selectColumnList){
         int i = 0;
         while (i < node.jjtGetNumChildren()) {

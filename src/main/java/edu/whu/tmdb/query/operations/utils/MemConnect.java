@@ -138,6 +138,25 @@ public class MemConnect {
     }
 
     /**
+     * 给定表名(类名), 获取表在classTable中的id值
+     * @param tableName 表名(类名)
+     * @return 给定表名(类名)所对应的class id
+     * @throws TMDBException 不存在给定表名的表，抛出异常
+     */
+    public List<String> getColumns(String tableName) throws TMDBException {
+        List<String> colNames = new ArrayList<>();
+        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
+            if(classTableItem.classname.equals(tableName)){
+                colNames.add(classTableItem.attrname);
+            }
+        }
+        if (colNames.isEmpty()) {
+            throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
+        }
+        return colNames;
+    }
+
+    /**
      * 给定表名(类名), 获取表在中属性的数量
      * @param tableName 表名(类名)
      * @return 给定表名(类名)所具有的属性数量(attrNum)
@@ -193,6 +212,21 @@ public class MemConnect {
         }
 
         return attridList;
+    }
+
+    /**
+     * 给定classId和attrName，返回属性的attrid
+     * @param classId 类id号
+     * @param attrName 属性名称
+     * @return 属性对应的id
+     */
+    public int getAttrid(int classId, String attrName) throws TMDBException {
+        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
+            if (classTableItem.classid == classId && classTableItem.attrname.equals(attrName)) {
+                return classTableItem.attrid;
+            }
+        }
+        throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, attrName);
     }
 
     /**
@@ -268,6 +302,21 @@ public class MemConnect {
             }
         }
         return false;
+    }
+
+    /**
+     * 给定class id, 获取该源类对应的所有代理类（注：稍后放到memConnect中
+     * @param classId 源类的class id
+     * @return 该class id对应的所有代理类
+     */
+    public ArrayList<Integer> getDeputyIdList(int classId) {
+        ArrayList<Integer> deputyIdList = new ArrayList<>();
+        for (DeputyTableItem deputyTableItem : MemConnect.getDeputyt().deputyTableList) {
+            if (deputyTableItem.originid == classId && !deputyTableItem.deputyrule[0].equals("5")) {
+                deputyIdList.add(deputyTableItem.deputyid);
+            }
+        }
+        return deputyIdList;
     }
 
     public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {

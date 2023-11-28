@@ -36,7 +36,7 @@ public class InsertImpl implements Insert {
         Table table = insertStmt.getTable();        // 解析insert对应的表
         List<String> attrNames = new ArrayList<>(); // 解析插入的字段名
         if (insertStmt.getColumns() == null){
-            attrNames = getColumns(table.getName());
+            attrNames = memConnect.getColumns(table.getName());
         }
         else{
             int insertColSize = insertStmt.getColumns().size();
@@ -56,12 +56,9 @@ public class InsertImpl implements Insert {
     }
 
     /**
-     *
      * @param tableName 表名/类名
      * @param columns 表/类所具有的属性列表
      * @param tupleList 要插入的元组列表
-     * @throws TMDBException
-     * @throws IOException
      */
     public void execute(String tableName, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int classId = memConnect.getClassId(tableName);         // 类id
@@ -76,12 +73,9 @@ public class InsertImpl implements Insert {
     }
 
     /**
-     *
      * @param classId 表/类id
      * @param columns 表/类所具有的属性列表
      * @param tupleList 要插入的元组列表
-     * @throws TMDBException
-     * @throws IOException
      */
     public void execute(int classId, List<String> columns, TupleList tupleList) throws TMDBException, IOException {
         int attrNum = memConnect.getClassAttrnum(classId);
@@ -95,13 +89,10 @@ public class InsertImpl implements Insert {
     }
 
     /**
-     *
      * @param classId 要插入的类id
      * @param columns 要插入类的属性名列表
      * @param tuple 要insert的元组tuple
      * @return 新插入元组的tuple id
-     * @throws TMDBException
-     * @throws IOException
      */
     public int execute(int classId, List<String> columns, Tuple tuple) throws TMDBException, IOException {
         int attrNum = memConnect.getClassAttrnum(classId);
@@ -123,7 +114,6 @@ public class InsertImpl implements Insert {
      * @param attrNum 元组包含的属性数量（系统表中获取）
      * @param attrId 插入属性对应的attrId列表（根据insert的属性名，系统表中获取）
      * @return 新插入属性的tuple id
-     * @throws TMDBException
      */
     private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException {
         // 1.直接在对应类中插入tuple
@@ -143,7 +133,7 @@ public class InsertImpl implements Insert {
 
         // 2.找到所有的代理类，进行递归插入
         // 2.1 找到源类所有的代理类
-        ArrayList<Integer> DeputyIdList = getDeputyByOriginId(classId);
+        ArrayList<Integer> DeputyIdList = memConnect.getDeputyIdList(classId);
 
         // 2.2 将元组转换为代理类应有的形式
         if (!DeputyIdList.isEmpty()) {
@@ -158,32 +148,6 @@ public class InsertImpl implements Insert {
             }
         }
         return tupleid;
-    }
-
-    // 给定表名，返回该表的属性列表，注：未加异常处理
-    public List<String> getColumns(String tableName){
-        List<String> colName = new ArrayList<>();
-        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
-            if(classTableItem.classname.equals(tableName)){
-                colName.add(classTableItem.attrname);
-            }
-        }
-        return colName;
-    }
-
-    /**
-     * 给定class id, 获取该源类对应的所有代理类（注：稍后放到memConnect中
-     * @param classId 源类的class id
-     * @return 该class id对应的所有代理类
-     */
-    private ArrayList<Integer> getDeputyByOriginId(int classId) {
-        ArrayList<Integer> deputyIdList = new ArrayList<>();
-        for (DeputyTableItem deputyTableItem : MemConnect.getDeputyt().deputyTableList) {
-            if (deputyTableItem.originid == classId && !deputyTableItem.deputyrule[0].equals("5")) {
-                deputyIdList.add(deputyTableItem.deputyid);
-            }
-        }
-        return deputyIdList;
     }
 
     /**

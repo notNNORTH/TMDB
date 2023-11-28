@@ -59,7 +59,7 @@ public class CreateTJoinDeputyClassImpl extends CreateDeputyClassImpl{
 
     private void insertElseDeputyTable(String[] strings, int i, String deputyClass) throws TMDBException {
         int classId = memConnect.getClassId(deputyClass);
-        super.insertDeputyTable(strings,i,classId);
+        super.createDeputyTableItem(strings, i, classId);
     }
 
     public boolean createTJoinDeputyClass(Statement stmt) throws TMDBException, IOException {

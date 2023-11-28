@@ -18,13 +18,9 @@ public class Tuple implements Serializable {
         tupleSize = values.length;
     }
 
-    public int getTupleId() {
-        return tupleId;
-    }
+    public int getTupleId() { return tupleId; }
 
-    public void setTupleId(int tupleId) {
-        this.tupleId = tupleId;
-    }
+    public void setTupleId(int tupleId) { this.tupleId = tupleId; }
 
     // 根据给定变量对tuple进行赋值
     public void setTuple(int header, int tupleid, int classid, Object[] tuple) {

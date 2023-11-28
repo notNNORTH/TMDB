@@ -22,19 +22,19 @@ public class SelectResult {
         this.type = type;
     }
 
-    public SelectResult(){}
-
     /**
      * 初始化表头大小，设置selectResult表项的数量
      * @param size selectResult表项的数量
      */
-    public void setHeaderSzie(int size) {
+    public SelectResult(int size) {
         setClassName(new String[size]);
         setAttrname(new String[size]);
         setAttrid(new int[size]);
         setType(new String[size]);
         setAlias(new String[size]);
     }
+
+    public SelectResult(){}
 
     // 读写元组数据
     public void setTpl(TupleList tpl) { this.tpl = tpl; }
