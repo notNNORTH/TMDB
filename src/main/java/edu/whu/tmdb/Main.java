@@ -24,83 +24,28 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String sqlCommand;
 
-
         // 调试用
         while (true) {
             System.out.print("tmdb> ");
             sqlCommand = reader.readLine().trim();
             if ("exit".equalsIgnoreCase(sqlCommand)) {
                 break;
-            } else if (sqlCommand.isEmpty()) {
-                // do nothing
-                continue;
-            } else {
+            } else if (!sqlCommand.isEmpty()) {
                 SelectResult result = execute(sqlCommand);
-                // System.out.println("Result: " + result.toString());
-                if (result == null) { continue; }
-
-                // 输出表头信息
-                StringBuilder tableHeader = new StringBuilder("|");
-                for (int i = 0; i < result.getAttrname().length; i++) {
-                    tableHeader.append(String.format("%-20s", result.getClassName()[i] + "." + result.getAttrname()[i])).append("|");
-                }
-                System.out.println(tableHeader);
-
-                // 输出元组信息
-                for (Tuple tuple : result.getTpl().tuplelist) {
-                    StringBuilder data = new StringBuilder("|");
-                    for (int i = 0; i < tuple.tuple.length; i++) {
-                        data.append(String.format("%-20s", tuple.tuple[i].toString())).append("|");
-                    }
-                    System.out.println(data);
+                if (result != null) {
+                    printResult(result);
                 }
             }
         }
-
-
-        /*
-        long startTime = System.currentTimeMillis();
-        long tmp = startTime;
-
-        String fileName = "D:\\cs\\JavaProject\\TMDB\\src\\main\\java\\edu\\whu\\tmdb\\test\\insert_test_1k.txt";
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String sqlCommand;
-            while ((sqlCommand = br.readLine()) != null) {
-                execute(sqlCommand);
-                long TimeNow = System.currentTimeMillis();
-                System.out.println(sqlCommand);
-                System.out.println("spend time: " + (TimeNow - tmp) + "ms, total: " + (TimeNow - startTime) + "ms");
-                tmp = TimeNow;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        long endTime = System.currentTimeMillis();
-        System.out.println("spend time: " + (endTime - startTime) + " ms");
-
-         */
-
-        /*
-        long startTime=System.nanoTime();
-        execute("INSERT INTO company_1k VALUES ('fDXKK', 666, 666);");
-
-        long endTime=System.nanoTime();
-        System.out.println("exe执行时间: " + (endTime - startTime) + " ns");*/
-
 
         // execute("show tables;");
-//        execute("select * from trajectory_vertex limit 1;");
-//        execute("select * from traj"+
-//                " where traj_name='"+getFileNameWithoutExtension("data/res/raw/porto_raw_trajectory.txt")+"';");
-//        execute(args[0]);
-//        transaction.test();
-//        transaction.test2();
-//        insertIntoTrajTable();
+        // execute(args[0]);
+        // transaction.test();
+        // transaction.test2();
+        // insertIntoTrajTable();
         // testMapMatching();
-//        testEngine();
-//        testTorch3();
+        // testEngine();
+        // testTorch3();
     }
 
     public static void insertIntoTrajTable(){
@@ -135,5 +80,23 @@ public class Main {
             System.out.println("syntax error");
         }
         return selectResult;
+    }
+
+    private static void printResult(SelectResult result) {
+        // 输出表头信息
+        StringBuilder tableHeader = new StringBuilder("|");
+        for (int i = 0; i < result.getAttrname().length; i++) {
+            tableHeader.append(String.format("%-20s", result.getClassName()[i] + "." + result.getAttrname()[i])).append("|");
+        }
+        System.out.println(tableHeader);
+
+        // 输出元组信息
+        for (Tuple tuple : result.getTpl().tuplelist) {
+            StringBuilder data = new StringBuilder("|");
+            for (int i = 0; i < tuple.tuple.length; i++) {
+                data.append(String.format("%-20s", tuple.tuple[i].toString())).append("|");
+            }
+            System.out.println(data);
+        }
     }
 }

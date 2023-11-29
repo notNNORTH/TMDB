@@ -42,9 +42,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
     private MemConnect memConnect;
 
-    public SelectImpl() {
-        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
-    }
+    public SelectImpl() { this.memConnect = MemConnect.getInstance(MemManager.getInstance()); }
 
     @Override
     public SelectResult select(Object stmt) throws TMDBException, IOException {
@@ -96,7 +94,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
             selectResult = groupByElicit(plainSelect, hashMap, selectResult);
         }
         else {//然后通过selectItem提取想要的列
-            selectResult = elicit(plainSelect, selectResult);
+            selectResult = projection(plainSelect, selectResult);
         }
         //最终返回selectResult
         return selectResult;
@@ -253,122 +251,192 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
         }
     }
 
+    /**
+     * projection操作，从当前元组列表中挑选出想要的的属性列
+     * @param plainSelect 子查询语句
+     * @param entireResult 根据from语句得到，子查询的涉及的所有满足where条件的完整元组
+     * @return 挑选之后的属性列表
+     */
+    public SelectResult projection(PlainSelect plainSelect, SelectResult entireResult) throws TMDBException {
+        ArrayList<SelectItem> selectItemList = (ArrayList<SelectItem>) plainSelect.getSelectItems();    // 获取from后的查询项 (形如from id, value as v)
+        int selectItemNum = selectItemList.size();              // 对应查询结果的列数
 
-    //提取
-    public SelectResult elicit(PlainSelect plainSelect, SelectResult selectResult) throws TMDBException {
-        ArrayList<SelectItem> selectItemList = (ArrayList<SelectItem>) plainSelect.getSelectItems();    // 获取from后的查询项目
-        HashMap<SelectItem, ArrayList<Column>> map = getSelectItemColumn(selectItemList);               // 查询项->使用属性的hashmap
+        TupleList resTupleList = new TupleList(selectItemNum, entireResult.getTpl().tuplelist.size());  // 存储最终projection结果的tupleList
+        SelectResult projectResult = new SelectResult(selectItemNum);  // 存储返回的结果
 
-        int length = selectItemList.size();     // 对应查询结果的列数
-        TupleList resTupleList = new TupleList();       // 存储最终projection结果的tupleList
-        for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++){
-            Tuple tuple = new Tuple();
-            int[] temp = new int[length];
-            Arrays.fill(temp,-1);
-            tuple.tupleIds = temp;
+        int i = 0;      // 对应于projectResult的下标
+        int index = 0;  // 对用于selectItem的下标
 
-            tuple.tuple = new Object[length];
-            resTupleList.addTuple(tuple);
-        }
+        // 对resTupleList以及projectResult进行相关赋值
+        while (i < selectItemNum) {
+            SelectItem item = selectItemList.get(index);
 
-        SelectResult result = new SelectResult(length);
-
-
-        for (int i = 0 ; i < selectItemList.size(); i++) {
-            // 1.针对select * from，返回全部结果
-            if (selectItemList.get(i).getClass().getSimpleName().equals("AllColumns")) {
-                selectResult.setAlias(selectResult.getAttrname());
-                // 要对attrid重拍以下，不然最终printresult的时候会有问题
-                for (int j = 0; j < selectResult.getAttrid().length; j++){
-                    selectResult.getAttrid()[j] = j;
-                }
-                return selectResult;
+            // 1.针对select * from
+            if (item.getClass().getSimpleName().equals("AllColumns")) {
+                return projectAllColums(entireResult);
             }
-            //如果是select a.* from a，b这种，a.*会显示为AllTableColumns，这时候，需要将a的所有的元素都加入结果集合中
-            //也就是说a.*虽然在selectItem中只显示为一个元素，但是需要输出多个元素，因此要更改以下length
-            else if(selectItemList.get(i).getClass().getSimpleName().equals("AllTableColumns")){
-                AllTableColumns selectItem = (AllTableColumns) selectItemList.get(i);
-                for (int y = 0; y < selectResult.getClassName().length; y++){
-                    String s = selectResult.getClassName()[y];
-                    String alias = selectResult.getAlias()[y];
-                    if (s.equals(selectItem.getTable().getName()) || selectItem.getTable().getAlias()!=null && selectItem.getTable().getAlias().getName().equals(alias)) {
-                        length++;
-                    }
-                }
-                length--;
-            }
-        }
+            // 2.针对select a from或者select a+b as c from test (认定为表达式)
+            if (item.getClass().getSimpleName().equals("SelectExpressionItem")) {
+                projectSelectExpression(item, entireResult, projectResult, resTupleList, i);
 
-
-        int i = 0;
-        int index = 0;
-        while (i < length){
-            // 遍历selectItemList中的selectItem，分别处理
-            // 这里是针对selectItem是表达式的判定，a或者a+2或者a+b*c都会被认定为表达式
-            if (selectItemList.get(index).getClass().getSimpleName().equals("SelectExpressionItem")) {
-                SelectExpressionItem selectItem = (SelectExpressionItem) selectItemList.get(index);
-                // 如果有alias 例如a*b as c则需要将输出的getAttrname()改成别名
-                result.getAlias()[i] = selectItem.getExpression().toString();/////////////////////////ERROR////////////////////////////
-                if (selectItem.getAlias() != null){
-                    result.getAttrname()[i] = selectItem.getAlias().getName();
-                }
-                else result.getAttrname()[i] = selectItem.toString();
-                // 调用formula对表达式进行解析，返回运算后的结果，存入res的tuplelist中
-                ArrayList<Object> thisColumn = (new Formula()).formulaExecute(selectItem.getExpression(), selectResult);
-                int tempI = -1;
-                Column column = map.get(selectItem).get(0);
-                for (int j = 0; j < selectResult.getClassName().length; j++) {
-                    if (column.getTable() != null){
-                        if ((selectResult.getClassName()[j].equals(column.getTable().getName())
-                        || selectResult.getAlias()[j].equals(column.getTable().getName()))
-                        && selectResult.getAttrname()[j].equals(column.getColumnName())){
-                            tempI = j;
-                            break;
-                        }
-                    }
-                    else{
-                        if(selectResult.getAttrname()[j].equals(column.getColumnName())){
-                            tempI = j;
-                            break;
-                        }
-                    }
-                }
-
-                for (int j = 0; j < resTupleList.tuplelist.size(); j++){
-                    resTupleList.tuplelist.get(j).tuple[i] = thisColumn.get(j);
-                    resTupleList.tuplelist.get(j).tupleIds[i] = selectResult.getTpl().tuplelist.get(j).tupleIds[tempI];
-                }
-
-                result.getType()[i] = selectResult.getType()[tempI];
-                result.getAttrid()[i] = i;
-                result.getClassName()[i] = selectResult.getClassName()[tempI];
                 i++;
                 index++;
             }
-            //这里是针对a.*这种情况的操作
-            else if(selectItemList.get(index).getClass().getSimpleName().equals("AllTableColumns")){
-                AllTableColumns selectItem = (AllTableColumns) selectItemList.get(index);
-                for (int j = 0; j < selectResult.getClassName().length; j++){
-                    String s = selectResult.getClassName()[j];
-                    String alias = selectResult.getAlias()[j];
-                    //将选取表的所有列加入结果集合中
-                    if (s.equals(selectItem.getTable().getName()) || selectItem.getTable().getName().equals(alias)) {
-                        result.getAttrname()[i] = selectResult.getAttrname()[j];
-                        result.getAlias()[i] = selectResult.getAttrname()[j];
+            // 这里是针对a.*这种情况的操作
+            // 如果是select a.* from a，b这种，a.*会显示为AllTableColumns，这时候，需要将a的所有的元素都加入结果集合中
+            // 也就是说a.*虽然在selectItem中只显示为一个元素，但是需要输出多个元素，因此要更改以下length
+            // 2.针对select className.* from
+            // 2.1 遍历selectResult
+            // 2.2 if selectResult的表名与className相同，selectItemNum++
+            else if(item.getClass().getSimpleName().equals("AllTableColumns")){
+                AllTableColumns selectItem = (AllTableColumns) item;
+                Table table = selectItem.getTable();
+
+                // 遍历所有的数据列
+                for (int j = 0; j < entireResult.getClassName().length; j++){
+                    String className = entireResult.getClassName()[j];
+                    String alias = entireResult.getAlias()[j];
+                    // 将选取表的所有列加入结果集合中
+                    if (className.equals(table.getName()) || table.getAlias() != null && table.getAlias().getName().equals(alias)) {
+                        selectItemNum++;
+
+
+                        projectResult.getAttrname()[i] = entireResult.getAttrname()[j];
+                        projectResult.getAlias()[i] = entireResult.getAttrname()[j];
                         for (int x = 0; x < resTupleList.tuplelist.size(); x++){
-                            resTupleList.tuplelist.get(x).tuple[i] = selectResult.getTpl().tuplelist.get(x).tuple[j];
-                            resTupleList.tuplelist.get(x).tupleIds[i] = selectResult.getTpl().tuplelist.get(x).tupleIds[j];
+                            resTupleList.tuplelist.get(x).tuple[i] = entireResult.getTpl().tuplelist.get(x).tuple[j];
+                            resTupleList.tuplelist.get(x).tupleIds[i] = entireResult.getTpl().tuplelist.get(x).tupleIds[j];
                         }
-                        result.getType()[i] = selectResult.getType()[index];
-                        result.getAttrid()[i] = i;
+                        projectResult.getType()[i] = entireResult.getType()[index];
+                        projectResult.getAttrid()[i] = i;
                         i++;
                     }
                 }
+                // projectAllTableColumns(item, selectResult, result, resTupleList, i, index, selectItemNum);
+                selectItemNum--;
                 index++;
             }
         }
-        result.setTpl(resTupleList);
-        return result;
+        projectResult.setTpl(resTupleList);
+        return projectResult;
+    }
+
+    /**
+     * 针对select * from子句，用于处理 "AllColumns" 类型的投影操作
+     * @param entireResult 根据from语句得到，子查询的涉及的所有满足where条件的完整元组
+     * @return project结果，即select语句最终结果
+     */
+    public SelectResult projectAllColums(SelectResult entireResult) {
+        entireResult.setAlias(entireResult.getAttrname());
+        // 要对attrid重拍以下，不然最终printResult的时候会有问题
+        for (int j = 0; j < entireResult.getAttrid().length; j++) {
+            entireResult.getAttrid()[j] = j;
+        }
+        return entireResult;
+    }
+
+    /**
+     * 针对select a from或者select a+b as c from test (认定为表达式)执行projection
+     * @param item 查询项 (如：[a+b as c])
+     * @param entireResult 根据from语句得到，子查询的涉及的所有满足where条件的完整元组
+     * @param projectResult project结果，即select语句最终结果
+     * @param resTupleList 存储全部projection元组的list
+     * @param i projectResult的赋值下标，表示查询结果的第i列赋值
+     */
+    public void projectSelectExpression(SelectItem item, SelectResult entireResult,
+                SelectResult projectResult, TupleList resTupleList, int i) throws TMDBException {
+
+        SelectExpressionItem selectItem = (SelectExpressionItem) item;
+        // 1.attrName赋值
+        if (selectItem.getAlias() != null){
+            projectResult.getAttrname()[i] = selectItem.getAlias().getName();
+        } else {
+            projectResult.getAttrname()[i] = selectItem.toString();
+        }
+        // 2.alias赋值
+        String expression = selectItem.getExpression().toString();  // String类型的表达式
+        projectResult.getAlias()[i] = expression;
+        // 3.resTupleList赋值
+        ArrayList<String> TableColumn = new ArrayList<>();          // 含有两个元素的列表，结构为[tableName, columnName]
+        attributeParser(expression, TableColumn);
+        ArrayList<Object> dataList = (new Formula()).formulaExecute(selectItem.getExpression(), entireResult);  // 对表达式进行解析，获取该列的值
+        int index = getIndexInEntireResult(entireResult, TableColumn.get(0), TableColumn.get(1));   // 找到表达式对应属性在原元组对应的下标
+        for (int j = 0; j < resTupleList.tuplelist.size(); j++){
+            resTupleList.tuplelist.get(j).tuple[i] = dataList.get(j);
+            resTupleList.tuplelist.get(j).tupleIds[i] = entireResult.getTpl().tuplelist.get(j).tupleIds[index];
+        }
+        // 4.剩余属性赋值
+        projectResult.getType()[i] = entireResult.getType()[index];
+        projectResult.getClassName()[i] = entireResult.getClassName()[index];
+        projectResult.getAttrid()[i] = i;
+    }
+
+    public void projectAllTableColumns(SelectItem item, SelectResult selectResult, SelectResult result,
+                                       TupleList resTupleList, int i, int index, int selectItemNum) {
+        AllTableColumns selectItem = (AllTableColumns) item;
+        Table table = selectItem.getTable();
+
+        // 遍历所有的数据列
+        for (int j = 0; j < selectResult.getClassName().length; j++){
+            String className = selectResult.getClassName()[j];
+            String alias = selectResult.getAlias()[j];
+            // 将选取表的所有列加入结果集合中
+            if (className.equals(table.getName()) || table.getAlias() != null && table.getAlias().getName().equals(alias)) {
+                selectItemNum++;
+
+
+                result.getAttrname()[i] = selectResult.getAttrname()[j];
+                result.getAlias()[i] = selectResult.getAttrname()[j];
+                for (int x = 0; x < resTupleList.tuplelist.size(); x++){
+                    resTupleList.tuplelist.get(x).tuple[i] = selectResult.getTpl().tuplelist.get(x).tuple[j];
+                    resTupleList.tuplelist.get(x).tupleIds[i] = selectResult.getTpl().tuplelist.get(x).tupleIds[j];
+                }
+                result.getType()[i] = selectResult.getType()[index];
+                result.getAttrid()[i] = i;
+                i++;
+            }
+        }
+    }
+
+    /**
+     * 表达式解析函数，给定表达式（形如value1 + value2 as sum）
+     * 将其第一个属性的表名和属性名赋值给相应变量
+     * @param expression 其实是selectItem，a.value1 + b.value2 as sum
+     * @param TableColumn 包含两个值：第一个表达式的表名，有则赋值为"a"，没有赋值为""；第一个表达式的属性名
+     */
+    private void attributeParser(String expression, ArrayList<String> TableColumn) {
+        String attr = expression.substring(0, expression.indexOf(' '));
+        if (attr.contains(".")) {
+            // 如果存在"."，则分割字符串
+            String[] parts = attr.split("\\.", 2);
+            TableColumn.add(parts[0]);
+            TableColumn.add(parts[1]);
+        } else {
+            // 如果不存在"."，整个字符串赋值给attrName，tableName为空字符串
+            TableColumn.add("");
+            TableColumn.add(attr);
+        }
+    }
+
+    /**
+     * 给定查询属性的属性名和表名，返回属性在完全的查询结果中的位置
+     * @param entireResult 完全查询结果
+     * @param tableName 待查询表名
+     * @param columnName 待查询属性名
+     * @return 待查询在完全查询列表中的下标index
+     */
+    private int getIndexInEntireResult(SelectResult entireResult, String tableName, String columnName) {
+        for (int i = 0; i < entireResult.getClassName().length; i++) {
+            if (entireResult.getAttrname()[i].equals(columnName)) {
+                if (tableName.equals("")) {
+                    return i;
+                }
+                if (entireResult.getClassName()[i].equals(tableName) || entireResult.getAlias()[i].equals(tableName)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     /**

@@ -23,35 +23,44 @@ public class Formula {
     public ArrayList<Object> formulaExecute(Expression expression, SelectResult selectResult) throws TMDBException {
         ArrayList<Object> dataList = new ArrayList<>();
         // 根据表达式的类别，分别处理
-        switch ((expression.getClass().getSimpleName())){
+        switch ((expression.getClass().getSimpleName())) {
             case "Addition":
-                dataList = addition((Addition) expression, selectResult); break;
+                dataList = addition((Addition) expression, selectResult);
+                break;
             case "Subtraction":
-                dataList = subtraction((Subtraction) expression, selectResult); break;
+                dataList = subtraction((Subtraction) expression, selectResult);
+                break;
             case "Division":
-                dataList = division((Division) expression, selectResult); break;
+                dataList = division((Division) expression, selectResult);
+                break;
             case "Modulo":
-                dataList = modulo((Modulo) expression, selectResult); break;
+                dataList = modulo((Modulo) expression, selectResult);
+                break;
             case "Multiplication":
-                dataList = multiplication((Multiplication) expression, selectResult); break;
+                dataList = multiplication((Multiplication) expression, selectResult);
+                break;
             case "LongValue":
-                dataList = longValue((LongValue) expression, selectResult); break;
+                dataList = longValue((LongValue) expression, selectResult);
+                break;
             case "Column":
-                dataList = column((Column) expression, selectResult); break;
+                dataList = column((Column) expression, selectResult);
+                break;
             case "Parenthesis":
-                dataList = parenthesis((Parenthesis) expression, selectResult);break;
+                dataList = parenthesis((Parenthesis) expression, selectResult);
+                break;
             case "StringValue":
-                dataList = StringValue((StringValue)expression, selectResult); break;
+                dataList = StringValue((StringValue) expression, selectResult);
+                break;
         }
         return dataList;
     }
 
     private ArrayList<Object> StringValue(StringValue expression, SelectResult selectResult) {
 
-        String temp=expression.getValue();
-        ArrayList<Object> res=new ArrayList<>();
+        String temp = expression.getValue();
+        ArrayList<Object> res = new ArrayList<>();
         //返回全是该数字元素的列
-        for(int i=0;i<selectResult.getTpl().tuplelist.size();i++){
+        for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
             res.add(temp);
         }
         return res;
@@ -63,7 +72,7 @@ public class Formula {
         String columnName = column.getColumnName();
         int index = -1;
         // 找到这个column在selectResult中的对应index，在原始名和别名中都要进行寻找。
-        for (int i = 0; i < selectResult.getClassName().length; i++){
+        for (int i = 0; i < selectResult.getClassName().length; i++) {
             if (!selectResult.getAttrname()[i].equals(columnName)) {
                 continue;
             }
@@ -83,83 +92,82 @@ public class Formula {
         return dataList;
     }
 
-    //加法的处理
+    // 加法的处理
     public ArrayList<Object> addition(Addition expression, SelectResult selectResult) throws TMDBException {
-        //获取表达式左边元素
-        ArrayList<Object> left=formulaExecute(expression.getLeftExpression(),selectResult);
-        //获取表达式右边元素
-        ArrayList<Object> right=formulaExecute(expression.getRightExpression(),selectResult);
-        ArrayList<Object> res=new ArrayList<>();
-        for(int i=0;i<left.size();i++){
-            res.add(Double.parseDouble(String.valueOf(left.get(i)))+Double.parseDouble(String.valueOf(right.get(i))));
+        // 获取表达式左边元素
+        ArrayList<Object> left = formulaExecute(expression.getLeftExpression(), selectResult);
+        // 获取表达式右边元素
+        ArrayList<Object> right = formulaExecute(expression.getRightExpression(), selectResult);
+        ArrayList<Object> res = new ArrayList<>();
+        for (int i = 0; i < left.size(); i++) {
+            res.add(Double.parseDouble(String.valueOf(left.get(i))) + Double.parseDouble(String.valueOf(right.get(i))));
         }
         return res;
     }
 
-    //减法处理
+    // 减法处理
     public ArrayList<Object> subtraction(Subtraction expression, SelectResult selectResult) throws TMDBException {
-        //获取表达式左边元素
-        ArrayList<Object> left=formulaExecute(expression.getLeftExpression(),selectResult);
-        //获取表达式右边元素
-        ArrayList<Object> right=formulaExecute(expression.getRightExpression(),selectResult);
-        ArrayList<Object> res=new ArrayList<>();
-        for(int i=0;i<left.size();i++){
-            res.add(Double.parseDouble(String.valueOf(left.get(i)))-Double.parseDouble(String.valueOf(right.get(i))));
+        // 获取表达式左边元素
+        ArrayList<Object> left = formulaExecute(expression.getLeftExpression(), selectResult);
+        // 获取表达式右边元素
+        ArrayList<Object> right = formulaExecute(expression.getRightExpression(), selectResult);
+        ArrayList<Object> res = new ArrayList<>();
+        for (int i = 0; i < left.size(); i++) {
+            res.add(Double.parseDouble(String.valueOf(left.get(i))) - Double.parseDouble(String.valueOf(right.get(i))));
         }
         return res;
     }
 
-    //乘法处理
-    public ArrayList<Object> multiplication(Multiplication expression,SelectResult selectResult) throws TMDBException {
-        //获取表达式左边元素
-        ArrayList<Object> left=formulaExecute(expression.getLeftExpression(),selectResult);
-        //获取表达式右边元素
-        ArrayList<Object> right=formulaExecute(expression.getRightExpression(),selectResult);
-        ArrayList<Object> res=new ArrayList<>();
-        for(int i=0;i<left.size();i++){
-            res.add(Double.parseDouble(String.valueOf(left.get(i)))*Double.parseDouble(String.valueOf(right.get(i))));
+    // 乘法处理
+    public ArrayList<Object> multiplication(Multiplication expression, SelectResult selectResult) throws TMDBException {
+        // 获取表达式左边元素
+        ArrayList<Object> left = formulaExecute(expression.getLeftExpression(), selectResult);
+        // 获取表达式右边元素
+        ArrayList<Object> right = formulaExecute(expression.getRightExpression(), selectResult);
+        ArrayList<Object> res = new ArrayList<>();
+        for (int i = 0; i < left.size(); i++) {
+            res.add(Double.parseDouble(String.valueOf(left.get(i))) * Double.parseDouble(String.valueOf(right.get(i))));
         }
         return res;
     }
 
-    //除法处理
+    // 除法处理
     public ArrayList<Object> division(Division expression, SelectResult selectResult) throws TMDBException {
-        //获取表达式左边元素
-        ArrayList<Object> left=formulaExecute(expression.getLeftExpression(),selectResult);
-        //获取表达式右边元素
-        ArrayList<Object> right=formulaExecute(expression.getRightExpression(),selectResult);
-        ArrayList<Object> res=new ArrayList<>();
-        for(int i=0;i<left.size();i++){
-            res.add(Double.parseDouble(String.valueOf(left.get(i)))/Double.parseDouble(String.valueOf(right.get(i))));
+        // 获取表达式左边元素
+        ArrayList<Object> left = formulaExecute(expression.getLeftExpression(), selectResult);
+        // 获取表达式右边元素
+        ArrayList<Object> right = formulaExecute(expression.getRightExpression(), selectResult);
+        ArrayList<Object> res = new ArrayList<>();
+        for (int i = 0; i < left.size(); i++) {
+            res.add(Double.parseDouble(String.valueOf(left.get(i))) / Double.parseDouble(String.valueOf(right.get(i))));
         }
         return res;
     }
 
-    //余数处理
+    // 余数处理
     public ArrayList<Object> modulo(Modulo expression, SelectResult selectResult) throws TMDBException {
-        //获取表达式左边
-        ArrayList<Object> left=formulaExecute(expression.getLeftExpression(),selectResult);
-        //获取表达式右边
-        ArrayList<Object> right=formulaExecute(expression.getRightExpression(),selectResult);
-        ArrayList<Object> res=new ArrayList<>();
-        for(int i=0;i<left.size();i++){
-            res.add(Double.parseDouble((String) left.get(i))%Double.parseDouble((String) right.get(i)));
+        // 获取表达式左边
+        ArrayList<Object> left = formulaExecute(expression.getLeftExpression(), selectResult);
+        // 获取表达式右边
+        ArrayList<Object> right = formulaExecute(expression.getRightExpression(), selectResult);
+        ArrayList<Object> res = new ArrayList<>();
+        for (int i = 0; i < left.size(); i++) {
+            res.add(Double.parseDouble((String) left.get(i)) % Double.parseDouble((String) right.get(i)));
         }
         return res;
     }
 
-    //小括号（）处理，直接返回内部的表达式
+    // 小括号（）处理，直接返回内部的表达式
     public ArrayList<Object> parenthesis(Parenthesis expression, SelectResult selectResult) throws TMDBException {
-        ArrayList<Object> res=formulaExecute(expression.getExpression(),selectResult);
-        return res;
+        return formulaExecute(expression.getExpression(), selectResult);
     }
 
-    //数字元素处理
-    public ArrayList<Object> longValue(LongValue value, SelectResult selectResult){
-        double temp=(double)value.getValue();
-        ArrayList<Object> res=new ArrayList<>();
-        //返回全是该数字元素的列
-        for(int i=0;i<selectResult.getTpl().tuplelist.size();i++){
+    // 数字元素处理
+    public ArrayList<Object> longValue(LongValue value, SelectResult selectResult) {
+        double temp = (double) value.getValue();
+        ArrayList<Object> res = new ArrayList<>();
+        // 返回全是该数字元素的列
+        for (int i = 0; i < selectResult.getTpl().tuplelist.size(); i++) {
             res.add(temp);
         }
         return res;

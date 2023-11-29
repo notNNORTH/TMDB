@@ -82,13 +82,9 @@ public class Transaction {
         objtab.delete();
     }
 
-    public void SaveAll( ) {
-        memConnect.SaveAll();
-    }
+    public void SaveAll( ) { memConnect.SaveAll(); }
 
-    public void reload() {
-        memConnect.reload();
-    }
+    public void reload() { memConnect.reload(); }
 
     public void Test(){
         TupleList tpl = new TupleList();
@@ -128,6 +124,7 @@ public class Transaction {
     public SelectResult query(Statement s) {
         return this.query("", -1, s);
     }
+
     public SelectResult query(String k, int op, Statement stmt) {
         SelectResult selectResult = null;
         try {
