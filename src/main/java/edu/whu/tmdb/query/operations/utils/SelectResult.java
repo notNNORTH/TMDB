@@ -2,6 +2,8 @@ package edu.whu.tmdb.query.operations.utils;
 
 import edu.whu.tmdb.storage.memory.TupleList;
 
+import java.util.Arrays;
+
 public class SelectResult {
     // 数据信息
     TupleList tpl;          // 元组数据列表

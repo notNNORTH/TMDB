@@ -20,7 +20,7 @@ public class TupleList implements Serializable {
         }
     }
 
-    public void addTuple(Tuple tuple){
+    public void addTuple(Tuple tuple) {
         this.tuplelist.add(tuple);
         tuplenum++;
     }
