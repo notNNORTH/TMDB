@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectTable implements Serializable {
-    public  List<ObjectTableItem> objectTableList = new ArrayList<>();
+    public List<ObjectTableItem> objectTableList = new ArrayList<>();
     public int maxTupleId = 0;
     public void clear(){
         objectTableList.clear();

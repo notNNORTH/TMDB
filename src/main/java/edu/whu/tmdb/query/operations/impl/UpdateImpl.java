@@ -87,7 +87,7 @@ public class UpdateImpl implements Update {
         // 2.根据biPointerTable找到对应的deputyTuple
         ArrayList<Integer> deputyTupleIdList = new ArrayList<>();
         TupleList deputyTupleList = new TupleList();    // 所有代理类的元组
-        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerT().biPointerTableList) {
+        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerTableList()) {
             if (updateIdList.contains(biPointerTableItem.objectid)) {
                 deputyTupleIdList.add(biPointerTableItem.deputyobjectid);
                 Tuple tuple = memConnect.GetTuple(biPointerTableItem.deputyobjectid);
@@ -100,7 +100,7 @@ public class UpdateImpl implements Update {
         List<Integer> collect = Arrays.stream(indexs).boxed().collect(Collectors.toList());
         HashMap<Integer, ArrayList<Integer>> deputyId2AttrId = new HashMap<>();         // 满足where条件的deputyId -> deputyAttrIdList(其实也是index)
         HashMap<Integer, ArrayList<Object>> deputyId2UpdateValue = new HashMap<>();     // 满足where条件的deputyId -> 更新后的属性值列表(其实也是updateValue)
-        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingT().switchingTableList) {
+        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingTableList()) {
             if (switchingTableItem.oriId == classId && collect.contains(switchingTableItem.oriAttrid)) {
                 if (!deputyId2AttrId.containsKey(switchingTableItem.deputyId)) {
                     deputyId2AttrId.put(switchingTableItem.deputyId, new ArrayList<>());

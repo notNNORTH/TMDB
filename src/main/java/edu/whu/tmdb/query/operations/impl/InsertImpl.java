@@ -118,7 +118,7 @@ public class InsertImpl implements Insert {
     private Integer insert(int classId, List<String> columns, Tuple tuple, int attrNum, int[] attrId) throws TMDBException, IOException {
         // 1.直接在对应类中插入tuple
         // 1.1 获取新插入元组的id
-        int tupleid = MemConnect.getTopt().maxTupleId++;
+        int tupleid = MemConnect.getObjectTable().maxTupleId++;
 
         // 1.2 将tuple转换为可插入的形式
         Object[] temp = new Object[attrNum];
@@ -129,7 +129,7 @@ public class InsertImpl implements Insert {
 
         // 1.3 元组插入操作
         memConnect.InsertTuple(tuple);
-        MemConnect.getTopt().objectTableList.add(new ObjectTableItem(classId, tupleid));
+        MemConnect.getObjectTableList().add(new ObjectTableItem(classId, tupleid));
 
         // 2.找到所有的代理类，进行递归插入
         // 2.1 找到源类所有的代理类
@@ -144,7 +144,7 @@ public class InsertImpl implements Insert {
 
                 // 2.3 递归插入
                 int tupleId = execute(deputyCalssId, deputyColumns, deputyTuple);
-                MemConnect.getBiPointerT().biPointerTableList.add(new BiPointerTableItem(classId, tupleid, deputyCalssId, tupleId));
+                MemConnect.getBiPointerTableList().add(new BiPointerTableItem(classId, tupleid, deputyCalssId, tupleId));
             }
         }
         return tupleid;
@@ -159,7 +159,7 @@ public class InsertImpl implements Insert {
      */
     private HashMap<String, String> getAttrNameHashMap(int originClassId, int deputyClassId, List<String> originColumns) {
         HashMap<String, String> attrNameHashMap = new HashMap<>();
-        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingT().switchingTableList) {
+        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingTableList()) {
             if (switchingTableItem.oriId != originClassId || switchingTableItem.deputyId != deputyClassId) {
                 continue;
             }

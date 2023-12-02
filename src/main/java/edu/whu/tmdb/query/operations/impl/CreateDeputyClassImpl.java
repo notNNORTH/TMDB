@@ -92,19 +92,19 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
      * @return 新建代理类ID
      */
     private int createDeputyClass(String deputyClassName, SelectResult selectResult, int deputyRule) throws TMDBException {
-        MemConnect.getClasst().maxid++;
-        int deputyClassId = MemConnect.getClasst().maxid;   // 代理类的id
+        MemConnect.getClassTable().maxid++;
+        int deputyClassId = MemConnect.getClassTable().maxid;   // 代理类的id
         int attrNum = selectResult.getAttrid().length;      // 代理类的长度
         for (int i = 0; i < selectResult.getAttrid().length; i++) {
             // 1.新建classTableItem
-            MemConnect.getClasst().classTableList.add(
+            MemConnect.getClassTableList().add(
                     new ClassTableItem(deputyClassName, deputyClassId, attrNum, selectResult.getAttrid()[i],
                             selectResult.getAttrname()[i], selectResult.getType()[i], "de", ""));
             // 2.新建switchingTableItem
             String className = selectResult.getClassName()[i];
             int oriClassId = memConnect.getClassId(className);
             int oriAttrId = memConnect.getAttrid(oriClassId, selectResult.getAlias()[i]);
-            MemConnect.getSwitchingT().switchingTableList.add(
+            MemConnect.getSwitchingTableList().add(
                     new SwitchingTableItem(oriClassId, oriAttrId, selectResult.getAlias()[i], deputyClassId,
                             i, selectResult.getAttrname()[i], deputyRule + "")
             );
@@ -122,7 +122,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
         HashSet<String> collect = Arrays.stream(classNames).collect(Collectors.toCollection(HashSet::new));
         for (String className : collect) {
             int oriClassId = memConnect.getClassId(className);
-            MemConnect.getDeputyt().deputyTableList.add(new DeputyTableItem(oriClassId, deputyId, new String[]{deputyType + ""}));
+            MemConnect.getDeputyTableList().add(new DeputyTableItem(oriClassId, deputyId, new String[]{deputyType + ""}));
         }
     }
 
@@ -140,7 +140,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
             for (int o : origin) {
                 int classId = memConnect.getClassId(selectResult.getClassName()[o]);
                 int oriTupleId = tuple.tupleIds[o];
-                MemConnect.getBiPointerT().biPointerTableList.add(new BiPointerTableItem(classId, oriTupleId, deputyId, deputyTupleId));
+                MemConnect.getBiPointerTableList().add(new BiPointerTableItem(classId, oriTupleId, deputyId, deputyTupleId));
             }
         }
     }

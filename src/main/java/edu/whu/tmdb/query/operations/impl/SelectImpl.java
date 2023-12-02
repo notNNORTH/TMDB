@@ -1014,7 +1014,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     public ArrayList<ClassTableItem> getSelectItem(FromItem fromItem, List<Column> columnList){
         // 从class表中提取将要获取的元素。
         ArrayList<ClassTableItem> elicitAttrItemList=new ArrayList<>();
-        for(ClassTableItem item : memConnect.getClasst().classTableList){
+        for(ClassTableItem item : MemConnect.getClassTableList()){
             if(item.classname.equals(fromItem.toString())){
                 String attrName=item.attrname;
                 boolean flag=false;

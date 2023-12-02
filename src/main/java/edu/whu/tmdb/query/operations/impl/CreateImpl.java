@@ -32,7 +32,7 @@ public class CreateImpl implements Create {
         String classname = stmt.getTable().toString();
 
         // 2.判断类名的唯一性（要满足唯一性约束）
-        for (ClassTableItem item : MemConnect.getClasst().classTableList) {
+        for (ClassTableItem item : MemConnect.getClassTableList()) {
             if (item.classname.equals(classname)) {
                 throw new TMDBException(ErrorList.TABLE_ALREADY_EXISTS, classname);
             }
@@ -40,10 +40,10 @@ public class CreateImpl implements Create {
 
         // 3.新建class
         int count = columnDefinitionArrayList.size();
-        MemConnect.getClasst().maxid++;
-        int classid = MemConnect.getClasst().maxid;
+        MemConnect.getClassTable().maxid++;
+        int classid = MemConnect.getClassTable().maxid;
         for (int i = 0; i < count; i++) {
-            MemConnect.getClasst().classTableList.add(new ClassTableItem(classname, classid, count, i,
+            MemConnect.getClassTableList().add(new ClassTableItem(classname, classid, count, i,
                     columnDefinitionArrayList.get(i).getColumnName(), columnDefinitionArrayList.get(i).toStringDataTypeAndSpec()
                     ,"ori",""));
         }

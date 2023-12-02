@@ -25,11 +25,6 @@ public class MemConnect {
     // 进行内存操作的一些一些方法和数据
     private static Logger logger = LoggerFactory.getLogger(MemConnect.class);
     private MemManager memManager;
-    public static ObjectTable topt;
-    private static ClassTable classt;
-    private static DeputyTable deputyt;
-    private static BiPointerTable biPointerT;
-    private static SwitchingTable switchingT;
 
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
@@ -57,14 +52,7 @@ public class MemConnect {
         return instance;
     }
 
-    private MemConnect(MemManager mem) {
-        this.memManager = mem;
-        topt = MemManager.objectTable;
-        classt = MemManager.classTable;
-        deputyt = MemManager.deputyTable;
-        biPointerT = MemManager.biPointerTable;
-        switchingT = MemManager.switchingTable;
-    }
+    private MemConnect(MemManager mem) { this.memManager = mem; }
 
     //获取tuple
     public Tuple GetTuple(int id) {
@@ -129,7 +117,7 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassId(String tableName) throws TMDBException {
-        for (ClassTableItem item : classt.classTableList) {
+        for (ClassTableItem item : getClassTableList()) {
             if (item.classname.equals(tableName)) {
                 return item.classid;
             }
@@ -145,7 +133,7 @@ public class MemConnect {
      */
     public List<String> getColumns(String tableName) throws TMDBException {
         List<String> colNames = new ArrayList<>();
-        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
+        for (ClassTableItem classTableItem : MemConnect.getClassTableList()) {
             if(classTableItem.classname.equals(tableName)){
                 colNames.add(classTableItem.attrname);
             }
@@ -163,7 +151,7 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassAttrnum(String tableName) throws TMDBException {
-        for (ClassTableItem item : classt.classTableList) {
+        for (ClassTableItem item : getClassTableList()) {
             if (item.classname.equals(tableName)) {
                 return item.attrnum;
             }
@@ -178,7 +166,7 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassAttrnum(int classId) throws TMDBException {
-        for (ClassTableItem item : classt.classTableList) {
+        for (ClassTableItem item : getClassTableList()) {
             if(item.classid == classId){
                 return item.attrnum;
             }
@@ -197,7 +185,7 @@ public class MemConnect {
         int[] attridList = new int[attrnum];
 
         // 遍历当前的ClassTableItem
-        for (ClassTableItem classTableItem : getClasst().classTableList) {
+        for (ClassTableItem classTableItem : getClassTableList()) {
             if (classTableItem.classid != classId) {
                 continue;
             }
@@ -221,7 +209,7 @@ public class MemConnect {
      * @return 属性对应的id
      */
     public int getAttrid(int classId, String attrName) throws TMDBException {
-        for (ClassTableItem classTableItem : MemConnect.getClasst().classTableList) {
+        for (ClassTableItem classTableItem : getClassTableList()) {
             if (classTableItem.classid == classId && classTableItem.attrname.equals(attrName)) {
                 return classTableItem.attrid;
             }
@@ -238,7 +226,7 @@ public class MemConnect {
     public TupleList getTupleList(FromItem fromItem) throws TMDBException {
         int classId = getClassId(((Table) fromItem).getName());
         TupleList tupleList = new TupleList();
-        for (ObjectTableItem item : getTopt().objectTableList) {
+        for (ObjectTableItem item : getObjectTableList()) {
             if (item.classid != classId) {
                 continue;
             }
@@ -259,7 +247,7 @@ public class MemConnect {
      */
     public ArrayList<ClassTableItem> copyClassTableList(FromItem fromItem) throws TMDBException{
         ArrayList<ClassTableItem> classTableList = new ArrayList<>();
-        for (ClassTableItem item : getClasst().classTableList){
+        for (ClassTableItem item : getClassTableList()){
             if (item.classname.equals(((Table)fromItem).getName())){
                 // 硬拷贝，不然后续操作会影响原始信息
                 ClassTableItem classTableItem = item.getCopy();
@@ -281,7 +269,7 @@ public class MemConnect {
      * @return 存在返回true
      */
     public boolean classExist(String tableName) {
-        for (ClassTableItem item : classt.classTableList) {
+        for (ClassTableItem item : getClassTableList()) {
             if (item.classname.equals(tableName)) {
                 return true;
             }
@@ -296,7 +284,7 @@ public class MemConnect {
      * @return 存在返回true
      */
     public boolean columnExist(String tableName, String columnName) throws TMDBException {
-        for (ClassTableItem item : classt.classTableList) {
+        for (ClassTableItem item : getClassTableList()) {
             if (item.classname.equals(tableName) && item.attrname.equals(columnName)) {
                 return true;
             }
@@ -311,7 +299,7 @@ public class MemConnect {
      */
     public ArrayList<Integer> getDeputyIdList(int classId) {
         ArrayList<Integer> deputyIdList = new ArrayList<>();
-        for (DeputyTableItem deputyTableItem : MemConnect.getDeputyt().deputyTableList) {
+        for (DeputyTableItem deputyTableItem : getDeputyTableList()) {
             if (deputyTableItem.originid == classId && !deputyTableItem.deputyrule[0].equals("5")) {
                 deputyIdList.add(deputyTableItem.deputyid);
             }
@@ -368,14 +356,25 @@ public class MemConnect {
         }
     }
 
+    // 获取系统表
+    public static ObjectTable getObjectTable() { return MemManager.objectTable; }
 
-    public static ObjectTable getTopt() { return topt; }
+    public static ClassTable getClassTable() { return MemManager.classTable; }
 
-    public static ClassTable getClasst() { return classt; }
+    public static DeputyTable getDeputyTable() { return MemManager.deputyTable; }
 
-    public static DeputyTable getDeputyt() { return deputyt; }
+    public static BiPointerTable getBiPointerTable() { return MemManager.biPointerTable; }
 
-    public static BiPointerTable getBiPointerT() { return biPointerT; }
+    public static SwitchingTable getSwitchingTable() { return MemManager.switchingTable; }
 
-    public static SwitchingTable getSwitchingT() { return switchingT; }
+    // 获取系统表表项
+    public static List<ObjectTableItem> getObjectTableList() { return MemManager.objectTable.objectTableList; }
+
+    public static List<ClassTableItem> getClassTableList() { return MemManager.classTable.classTableList; }
+
+    public static List<DeputyTableItem> getDeputyTableList() { return MemManager.deputyTable.deputyTableList; }
+
+    public static List<BiPointerTableItem> getBiPointerTableList() { return MemManager.biPointerTable.biPointerTableList; }
+
+    public static List<SwitchingTableItem> getSwitchingTableList() { return MemManager.switchingTable.switchingTableList; }
 }

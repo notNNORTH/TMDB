@@ -53,16 +53,16 @@ public class DeleteImpl implements Delete {
         for (Tuple tuple : tupleList.tuplelist) {
             memConnect.DeleteTuple(tuple.getTupleId());             // 删除元组
             ObjectTableItem objectTableItem = new ObjectTableItem(tuple.classId, tuple.getTupleId());
-            MemConnect.getTopt().objectTableList.remove(objectTableItem);   // 删除对象表
+            MemConnect.getObjectTableList().remove(objectTableItem);   // 删除对象表
             deleteTupleIdList.add(tuple.getTupleId());
         }
 
         // 2.删除源类biPointerTable
         ArrayList<Integer> deputyTupleIdList = new ArrayList<>();
-        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerT().biPointerTableList) {
+        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerTableList()) {
             if (deleteTupleIdList.contains(biPointerTableItem.objectid)){
                 deputyTupleIdList.add(biPointerTableItem.deputyobjectid);
-                MemConnect.getBiPointerT().biPointerTableList.remove(biPointerTableItem);
+                MemConnect.getBiPointerTableList().remove(biPointerTableItem);
             }
         }
 
