@@ -1,11 +1,4 @@
-package edu.whu.tmdb;/*
- * className:${NAME}
- * Package:edu.whu.tmdb
- * Description:
- * @Author: xyl
- * @Create:${DATE} - ${TIME}
- * @Version:v1
- */
+package edu.whu.tmdb;
 
 import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
@@ -16,6 +9,8 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
@@ -30,6 +25,8 @@ public class Main {
             sqlCommand = reader.readLine().trim();
             if ("exit".equalsIgnoreCase(sqlCommand)) {
                 break;
+            }else if ("resetdb".equalsIgnoreCase(sqlCommand)) {
+                resetDB();
             } else if (!sqlCommand.isEmpty()) {
                 SelectResult result = execute(sqlCommand);
                 if (result != null) {
@@ -99,4 +96,44 @@ public class Main {
             System.out.println(data);
         }
     }
+
+    private static void resetDB() {
+        // 仓库路径
+        String repositoryPath = "D:\\cs\\JavaProject\\TMDB";
+
+        // 子目录路径
+        String sysPath = repositoryPath + File.separator + "data\\sys";
+        String logPath = repositoryPath + File.separator + "data\\log";
+        String levelPath = repositoryPath + File.separator + "data\\level";
+
+        List<String> filePath = new ArrayList<>();
+        filePath.add(sysPath);
+        filePath.add(logPath);
+        filePath.add(levelPath);
+
+        // 遍历删除文件
+        for (String path : filePath) {
+            File directory = new File(path);
+
+            // 检查目录是否存在
+            if (!directory.exists()) {
+                System.out.println("目录不存在：" + path);
+                return;
+            }
+
+            // 获取目录中的所有文件
+            File[] files = directory.listFiles();
+            if (files == null) { continue; }
+            for (File file : files) {
+                // 删除文件
+                if (file.delete()) {
+                    System.out.println("已删除文件：" + file.getAbsolutePath());
+                } else {
+                    System.out.println("无法删除文件：" + file.getAbsolutePath());
+                }
+            }
+        }
+    }
+
+
 }
