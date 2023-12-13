@@ -4,14 +4,21 @@ import java.util.Objects;
 import edu.whu.tmdb.query.operations.Exception.ErrorList;
 
 public class TMDBException extends Exception{
-    private String name = "";
-    private int id = -1;
-    private int error = -1;
+    private String name = "";   // 针对表名/属性名不存在的error
+    private int id = -1;        // 针对表id/属性id不存在的error
+    private int error = -1;     // error类型编号
+    private String type = "";   // 针对where表达式中类型不支持的error
 
     // 使用super方法显示调用父类构造函数
-    public TMDBException(int error, String name) {
-        super(name);
-        this.name = name;
+    public TMDBException(int error, String nameOrType) {
+        super(nameOrType);
+        switch (error) {
+            case ErrorList.TYPE_IS_NOT_SUPPORTED:
+                this.type = nameOrType;
+                break;
+            default:
+                this.name = nameOrType;
+        }
         this.error = error;
     }
 
@@ -42,6 +49,10 @@ public class TMDBException extends Exception{
                 System.out.println("column with ID: " + id + " does not exist"); break;
             case ErrorList.MISSING_FROM_CLAUSE:
                 System.out.println("SELECT SYNTAX ERROR: missing FROM-clause entry"); break;
+            case ErrorList.TYPE_IS_NOT_SUPPORTED:
+                System.out.println("type: " + type + " is not supported"); break;
+            case ErrorList.TYPE_DOES_NOT_MATCH:
+                System.out.println("type does not match"); break;
             default:
                 System.out.println("ERROR"); break;
         }

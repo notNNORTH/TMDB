@@ -4,6 +4,7 @@ import au.edu.rmit.bdm.Torch.base.model.Coordinate;
 import au.edu.rmit.bdm.Torch.base.model.TrajEntry;
 import au.edu.rmit.bdm.Torch.base.model.Trajectory;
 import au.edu.rmit.bdm.Torch.queryEngine.model.SearchWindow;
+import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.MemManager;
 import edu.whu.tmdb.query.operations.torch.TorchConnect;
 import net.sf.jsqlparser.JSQLParserException;
@@ -27,6 +28,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.query.operations.utils.traj.TrajTrans;
 import edu.whu.tmdb.storage.memory.Tuple;
 import edu.whu.tmdb.storage.memory.TupleList;
+import org.apache.kafka.common.protocol.types.Field;
 
 public class Where {
     private MemConnect memConnect;
@@ -246,10 +248,7 @@ public class Where {
         ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
         HashSet<Tuple> set = new HashSet<>();
         for (int i = 0; i < left.size(); i++) {
-            String tempLeft = transType(left.get(i));
-            String tempRight = transType(right.get(i));
-            // 左边和右边相等则加入结果集合。
-            if (tempLeft.equals(tempRight)) {
+            if (compare(left.get(i), right.get(i)) == 0) {
                 set.add(selectResult.getTpl().tuplelist.get(i));
             }
         }
@@ -261,10 +260,7 @@ public class Where {
         ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
         HashSet<Tuple> set = new HashSet<>();
         for (int i = 0; i < left.size(); i++) {
-            String tempLeft = transType(left.get(i));
-            String tempRight = transType(right.get(i));
-            // 左边小于右边，则加入结果集合
-            if (tempLeft.compareTo(tempRight) < 0) {
+            if (compare(left.get(i), right.get(i)) < 0) {
                 set.add(selectResult.getTpl().tuplelist.get(i));
             }
         }
@@ -276,10 +272,7 @@ public class Where {
         ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
         HashSet<Tuple> set = new HashSet<>();
         for (int i = 0; i < left.size(); i++) {
-            String tempLeft = transType(left.get(i));
-            String tempRight = transType(right.get(i));
-            // 左边小于右边，则加入结果集合
-            if (tempLeft.compareTo(tempRight) < 0 || tempLeft.equals(tempRight)) {
+            if (compare(left.get(i), right.get(i)) <= 0) {
                 set.add(selectResult.getTpl().tuplelist.get(i));
             }
         }
@@ -292,10 +285,7 @@ public class Where {
         ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
         HashSet<Tuple> set = new HashSet<>();
         for (int i = 0; i < left.size(); i++) {
-            String tempLeft = transType(left.get(i));
-            String tempRight = transType(right.get(i));
-            // 左边大于右边，则加入结果集合
-            if (tempLeft.compareTo(tempRight) > 0) {
+            if (compare(left.get(i), right.get(i)) > 0) {
                 set.add(selectResult.getTpl().tuplelist.get(i));
             }
         }
@@ -307,11 +297,8 @@ public class Where {
         ArrayList<Object> left = formula.formulaExecute(expression.getLeftExpression(), selectResult);
         ArrayList<Object> right = formula.formulaExecute(expression.getRightExpression(), selectResult);
         HashSet<Tuple> set = new HashSet<>();
-        for (int i = 0; i < left.size(); i++){
-            String tempLeft = transType(left.get(i));
-            String tempRight = transType(right.get(i));
-            // 左边大于右边，则加入结果集合
-            if (tempLeft.compareTo(tempRight) > 0 || tempLeft.equals(tempRight)) {
+        for (int i = 0; i < left.size(); i++) {
+            if (compare(left.get(i), right.get(i)) >= 0) {
                 set.add(selectResult.getTpl().tuplelist.get(i));
             }
         }
@@ -349,6 +336,29 @@ public class Where {
             case "Character":
                 return String.valueOf(obj);
             default: return "";
+        }
+    }
+
+    public int compare(Object obj1, Object obj2) throws TMDBException {
+        if (obj1 == null || obj2 == null) {
+            throw new IllegalArgumentException("比较的对象不能为null");
+        }
+
+        // 获取数据类型
+        String type1 = obj1.getClass().getSimpleName();
+        String type2 = obj2.getClass().getSimpleName();
+
+        // 判断类名并执行比较逻辑
+        if (type1.equals("String") && !type2.equals("String") || !type1.equals("String") && type2.equals("String")) {
+            throw new TMDBException(ErrorList.TYPE_DOES_NOT_MATCH);
+        } else if (type1.equals("String")) {
+            String value1 = String.valueOf(obj1);
+            String value2 = String.valueOf(obj2);
+            return value1.compareTo(value2);
+        } else {
+            Double value1 = Double.parseDouble(String.valueOf(obj1));
+            Double value2 = Double.parseDouble(String.valueOf(obj2));
+            return value1.compareTo(value2);
         }
     }
 

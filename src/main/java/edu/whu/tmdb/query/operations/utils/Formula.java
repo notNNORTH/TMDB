@@ -2,10 +2,7 @@ package edu.whu.tmdb.query.operations.utils;
 
 import edu.whu.tmdb.query.operations.Exception.ErrorList;
 import edu.whu.tmdb.storage.memory.Tuple;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.Parenthesis;
-import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.arithmetic.Addition;
 import net.sf.jsqlparser.expression.operators.arithmetic.Division;
 import net.sf.jsqlparser.expression.operators.arithmetic.Modulo;
@@ -23,7 +20,8 @@ public class Formula {
     public ArrayList<Object> formulaExecute(Expression expression, SelectResult selectResult) throws TMDBException {
         ArrayList<Object> dataList = new ArrayList<>();
         // 根据表达式的类别，分别处理
-        switch ((expression.getClass().getSimpleName())) {
+        String type = (expression.getClass().getSimpleName());
+        switch (type) {
             case "Addition":
                 dataList = addition((Addition) expression, selectResult);
                 break;
@@ -50,6 +48,9 @@ public class Formula {
                 break;
             case "StringValue":
                 dataList = StringValue((StringValue) expression, selectResult);
+                break;
+            case "SignedExpression":
+                dataList = signedExpression((SignedExpression) expression, selectResult);
                 break;
         }
         return dataList;
@@ -86,8 +87,9 @@ public class Formula {
             throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, columnName);
         }
         ArrayList<Object> dataList = new ArrayList<>();
+        String type = selectResult.getType()[index];
         for (Tuple tuple : selectResult.getTpl().tuplelist) {
-            dataList.add(tuple.tuple[index]);
+            addToDataList(dataList, type, tuple.tuple[index]);
         }
         return dataList;
     }
@@ -162,7 +164,7 @@ public class Formula {
         return formulaExecute(expression.getExpression(), selectResult);
     }
 
-    // 数字元素处理
+    // 正数处理
     public ArrayList<Object> longValue(LongValue value, SelectResult selectResult) {
         double temp = (double) value.getValue();
         ArrayList<Object> res = new ArrayList<>();
@@ -173,5 +175,43 @@ public class Formula {
         return res;
     }
 
+    // 负数处理
+    public ArrayList<Object> signedExpression(SignedExpression value, SelectResult selectResult) {
+        String sign = String.valueOf(value.getSign());
+        double data = Double.parseDouble(sign + value.getExpression().toString());
+        int size = selectResult.getTpl().tuplelist.size();
+        ArrayList<Object> res = new ArrayList<>();
+        // 返回全是该数字元素的列
+        for (int i = 0; i < size; i++) {
+            res.add(data);
+        }
+        return res;
+    }
 
+    private void addToDataList(ArrayList<Object> dataList, String type, Object obj) throws TMDBException {
+        switch (type) {
+            case "String":
+                dataList.add(String.valueOf(obj));
+                break;
+            case "float":
+                dataList.add(Float.parseFloat(String.valueOf(obj)));
+                break;
+            case "int":
+                dataList.add(Integer.parseInt(String.valueOf(obj)));
+                break;
+            case "long":
+                dataList.add(Long.parseLong(String.valueOf(obj)));
+                break;
+            case "short":
+                dataList.add(Short.parseShort(String.valueOf(obj)));
+                break;
+            case "double":
+                dataList.add(Double.parseDouble(String.valueOf(obj)));
+                break;
+            case "char":
+                dataList.add(String.valueOf(obj));
+            default:
+                throw new TMDBException(ErrorList.TYPE_IS_NOT_SUPPORTED, type);
+        }
+    }
 }
