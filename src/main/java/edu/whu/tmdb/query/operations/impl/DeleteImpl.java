@@ -37,7 +37,10 @@ public class DeleteImpl implements Delete {
         // 1.获取符合where条件的所有元组
         Table table = deleteStmt.getTable();        // 获取需要删除的表名
         Expression where = deleteStmt.getWhere();   // 获取delete中的where表达式
-        String sql = "select * from " + table + " where " + where.toString() + ";";
+        String sql = "select * from " + table;;
+        if (where != null) {
+            sql += " where " + String.valueOf(where) + ";";
+        }
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sql.getBytes());
         net.sf.jsqlparser.statement.select.Select parse = (net.sf.jsqlparser.statement.select.Select) CCJSqlParserUtil.parse(byteArrayInputStream);
         Select select = new SelectImpl();
