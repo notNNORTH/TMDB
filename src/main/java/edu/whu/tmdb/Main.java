@@ -4,6 +4,7 @@ import edu.whu.tmdb.query.Transaction;
 import edu.whu.tmdb.query.operations.Exception.TMDBException;
 import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.storage.memory.Tuple;
+import edu.whu.tmdb.util.DbOperation;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -12,6 +13,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static edu.whu.tmdb.util.DbOperation.*;
 import static edu.whu.tmdb.util.FileOperation.getFileNameWithoutExtension;
 
 public class Main {
@@ -25,12 +27,18 @@ public class Main {
             sqlCommand = reader.readLine().trim();
             if ("exit".equalsIgnoreCase(sqlCommand)) {
                 break;
-            }else if ("resetdb".equalsIgnoreCase(sqlCommand)) {
-                resetDB();
+            } else if ("resetdb".equalsIgnoreCase(sqlCommand)) {
+                DbOperation.resetDB();
+            } else if ("show BiPointerTable".equalsIgnoreCase(sqlCommand)) {
+                DbOperation.showBiPointerTable();
+            } else if ("show ClassTable".equalsIgnoreCase(sqlCommand)) {
+                DbOperation.showClassTable();
+            } else if ("show DeputyTable".equalsIgnoreCase(sqlCommand)) {
+                DbOperation.showDeputyTable();
             } else if (!sqlCommand.isEmpty()) {
                 SelectResult result = execute(sqlCommand);
                 if (result != null) {
-                    printResult(result);
+                    DbOperation.printResult(result);
                 }
             }
         }
@@ -78,62 +86,5 @@ public class Main {
         }
         return selectResult;
     }
-
-    private static void printResult(SelectResult result) {
-        // 输出表头信息
-        StringBuilder tableHeader = new StringBuilder("|");
-        for (int i = 0; i < result.getAttrname().length; i++) {
-            tableHeader.append(String.format("%-20s", result.getClassName()[i] + "." + result.getAttrname()[i])).append("|");
-        }
-        System.out.println(tableHeader);
-
-        // 输出元组信息
-        for (Tuple tuple : result.getTpl().tuplelist) {
-            StringBuilder data = new StringBuilder("|");
-            for (int i = 0; i < tuple.tuple.length; i++) {
-                data.append(String.format("%-20s", tuple.tuple[i].toString())).append("|");
-            }
-            System.out.println(data);
-        }
-    }
-
-    private static void resetDB() {
-        // 仓库路径
-        String repositoryPath = "D:\\cs\\JavaProject\\TMDB";
-
-        // 子目录路径
-        String sysPath = repositoryPath + File.separator + "data\\sys";
-        String logPath = repositoryPath + File.separator + "data\\log";
-        String levelPath = repositoryPath + File.separator + "data\\level";
-
-        List<String> filePath = new ArrayList<>();
-        filePath.add(sysPath);
-        filePath.add(logPath);
-        filePath.add(levelPath);
-
-        // 遍历删除文件
-        for (String path : filePath) {
-            File directory = new File(path);
-
-            // 检查目录是否存在
-            if (!directory.exists()) {
-                System.out.println("目录不存在：" + path);
-                return;
-            }
-
-            // 获取目录中的所有文件
-            File[] files = directory.listFiles();
-            if (files == null) { continue; }
-            for (File file : files) {
-                // 删除文件
-                if (file.delete()) {
-                    System.out.println("已删除文件：" + file.getAbsolutePath());
-                } else {
-                    System.out.println("无法删除文件：" + file.getAbsolutePath());
-                }
-            }
-        }
-    }
-
 
 }

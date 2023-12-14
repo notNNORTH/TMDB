@@ -402,7 +402,14 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
      * @param TableColumn 包含两个值：第一个表达式的表名，有则赋值为"a"，没有赋值为""；第一个表达式的属性名
      */
     private void attributeParser(String expression, ArrayList<String> TableColumn) {
-        String attr = expression.substring(0, expression.indexOf(' '));
+        String attr;
+        int spaceIndex = expression.indexOf(' ');
+        if (spaceIndex != -1) {
+            attr = expression.substring(0, spaceIndex);
+        } else {
+            // 处理没有空格的情况，可以使用整个字符串或者其他默认值
+            attr = expression;
+        }
         if (attr.contains(".")) {
             // 如果存在"."，则分割字符串
             String[] parts = attr.split("\\.", 2);
