@@ -6,7 +6,15 @@ Totem Mobile Database at WHU.
 
 ## 任务列表
 
-### *Task 1: show table功能实现*
+### *Task 1: MemConnect*
+
+**任务目标**：补全`edu.whu.tmdb.query.operations.utils.MemConnect`功能代码
+
+**任务描述**：MemConnect是数据库查询执行和底层存储交互的中间类，内部包含大量的系统表接口，本任务要求学生根据代码注释完成接口补全。
+
+
+
+### *Task 2: show table功能实现*
 
 本项目数据库采用对象代理模型，其中对象及其代理之间的关系采用系统表来实现。
 
@@ -21,7 +29,7 @@ Totem Mobile Database at WHU.
 
 
 
-### *Task 2: create deputy class功能实现*
+### *Task 3: create deputy class功能实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.CreateDeputyClassImpl.java`中相关创建代理类的函数，实现代理类创建功能
 
@@ -31,9 +39,11 @@ Totem Mobile Database at WHU.
 - `createDeputyTableItem`：创建并插入新的deputyTableItem
 - `createBiPointerTableItem`：创建并插入新的biPointerTableItem
 
+> 可参考create class相关逻辑
 
 
-### *Task 3: drop class功能实现*
+
+### *Task 4: drop class功能实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.DropImpl`中相关函数，实现数据库drop class功能
 
@@ -41,8 +51,46 @@ Totem Mobile Database at WHU.
 
 
 
-### *Task 4: 带表达式的select实现*
+### *Task 5: 带表达式的select实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.SelectImpl.java`中的`projectSelectExpression`函数，使系统支持带表达式的select查询
 
-**任务描述**：
+**任务描述**：当前系统仅支持形如下述表达式的查询语句
+
+```sql
+select * from test;
+select a.* from a, b;
+```
+
+本任务要求补全函数`projectAllTableColumns`，使系统支持如下带表达式的查询语句：
+
+```sql
+select a from test;
+select a+b as c from test;
+```
+
+
+
+### *Task 6: where子句的实现*
+
+**任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.Where`中相关代码，使其支持select查询中的where表达式
+
+**任务描述**：当前系统仅支持where子句的and、or、in和等式表达式，需要补全<、<=、>、>=的相关逻辑
+
+
+
+### *Task 7: delete语句实现*
+
+**任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.DeleteImpl.java`中相关函数，使数据库支持delete语句
+
+**任务描述**：delete语句的目标是删除满足where条件的对象（元组），因此在系统表ObjectTable中删除对应对象，并删除对象在BiPointerTable中的记录。注意，如果被执行delete语句的类包含其他代理，也需要一并删除代理类中相关元组。
+
+> 可参考update相关逻辑
+
+
+
+### *Task 8: limit字段实现*
+
+**任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.SelectImpl.java`中limit函数
+
+**任务描述**：limit关键字用于限制select查询结果的输出数量，因此需要在limit函数内实现查询结果的resize
