@@ -956,7 +956,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     /**
-     * 给定表项和所有的元组，包装成selectResult类，获取select表的所有元组
+     * 给定表项和所有的元组，将其包装成selectResult类。用于获取select表的所有元组
      * @param classTableItemList class item，对应查询结果的表头
      * @param tupleList 元组列表，对应查询结果的元数据
      * @return 包含所有查询元组的selectResult类
