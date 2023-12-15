@@ -15,11 +15,8 @@ import edu.whu.tmdb.query.operations.Create;
 import edu.whu.tmdb.query.operations.utils.MemConnect;
 
 public class CreateImpl implements Create {
-    private MemConnect memConnect;
 
-    public CreateImpl() {
-        this.memConnect = MemConnect.getInstance(MemManager.getInstance());
-    }
+    public CreateImpl() {}
 
     @Override
     public boolean create(Statement stmt) throws TMDBException {

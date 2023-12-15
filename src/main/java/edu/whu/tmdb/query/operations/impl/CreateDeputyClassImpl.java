@@ -60,31 +60,6 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     }
 
     /**
-     * 给定创建代理类语句，返回代理规则
-     * @param stmt 创建代理类语句
-     * @return 代理规则
-     */
-    private int getDeputyType(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) {
-        switch (stmt.getType().toLowerCase(Locale.ROOT)) {
-            case "selectdeputy":    return 0;
-            case "joindeputy":      return 1;
-            case "uniondeputy":     return 2;
-            case "groupbydeputy":   return 3;
-        }
-        return -1;
-    }
-
-    /**
-     * 给定查询语句，返回select查询执行结果（创建deputyclass后面的select语句中的selectResult）
-     * @param selectStmt select查询语句
-     * @return 查询执行结果（包含所有满足条件元组）
-     */
-    private SelectResult getSelectResult(Select selectStmt) throws TMDBException, IOException {
-        SelectImpl selectExecutor = new SelectImpl();
-        return selectExecutor.select(selectStmt);
-    }
-
-    /**
      * 创建代理类的实现，包含代理类classTableItem的创建和switchingTableItem的创建
      * @param deputyClassName 代理类名称
      * @param selectResult 代理类包含的元组列表
@@ -94,7 +69,7 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
     private int createDeputyClass(String deputyClassName, SelectResult selectResult, int deputyRule) throws TMDBException {
         MemConnect.getClassTable().maxid++;
         int deputyClassId = MemConnect.getClassTable().maxid;   // 代理类的id
-        int attrNum = selectResult.getAttrid().length;      // 代理类的长度
+        int attrNum = selectResult.getAttrid().length;          // 代理类的长度
         for (int i = 0; i < selectResult.getAttrid().length; i++) {
             // 1.新建classTableItem
             MemConnect.getClassTableList().add(
@@ -143,6 +118,31 @@ public class CreateDeputyClassImpl implements CreateDeputyClass {
                 MemConnect.getBiPointerTableList().add(new BiPointerTableItem(classId, oriTupleId, deputyId, deputyTupleId));
             }
         }
+    }
+
+    /**
+     * 给定创建代理类语句，返回代理规则
+     * @param stmt 创建代理类语句
+     * @return 代理规则
+     */
+    private int getDeputyType(net.sf.jsqlparser.statement.create.deputyclass.CreateDeputyClass stmt) {
+        switch (stmt.getType().toLowerCase(Locale.ROOT)) {
+            case "selectdeputy":    return 0;
+            case "joindeputy":      return 1;
+            case "uniondeputy":     return 2;
+            case "groupbydeputy":   return 3;
+        }
+        return -1;
+    }
+
+    /**
+     * 给定查询语句，返回select查询执行结果（创建deputyclass后面的select语句中的selectResult）
+     * @param selectStmt select查询语句
+     * @return 查询执行结果（包含所有满足条件元组）
+     */
+    private SelectResult getSelectResult(Select selectStmt) throws TMDBException, IOException {
+        SelectImpl selectExecutor = new SelectImpl();
+        return selectExecutor.select(selectStmt);
     }
 
     private HashSet<Integer> getOriginClass(SelectResult selectResult) {

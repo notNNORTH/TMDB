@@ -40,7 +40,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 //8、使用order by对结果集进行排序。
 public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
 
-    private MemConnect memConnect;
+    private final MemConnect memConnect;
 
     public SelectImpl() { this.memConnect = MemConnect.getInstance(MemManager.getInstance()); }
 

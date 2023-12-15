@@ -5,6 +5,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 import edu.whu.tmdb.storage.memory.SystemTable.BiPointerTableItem;
 import edu.whu.tmdb.storage.memory.SystemTable.ClassTableItem;
 import edu.whu.tmdb.storage.memory.SystemTable.DeputyTableItem;
+import edu.whu.tmdb.storage.memory.SystemTable.SwitchingTableItem;
 import edu.whu.tmdb.storage.memory.Tuple;
 
 import java.io.File;
@@ -130,6 +131,29 @@ public class DbOperation {
             StringBuilder data = new StringBuilder("|");
             data.append(String.format("%-20s", deputyTableItem.originid)).append("|");
             data.append(String.format("%-20s", deputyTableItem.deputyid)).append("|");
+            System.out.println(data);
+        }
+    }
+
+    public static void showSwitchingTable() {
+        // 输出表头信息
+        StringBuilder tableHeader = new StringBuilder("|");
+        String[] variables = {"origin class id", "origin attribute id", "origin attribute name",
+                                "deputy class id", "deputy attribute id", "deputy attribute name"};
+        for (String variable : variables) {
+            tableHeader.append(String.format("%-20s", variable)).append("|");
+        }
+        System.out.println(tableHeader);
+
+        // 输出元组信息
+        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingTableList()) {
+            StringBuilder data = new StringBuilder("|");
+            data.append(String.format("%-20s", switchingTableItem.oriId)).append("|");
+            data.append(String.format("%-20s", switchingTableItem.oriAttrid)).append("|");
+            data.append(String.format("%-20s", switchingTableItem.oriAttr)).append("|");
+            data.append(String.format("%-20s", switchingTableItem.deputyId)).append("|");
+            data.append(String.format("%-20s", switchingTableItem.deputyAttrId)).append("|");
+            data.append(String.format("%-20s", switchingTableItem.deputyAttr)).append("|");
             System.out.println(data);
         }
     }
