@@ -101,11 +101,7 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
     }
 
     private SelectResult limit(int limit,SelectResult selectResult) {
-        TupleList tpl = selectResult.getTpl();
-        List<Tuple> tuplelist = tpl.tuplelist;
-        List<Tuple> collect = tuplelist.stream().limit(limit).collect(Collectors.toList());
-        tpl.tuplelist=collect;
-        tpl.tuplenum=limit;
+        // TODO-task9
         return selectResult;
     }
 
@@ -335,30 +331,20 @@ public class SelectImpl implements edu.whu.tmdb.query.operations.Select {
      */
     private void projectSelectExpression(SelectItem item, SelectResult entireResult,
                 SelectResult projectResult, TupleList resTupleList, int indexInResult) throws TMDBException {
-
+        // TODO-task5
         SelectExpressionItem selectItem = (SelectExpressionItem) item;
         // 1.attrName赋值
-        if (selectItem.getAlias() != null){
-            projectResult.getAttrname()[indexInResult] = selectItem.getAlias().getName();
-        } else {
-            projectResult.getAttrname()[indexInResult] = selectItem.toString();
-        }
+
         // 2.alias赋值
-        String expression = selectItem.getExpression().toString();  // String类型的表达式
-        projectResult.getAlias()[indexInResult] = expression;
+
         // 3.resTupleList赋值
-        ArrayList<String> TableColumn = new ArrayList<>();          // 含有两个元素的列表，结构为[tableName, columnName]
-        attributeParser(expression, TableColumn);
-        ArrayList<Object> dataList = (new Formula()).formulaExecute(selectItem.getExpression(), entireResult);  // 对表达式进行解析，获取该列的值
-        int index = getIndexInEntireResult(entireResult, TableColumn.get(0), TableColumn.get(1));   // 找到表达式对应属性在原元组对应的下标
-        for (int j = 0; j < resTupleList.tuplelist.size(); j++){
-            resTupleList.tuplelist.get(j).tuple[indexInResult] = dataList.get(j);
-            resTupleList.tuplelist.get(j).tupleIds[indexInResult] = entireResult.getTpl().tuplelist.get(j).tupleIds[index];
-        }
+        // ArrayList<String> TableColumn = new ArrayList<>();          // 含有两个元素的列表，结构为[tableName, columnName]
+        // 调用attributeParser();
+        // ArrayList<Object> dataList = (new Formula()).formulaExecute(selectItem.getExpression(), entireResult);  // 对表达式进行解析，获取该列的值
+        // 调用getIndexInEntireResult();   // 找到表达式对应属性在原元组对应的下标
+
         // 4.剩余属性赋值
-        projectResult.getType()[indexInResult] = entireResult.getType()[index];
-        projectResult.getClassName()[indexInResult] = entireResult.getClassName()[index];
-        projectResult.getAttrid()[indexInResult] = indexInResult;
+
     }
 
     /**

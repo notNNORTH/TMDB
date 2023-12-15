@@ -37,7 +37,7 @@ Totem Mobile Database at WHU.
 
 - `createDeputyClass`：创建并插入新的classTableItem和switchingTableItem
 - `createDeputyTableItem`：创建并插入新的deputyTableItem
-- `createBiPointerTableItem`：创建并插入新的biPointerTableItem
+- `createBiPointerTableItem`：插入对象，创建并插入新的biPointerTableItem
 
 > 可参考create class相关逻辑
 
@@ -69,17 +69,27 @@ select a from test;
 select a+b as c from test;
 ```
 
+> 允许对函数逻辑进行重构
+
 
 
 ### *Task 6: where子句的实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.Where`中相关代码，使其支持select查询中的where表达式
 
-**任务描述**：当前系统仅支持where子句的and、or、in和等式表达式，需要补全<、<=、>、>=的相关逻辑
+**任务描述**：当前系统仅支持where子句的等式表达式，需要补全<、<=、>、>=的相关逻辑
 
 
 
-### *Task 7: delete语句实现*
+### *Task 7: where子句中or字段的实现*
+
+**任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.Where`中相关代码，使where表达式支持or字段的逻辑表达
+
+**任务描述**：当前系统支持where子句的and和in表达式，需要补全orExpression函数加入or表达逻辑
+
+
+
+### *Task 8: delete语句实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.DeleteImpl.java`中相关函数，使数据库支持delete语句
 
@@ -89,7 +99,7 @@ select a+b as c from test;
 
 
 
-### *Task 8: limit字段实现*
+### *Task 9: limit字段实现*
 
 **任务目标**：补全文件`edu.whu.tmdb.query.operations.impl.SelectImpl.java`中limit函数
 

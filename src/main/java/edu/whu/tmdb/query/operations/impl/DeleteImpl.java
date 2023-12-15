@@ -24,9 +24,7 @@ import edu.whu.tmdb.query.operations.utils.SelectResult;
 
 public class DeleteImpl implements Delete {
 
-    private MemConnect memConnect;
-
-    public DeleteImpl() { this.memConnect = MemConnect.getInstance(MemManager.getInstance()); }
+    public DeleteImpl() {}
 
     @Override
     public void delete(Statement statement) throws JSQLParserException, TMDBException, IOException {
@@ -51,32 +49,26 @@ public class DeleteImpl implements Delete {
     }
 
     public void delete(TupleList tupleList) {
+        // TODO-task8
         // 1.删除源类tuple和object table
-        ArrayList<Integer> deleteTupleIdList = new ArrayList<>();   // 用于存储要删除的tuple id
-        for (Tuple tuple : tupleList.tuplelist) {
-            memConnect.DeleteTuple(tuple.getTupleId());             // 删除元组
-            ObjectTableItem objectTableItem = new ObjectTableItem(tuple.classId, tuple.getTupleId());
-            MemConnect.getObjectTableList().remove(objectTableItem);   // 删除对象表
-            deleteTupleIdList.add(tuple.getTupleId());
-        }
+
+            // 使用MemConnect.getObjectTableList().remove();   // 删除对象表
+
+
 
         // 2.删除源类biPointerTable
-        ArrayList<Integer> deputyTupleIdList = new ArrayList<>();
-        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerTableList()) {
-            if (deleteTupleIdList.contains(biPointerTableItem.objectid)){
-                deputyTupleIdList.add(biPointerTableItem.deputyobjectid);
-                MemConnect.getBiPointerTableList().remove(biPointerTableItem);
-            }
-        }
+
+            // 使用MemConnect.getBiPointerTableList().remove();
+
 
         // 3.根据biPointerTable递归删除代理类相关表
-        if (deputyTupleIdList.isEmpty()) { return; }
-        TupleList deputyTupleList = new TupleList();
-        for (Integer deputyTupleId : deputyTupleIdList) {
-            Tuple tuple = memConnect.GetTuple(deputyTupleId);
-            deputyTupleList.addTuple(tuple);
-        }
-        delete(deputyTupleList);
+        // if (deputyTupleIdList.isEmpty()) { return; }
+        // TupleList deputyTupleList = new TupleList();
+        // for (Integer deputyTupleId : deputyTupleIdList) {
+        //     Tuple tuple = memConnect.GetTuple(deputyTupleId);
+        //     deputyTupleList.addTuple(tuple);
+        // }
+        // delete(deputyTupleList);
     }
 
 }

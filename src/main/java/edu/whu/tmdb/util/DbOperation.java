@@ -77,84 +77,18 @@ public class DbOperation {
     }
 
     public static void showBiPointerTable() {
-        // 输出表头信息
-        StringBuilder tableHeader = new StringBuilder("|");
-        String[] variables = {"class id", "object id", "deputy id", "deputy object id"};
-        for (String variable : variables) {
-            tableHeader.append(String.format("%-20s", variable)).append("|");
-        }
-        System.out.println(tableHeader);
-
-        // 输出元组信息
-        for (BiPointerTableItem biPointerTableItem : MemConnect.getBiPointerTableList()) {
-            StringBuilder data = new StringBuilder("|");
-            data.append(String.format("%-20s", biPointerTableItem.classid)).append("|");
-            data.append(String.format("%-20s", biPointerTableItem.objectid)).append("|");
-            data.append(String.format("%-20s", biPointerTableItem.deputyid)).append("|");
-            data.append(String.format("%-20s", biPointerTableItem.deputyobjectid)).append("|");
-            System.out.println(data);
-        }
+        // TODO-task2
     }
 
     public static void showClassTable() {
-        // 输出表头信息
-        StringBuilder tableHeader = new StringBuilder("|");
-        String[] variables = {"class name", "class id", "attribute name", "attribute id", "attribute type"};
-        for (String variable : variables) {
-            tableHeader.append(String.format("%-20s", variable)).append("|");
-        }
-        System.out.println(tableHeader);
-
-        // 输出元组信息
-        for (ClassTableItem classTableItem : MemConnect.getClassTableList()) {
-            StringBuilder data = new StringBuilder("|");
-            data.append(String.format("%-20s", classTableItem.classname)).append("|");
-            data.append(String.format("%-20s", classTableItem.classid)).append("|");
-            data.append(String.format("%-20s", classTableItem.attrname)).append("|");
-            data.append(String.format("%-20s", classTableItem.attrid)).append("|");
-            data.append(String.format("%-20s", classTableItem.attrtype)).append("|");
-            System.out.println(data);
-        }
+        // TODO-task2
     }
 
     public static void showDeputyTable() {
-        // 输出表头信息
-        StringBuilder tableHeader = new StringBuilder("|");
-        String[] variables = {"origin class id", "deputy class id"};
-        for (String variable : variables) {
-            tableHeader.append(String.format("%-20s", variable)).append("|");
-        }
-        System.out.println(tableHeader);
-
-        // 输出元组信息
-        for (DeputyTableItem deputyTableItem : MemConnect.getDeputyTableList()) {
-            StringBuilder data = new StringBuilder("|");
-            data.append(String.format("%-20s", deputyTableItem.originid)).append("|");
-            data.append(String.format("%-20s", deputyTableItem.deputyid)).append("|");
-            System.out.println(data);
-        }
+        // TODO-task2
     }
 
     public static void showSwitchingTable() {
-        // 输出表头信息
-        StringBuilder tableHeader = new StringBuilder("|");
-        String[] variables = {"origin class id", "origin attribute id", "origin attribute name",
-                                "deputy class id", "deputy attribute id", "deputy attribute name"};
-        for (String variable : variables) {
-            tableHeader.append(String.format("%-20s", variable)).append("|");
-        }
-        System.out.println(tableHeader);
-
-        // 输出元组信息
-        for (SwitchingTableItem switchingTableItem : MemConnect.getSwitchingTableList()) {
-            StringBuilder data = new StringBuilder("|");
-            data.append(String.format("%-20s", switchingTableItem.oriId)).append("|");
-            data.append(String.format("%-20s", switchingTableItem.oriAttrid)).append("|");
-            data.append(String.format("%-20s", switchingTableItem.oriAttr)).append("|");
-            data.append(String.format("%-20s", switchingTableItem.deputyId)).append("|");
-            data.append(String.format("%-20s", switchingTableItem.deputyAttrId)).append("|");
-            data.append(String.format("%-20s", switchingTableItem.deputyAttr)).append("|");
-            System.out.println(data);
-        }
+        // TODO-task2
     }
 }

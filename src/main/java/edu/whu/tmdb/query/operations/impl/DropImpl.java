@@ -37,6 +37,7 @@ public class DropImpl implements Drop {
     }
 
     public void drop(int classId) {
+        // TODO-task4
         ArrayList<Integer> deputyClassIdList = new ArrayList<>();   // 存储该类对应所有代理类id
 
         dropClassTable(classId);                            // 1.删除ClassTableItem
@@ -46,11 +47,7 @@ public class DropImpl implements Drop {
         dropObjectTable(classId);                           // 5.删除已创建的源类对象
 
         // 6.递归删除代理类相关
-        if(!deputyClassIdList.isEmpty()){
-            for (Integer deputyClassId : deputyClassIdList) {
-                drop(deputyClassId);
-            }
-        }
+        // TODO-task4
     }
 
     /**
@@ -58,15 +55,7 @@ public class DropImpl implements Drop {
      * @param classId 要删除的表对应的id
      */
     private void dropClassTable(int classId) {
-        ArrayList<ClassTableItem> classItemList = new ArrayList<>();
-        for (ClassTableItem classTableItem : MemConnect.getClassTableList()) {
-            if(classTableItem.classid == classId){
-                classItemList.add(classTableItem);
-            }
-        }
-        for (ClassTableItem item : classItemList) {
-            MemConnect.getClassTableList().remove(item);
-        }
+        // TODO-task4
     }
 
     /**
@@ -75,14 +64,7 @@ public class DropImpl implements Drop {
      * @param deputyClassIdList 作为返回值，源类对应的代理类id列表
      */
     private void dropDeputyClassTable(int classId, ArrayList<Integer> deputyClassIdList) {
-        Iterator<DeputyTableItem> iterator = MemConnect.getDeputyTableList().iterator();
-        while (iterator.hasNext()) {
-            DeputyTableItem deputyTableItem = iterator.next();
-            if (deputyTableItem.originid == classId || deputyTableItem.deputyid == classId) {
-                deputyClassIdList.add(deputyTableItem.deputyid);
-                iterator.remove();  // 使用迭代器安全地删除元素
-            }
-        }
+        // TODO-task4
     }
 
     /**
@@ -90,13 +72,7 @@ public class DropImpl implements Drop {
      * @param classId 源类id
      */
     private void dropBiPointerTable(int classId) {
-        Iterator<BiPointerTableItem> iterator = MemConnect.getBiPointerTableList().iterator();
-        while (iterator.hasNext()) {
-            BiPointerTableItem biPointerTableItem = iterator.next();
-            if (biPointerTableItem.classid == classId || biPointerTableItem.deputyid == classId) {
-                iterator.remove();
-            }
-        }
+        // TODO-task4
     }
 
     /**
@@ -104,13 +80,7 @@ public class DropImpl implements Drop {
      * @param classId 源类id
      */
     private void dropSwitchingTable(int classId) {
-        Iterator<SwitchingTableItem> iterator = MemConnect.getSwitchingTableList().iterator();
-        while (iterator.hasNext()) {
-            SwitchingTableItem switchingTableItem = iterator.next();
-            if (switchingTableItem.oriId == classId || switchingTableItem.deputyId == classId) {
-                iterator.remove();
-            }
-        }
+        // TODO-task4
     }
 
     /**
@@ -118,16 +88,8 @@ public class DropImpl implements Drop {
      * @param classId 源类id
      */
     private void dropObjectTable(int classId) {
-        ArrayList<ObjectTableItem> objectTableList = new ArrayList<>();
-        for (ObjectTableItem objectTableItem : MemConnect.getObjectTableList()) {
-            if(objectTableItem.classid == classId ){
-                memConnect.DeleteTuple(objectTableItem.tupleid);
-                objectTableList.add(objectTableItem);
-            }
-        }
-        for(ObjectTableItem temp : objectTableList){
-            MemConnect.getObjectTableList().remove(temp);
-        }
+        // TODO-task4
+        // 使用MemConnect.getObjectTableList().remove();
     }
 
 }

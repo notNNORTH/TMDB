@@ -117,31 +117,23 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassId(String tableName) throws TMDBException {
-        for (ClassTableItem item : getClassTableList()) {
-            if (item.classname.equals(tableName)) {
-                return item.classid;
-            }
-        }
-        throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
+        // TODO
+        // 不存在时抛出异常
+
+        return -1;
     }
 
     /**
-     * 给定表名(类名), 获取表在classTable中的id值
+     * 给定表名(类名), 获取表在classTable中的属性名列表
      * @param tableName 表名(类名)
-     * @return 给定表名(类名)所对应的class id
+     * @return 给定表名(类名)所对应的属性名列表
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public List<String> getColumns(String tableName) throws TMDBException {
-        List<String> colNames = new ArrayList<>();
-        for (ClassTableItem classTableItem : MemConnect.getClassTableList()) {
-            if(classTableItem.classname.equals(tableName)){
-                colNames.add(classTableItem.attrname);
-            }
-        }
-        if (colNames.isEmpty()) {
-            throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
-        }
-        return colNames;
+        // TODO
+        // 不存在时抛出异常
+
+        return new ArrayList<>();
     }
 
     /**
@@ -151,12 +143,10 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassAttrnum(String tableName) throws TMDBException {
-        for (ClassTableItem item : getClassTableList()) {
-            if (item.classname.equals(tableName)) {
-                return item.attrnum;
-            }
-        }
-        throw new TMDBException(ErrorList.CLASS_NAME_DOES_NOT_EXIST, tableName);
+        // TODO
+        // 不存在时抛出异常
+
+        return -1;
     }
 
     /**
@@ -166,12 +156,10 @@ public class MemConnect {
      * @throws TMDBException 不存在给定表名的表，抛出异常
      */
     public int getClassAttrnum(int classId) throws TMDBException {
-        for (ClassTableItem item : getClassTableList()) {
-            if(item.classid == classId){
-                return item.attrnum;
-            }
-        }
-        throw new TMDBException(ErrorList.CLASS_ID_DOES_NOT_EXIST, classId);
+        // TODO
+        // 不存在时抛出异常
+
+        return -1;
     }
 
     /**
@@ -181,25 +169,10 @@ public class MemConnect {
      * @return 属性名列表对应的attrid列表
      */
     public int[] getAttridList(int classId, List<String> columns) throws TMDBException {
-        int attrnum = getClassAttrnum(classId);
-        int[] attridList = new int[attrnum];
+        // TODO
+        // 不存在时抛出异常
 
-        // 遍历当前的ClassTableItem
-        for (ClassTableItem classTableItem : getClassTableList()) {
-            if (classTableItem.classid != classId) {
-                continue;
-            }
-            // 找到对应classId的类，遍历当前属性名称列表columns
-            for (int i = 0; i < attrnum; i++) {
-                if (!columns.get(i).equals(classTableItem.attrname)) {
-                    continue;
-                }
-                // 若colname和当前item对应的attrname相同，获取attrid放到对应位置
-                attridList[i] = classTableItem.attrid;
-            }
-        }
-
-        return attridList;
+        return new int[0];
     }
 
     /**
@@ -209,12 +182,10 @@ public class MemConnect {
      * @return 属性对应的id
      */
     public int getAttrid(int classId, String attrName) throws TMDBException {
-        for (ClassTableItem classTableItem : getClassTableList()) {
-            if (classTableItem.classid == classId && classTableItem.attrname.equals(attrName)) {
-                return classTableItem.attrid;
-            }
-        }
-        throw new TMDBException(ErrorList.COLUMN_NAME_DOES_NOT_EXIST, attrName);
+        // TODO
+        // 不存在时抛出异常
+
+        return -1;
     }
 
     /**
@@ -266,14 +237,11 @@ public class MemConnect {
     /**
      * 给定表名，返回该表是否存在，存在返回true
      * @param tableName 表名
-     * @return 存在返回true
+     * @return 存在返回true，否则返回false
      */
     public boolean classExist(String tableName) {
-        for (ClassTableItem item : getClassTableList()) {
-            if (item.classname.equals(tableName)) {
-                return true;
-            }
-        }
+        // TODO
+
         return false;
     }
 
@@ -281,30 +249,25 @@ public class MemConnect {
      * 给定表名和属性名，返回该属性是否存在，存在返回true
      * @param tableName 表名
      * @param columnName 属性名
-     * @return 存在返回true
+     * @return 存在返回true，否则返回false
      */
     public boolean columnExist(String tableName, String columnName) throws TMDBException {
-        for (ClassTableItem item : getClassTableList()) {
-            if (item.classname.equals(tableName) && item.attrname.equals(columnName)) {
-                return true;
-            }
-        }
+        // TODO
+
         return false;
     }
 
     /**
-     * 给定class id, 获取该源类对应的所有代理类（注：稍后放到memConnect中
+     * 给定class id, 获取该源类对应的所有代理类id
      * @param classId 源类的class id
-     * @return 该class id对应的所有代理类
+     * @return 该class id对应的所有代理类id
+     * @throws TMDBException 不存在给定表名的表，抛出异常
      */
-    public ArrayList<Integer> getDeputyIdList(int classId) {
-        ArrayList<Integer> deputyIdList = new ArrayList<>();
-        for (DeputyTableItem deputyTableItem : getDeputyTableList()) {
-            if (deputyTableItem.originid == classId && !deputyTableItem.deputyrule[0].equals("5")) {
-                deputyIdList.add(deputyTableItem.deputyid);
-            }
-        }
-        return deputyIdList;
+    public ArrayList<Integer> getDeputyIdList(int classId) throws TMDBException {
+        // TODO
+        // 不存在时抛出异常
+
+        return new ArrayList<>();
     }
 
     public boolean Condition(String attrtype, Tuple tuple, int attrid, String value1) {
